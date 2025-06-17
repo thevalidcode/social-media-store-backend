@@ -1,0 +1,59 @@
+const fs = require("fs");
+const tls = require("tls");
+const { getDocs } = require("../crud");
+
+const env = process.env.NODE_ENV;
+
+const sslOptions = {};
+
+async function loadCertificates() {
+  const domains = await getDocs("registered_panels", null, {
+    filter: { field: "ssl", operator: "===", value: true },
+  });
+
+  domains
+    .filter((domain) => domain.uid !== "localhost:5173") // remove localhost:5173 explicitly
+    .forEach((domain) => {
+      sslOptions[domain.uid] = env === "production" && {
+        cert: fs.readFileSync(
+          `/etc/letsencrypt/live/${domain.uid}/fullchain.pem`
+        ),
+        key: fs.readFileSync(`/etc/letsencrypt/live/${domain.uid}/privkey.pem`),
+      };
+    });
+}
+
+async function SNICallback(domain, cb) {
+  if (domain === "localhost:5173") {
+    return cb(new Error("SSL certificate not available for localhost:5173"));
+  }
+
+  let ctx = sslOptions[domain];
+
+  if (!ctx) {
+    const newDomain = await getDocs("registered_panels", null, {
+      find: { field: "uid", operator: "===", value: domain },
+    });
+
+    if (newDomain && newDomain.ssl) {
+      ctx = {
+        cert: fs.readFileSync(`/etc/letsencrypt/live/${domain}/fullchain.pem`),
+        key: fs.readFileSync(`/etc/letsencrypt/live/${domain}/privkey.pem`),
+      };
+      sslOptions[domain] = ctx;
+    }
+  }
+
+  if (ctx) {
+    cb(null, tls.createSecureContext(ctx));
+  } else {
+    cb(new Error("No SSL certificate available for domain: " + domain));
+  }
+}
+
+loadCertificates();
+
+module.exports = {
+  sslOptions,
+  SNICallback,
+};
