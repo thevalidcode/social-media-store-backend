@@ -50,7 +50,6 @@ CreateUserInput:
     - username
     - password
     - panel_id
-    - ref
   properties:
     email:
       type: string

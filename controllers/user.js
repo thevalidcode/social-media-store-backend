@@ -6,6 +6,7 @@ import {
   deletePanelDocs,
 } from "../crud.js";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { sendEmail } from "../utils/emails.js";
 
 export const getUsers = async (req, res) => {
@@ -28,10 +29,10 @@ export const getUsers = async (req, res) => {
 export const createUser = async (req, res) => {
   const { panel_id, email, username, ref, password } = req.body;
 
-  if (!panel_id || !email || !username || !password || !ref) {
+  if (!panel_id || !email || !username || !password) {
     return res
       .status(400)
-      .json({ error: "Missing email, key, username or password" });
+      .json({ error: "Missing email, key, panel_id, username or password" });
   }
   try {
     const allUsers = await getDocs("users", panel_id);
@@ -45,17 +46,36 @@ export const createUser = async (req, res) => {
     if (usernameExists) {
       return res.status(400).send({ error: "Username already exists" });
     }
+    let newUser;
     if (ref) {
-      await addPanelDoc(
+      newUser = await addPanelDoc(
         "referrals",
         { username: username, user_id: parseInt(ref) },
         panel_id
       );
     }
-    await addPanelDoc("users", { ...req.body }, panel_id);
+    newUser = await addPanelDoc("users", { ...req.body }, panel_id);
+
+    const token = jwt.sign(
+      {
+        email,
+        panel_id,
+        key: newUser.api_key,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     await sendEmail(undefined, "new_user", { ...req.body }, panel_id);
-    return res.status(200).send({ success: "Created Successfully" });
+    return res.status(204).send({
+      success: "Created Successfully",
+      token,
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        username: newUser.username,
+      },
+    });
   } catch (error) {
     return res.status(500).send({ error: error.message });
   }
@@ -113,6 +133,7 @@ export const me = async (req, res) => {
     return res.status(200).json({
       success: "Logged in successfully",
       token,
+      role: admin ? admin.role || "admin" : "user",
       user: {
         id: account.id,
         email: account.email,

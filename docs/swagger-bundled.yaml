@@ -121,7 +121,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateUserInput'
       responses:
-        '200':
+        '204':
           $ref: '#/components/responses/SuccessMessage'
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -353,7 +353,6 @@ components:
         - username
         - password
         - panel_id
-        - ref
       properties:
         email:
           type: string
@@ -475,6 +474,10 @@ components:
               success:
                 type: string
                 example: Created Successfully
+              token:
+                type: string
+              user:
+                $ref: '#/components/schemas/UserPublic'
     BadRequest:
       description: Missing or invalid input
       content:

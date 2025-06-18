@@ -233,11 +233,11 @@ const addDoc = async (col, data) => {
     const cols = keys.join(", ");
 
     const result = await vp_pool.query(
-      `INSERT INTO ${col} (${cols}) VALUES (${params}) RETURNING id`,
+      `INSERT INTO ${col} (${cols}) VALUES (${params}) RETURNING *`,
       values
     );
-
-    return { id: result.rows[0].id, uid: data.uid };
+    const user = result.rows[0];
+    return { ...user, uid: data.uid };
   } catch (err) {
     console.log(err.message);
     return { error: err.message };
@@ -272,11 +272,12 @@ const addPanelDoc = async (col, data, panel_id) => {
     const cols = keys.join(", ");
 
     const result = await vsp_pool.query(
-      `INSERT INTO ${col} (${cols}) VALUES (${params}) RETURNING id`,
+      `INSERT INTO ${col} (${cols}) VALUES (${params}) RETURNING *`,
       values
     );
 
-    return { id: result.rows[0].id, uid: data.uid };
+    const user = result.rows[0];
+    return { ...user, uid: data.uid };
   } catch (err) {
     console.log(err.message);
     return { error: err.message };

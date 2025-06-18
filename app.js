@@ -11,6 +11,7 @@ import { vp_pool } from "./db.js";
 import userRouter from "./routes/user.js";
 import oauthRoutes from "./routes/oauth.js";
 import panelRoutes from "./routes/panel.js";
+import serviceRoutes from "./routes/service.js";
 import { getDocs } from "./crud.js";
 
 const app = express();
@@ -72,6 +73,7 @@ app.use(
 app.use("/user", userRouter);
 app.use("/api/auth/panel", oauthRoutes);
 app.use("/panel", panelRoutes);
+app.use("/service", serviceRoutes);
 
 const swaggerDocument = YAML.load("./docs/swagger-bundled.yaml");
 

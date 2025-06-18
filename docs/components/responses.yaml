@@ -64,6 +64,10 @@ SuccessMessage:
           success:
             type: string
             example: Created Successfully
+          token:
+            type: string
+          user:
+            $ref: "./schemas.yaml#/UserPublic"
 
 BadRequest:
   description: Missing or invalid input

@@ -30,7 +30,7 @@ export const authenticate = async (req, res, next) => {
     // attach identity info to request
     req.auth = {
       email,
-      panel_id,
+      panel_id: parseInt(panel_id),
       key,
       role: admin ? admin.role || "admin" : "user",
       user: admin || user,

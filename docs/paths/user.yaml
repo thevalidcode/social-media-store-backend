@@ -38,7 +38,7 @@ user_create:
         schema:
           $ref: "../components/schemas.yaml#/CreateUserInput"
   responses:
-    "200":
+    "204":
       $ref: "../components/responses.yaml#/SuccessMessage"
     "400":
       $ref: "../components/responses.yaml#/BadRequest"
