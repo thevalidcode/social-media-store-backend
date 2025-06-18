@@ -1,5 +1,5 @@
-const { v4: uuidv4 } = require("uuid");
-const { vsp_pool, vp_pool } = require("./db");
+import { v4 as uuidv4 } from "uuid";
+import { vsp_pool, vp_pool } from "./db.js";
 
 const buildWhereClause = (queryObj = {}, offset = 1) => {
   const values = [];
@@ -184,7 +184,7 @@ const ensureColumnsExist = async (pool, table, records) => {
       WHERE table_schema = 'public' AND table_name = $1`,
     [table]
   );
-  const existing = new Set(rows.map(r => r.column_name.toLowerCase()));
+  const existing = new Set(rows.map((r) => r.column_name.toLowerCase()));
 
   // 2. Collect all fields across all records
   const fieldMap = new Map(); // key -> sampleValue
@@ -373,7 +373,7 @@ const updatePanelDoc = async (col, uid, newData, panel_id) => {
   }
 };
 
-module.exports = {
+export {
   getDocs,
   addDoc,
   addPanelDoc,

@@ -1,11 +1,11 @@
-require("dotenv").config();
-const http = require("http");
-const https = require("https");
-const app = require("./app");
-const { SNICallback } = require("./config/ssl");
-const { startCronJobs } = require("./cronJobs");
-const { setupSocket } = require("./socket");
-const { Server } = require("socket.io");
+import "dotenv/config";
+import http from "http";
+import https from "https";
+import app from "./app.js";
+import { SNICallback } from "./config/ssl.js";
+import { startCronJobs } from "./cronJobs/index.js";
+import { setupSocket } from "./socket/index.js";
+import { Server } from "socket.io";
 
 const env = process.env.NODE_ENV;
 
@@ -15,19 +15,19 @@ let mainServer;
 if (env === "production") {
   const serverOptions = { SNICallback };
   mainServer = https.createServer(serverOptions, app);
-  mainServer.listen(4001, () => {
-    console.log("HTTPS server running on https://validpanel.com:4001/");
+  mainServer.listen(6060, () => {
+    console.log("HTTPS server running on https://validpanel.com:6060/");
   });
 
   // Secondary HTTP server (optional, based on your use case)
   const secondaryHttpServer = http.createServer(app);
-  secondaryHttpServer.listen(3001, () => {
-    console.log("HTTP server running on http://validpanel.com:3001/");
+  secondaryHttpServer.listen(4040, () => {
+    console.log("HTTP server running on http://validpanel.com:4040/");
   });
 } else {
   mainServer = http.createServer(app);
-  mainServer.listen(4001, () => {
-    console.log("Development server running on http://localhost:4001/");
+  mainServer.listen(6060, () => {
+    console.log("Development server running on http://localhost:6060/");
   });
 }
 

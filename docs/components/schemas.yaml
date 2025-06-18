@@ -1,0 +1,118 @@
+UserUpdateRequest:
+  type: object
+  required:
+    - uid
+  properties:
+    uid:
+      type: string
+      example: "abc123"
+    username:
+      type: string
+      example: "validuser"
+    full_name:
+      type: string
+      example: "Valid Name"
+    balance:
+      type: number
+      example: 100.50
+User:
+  type: object
+  properties:
+    id:
+      type: string
+    email:
+      type: string
+    username:
+      type: string
+    password:
+      type: string
+    status:
+      type: string
+    key:
+      type: string
+    role:
+      type: string
+
+UserPublic:
+  type: object
+  properties:
+    id:
+      type: string
+    email:
+      type: string
+    username:
+      type: string
+
+CreateUserInput:
+  type: object
+  required:
+    - email
+    - username
+    - password
+    - panel_id
+    - ref
+  properties:
+    email:
+      type: string
+    username:
+      type: string
+    password:
+      type: string
+    panel_id:
+      type: number
+    ref:
+      type: string
+
+PanelId:
+  type: object
+  properties:
+    panel_id:
+      type: number
+  required:
+    - panel_id
+
+DesignStyles:
+  type: object
+  description: Flexible object holding style and theme settings
+  additionalProperties: true
+
+SiteData:
+  type: object
+  description: Flexible object holding site‑wide configuration
+  additionalProperties: true
+
+ExchangeRates:
+  type: object
+  description: Key‑value map of currency pairs to numeric rates
+  additionalProperties:
+    type: number
+
+AdminPublic:
+  type: object
+  properties:
+    id:
+      type: string
+    email:
+      type: string
+    username:
+      type: string
+    role:
+      type: string
+  required:
+    - id
+    - email
+    - username
+    - role
+
+GoogleAuthRequest:
+  type: object
+  required:
+    - id_token
+    - panel_id
+  properties:
+    id_token:
+      type: string
+      description: Google OAuth ID token
+    panel_id:
+      type: number
+      description: The panel identifier to fetch/store user

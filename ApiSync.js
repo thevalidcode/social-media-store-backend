@@ -1,15 +1,12 @@
-const {
+import { 
   getDocs,
   addPanelDoc,
   updatePanelDoc,
   addDoc,
   updateDoc,
-} = require("./crud");
-const axios = require("axios");
-const https = require("https");
-const convertCurrency = require("./utils/ConvertCurrency");
-const { sendEmail } = require("./utils/emails");
-const { vsp_pool } = require("./db");
+ } from './crud.js';
+import axios from 'axios';import https from 'https';import convertCurrency from './utils/ConvertCurrency.js';import {  sendEmail  } from './utils/emails.js';
+import {  vsp_pool  } from './db.js';
 const rateKey = process.env.RATE_KEY;
 const agent = new https.Agent({
   keepAlive: true,
@@ -912,7 +909,7 @@ const processdrip_feedOrders = async () => {
   }
 };
 
-module.exports = {
+export { 
   sendOrderToMainServer,
   sendRefillToMainServer,
   sync_orderDetails,
@@ -924,4 +921,4 @@ module.exports = {
   updateRefillStatus,
   updateServices,
   processdrip_feedOrders,
-};
+ };

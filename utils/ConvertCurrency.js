@@ -1,4 +1,4 @@
-module.exports = function convertCurrency(
+export default function convertCurrency(
   sourceAmount,
   sourceCurrency,
   targetCurrency,
@@ -27,4 +27,4 @@ module.exports = function convertCurrency(
 
     return roundedNumber;
   }
-};
+}

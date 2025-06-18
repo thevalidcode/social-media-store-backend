@@ -1,5 +1,5 @@
-const { getDocs } = require("../crud");
-const { vsp_pool } = require("../db");
+import {  getDocs  } from '../crud.js';
+import {  vsp_pool  } from '../db.js';
 
 const checkapiKey = async (api_key) => {
   try {
@@ -48,4 +48,4 @@ async function checkKey(api_key, panel_id) {
   }
 }
 
-module.exports = { checkapiKey, checkAdminApiKey, checkKey };
+export {  checkapiKey, checkAdminApiKey, checkKey  };

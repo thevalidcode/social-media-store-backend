@@ -1,6 +1,5 @@
-const nodemailer = require("nodemailer");
-const { addPanelDoc, getDocs, updatePanelDoc } = require("../crud");
-const { getTemplate } = require("./emailTemplates");
+import nodemailer from 'nodemailer';import {  addPanelDoc, getDocs, updatePanelDoc  } from '../crud.js';
+import {  getTemplate  } from './emailTemplates.js';
 
 const transporter = nodemailer.createTransport({
   sendmail: true,
@@ -129,4 +128,4 @@ const sendUserEmail = async (
   }
 };
 
-module.exports = { sendEmail, sendUserEmail };
+export {  sendEmail, sendUserEmail  };

@@ -694,4 +694,4 @@ const getTemplate = (type, variables) => {
   }
 };
 
-module.exports = { getTemplate };
+export {  getTemplate  };

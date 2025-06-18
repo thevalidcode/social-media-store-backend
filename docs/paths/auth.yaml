@@ -1,0 +1,20 @@
+auth_google:
+  post:
+    tags: [Auth]
+    summary: Google Sign-In
+    description: Sign in or register a user using Google OAuth token.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas.yaml#/GoogleAuthRequest"
+    responses:
+      "200":
+        $ref: "../components/responses.yaml#/GoogleLoginResponse"
+      "400":
+        $ref: "../components/responses.yaml#/BadRequest"
+      "401":
+        $ref: "../components/responses.yaml#/Unauthorized"
+      "500":
+        $ref: "../components/responses.yaml#/ServerError"

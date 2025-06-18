@@ -1,12 +1,11 @@
-const cron = require("node-cron");
-const {
+import cron from 'node-cron';import { 
   sync_orders,
   saveRates,
   sync_orderDetails,
   updateServices,
   syncServices,
   processdrip_feedOrders,
-} = require("../ApiSync");
+ } from '../ApiSync.js';
 
 function startCronJobs() {
   cron.schedule("*/5 * * * *", () => {
@@ -34,4 +33,4 @@ function startCronJobs() {
   });
 }
 
-module.exports = { startCronJobs };
+export {  startCronJobs  };

@@ -1,10 +1,10 @@
-const {
+import { 
   format,
   formatDistanceToNow,
   differenceInMinutes,
-} = require("date-fns");
+ } from 'date-fns';
 
-module.exports = function formatDate(timestamp) {
+export default function formatDate(timestamp) ;{
   const date = new Date(timestamp);
   if (isNaN(date)) {
     console.error("Invalid date value:", timestamp);

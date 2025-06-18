@@ -1,6 +1,6 @@
-const fs = require("fs");
-const tls = require("tls");
-const { getDocs } = require("../crud");
+import fs from "fs";
+import tls from "tls";
+import {  getDocs  } from '../crud.js';
 
 const env = process.env.NODE_ENV;
 
@@ -53,7 +53,7 @@ async function SNICallback(domain, cb) {
 
 loadCertificates();
 
-module.exports = {
+export { 
   sslOptions,
   SNICallback,
-};
+ };

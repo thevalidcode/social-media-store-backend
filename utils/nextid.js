@@ -1,6 +1,5 @@
-const express = require("express");
-const nextIdRouter = express.Router();
-const { getDocs } = require("../crud");
+import express from 'express';const nextIdRouter = express.Router();
+import {  getDocs  } from '../crud.js';
 
 nextIdRouter.post("/", async (req, res) => {
   const { collection, panel_id } = req.body;
@@ -34,4 +33,4 @@ const idIncrement = async (collection, panel_id) => {
   return { id: newID };
 };
 
-module.exports = { nextIdRouter, idIncrement };
+export {  nextIdRouter, idIncrement  };

@@ -1,4 +1,4 @@
-const { Pool } = require("pg");
+import { Pool } from "pg";
 
 const vsp_pool = new Pool({
   host: process.env.DB_HOST,
@@ -16,4 +16,4 @@ const vp_pool = new Pool({
   password: process.env.DB_PASSWORD,
 });
 
-module.exports = { vsp_pool, vp_pool };
+export { vsp_pool, vp_pool };

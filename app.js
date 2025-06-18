@@ -1,33 +1,21 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const cors = require("cors");
-const session = require("express-session");
-const swaggerUi = require("swagger-ui-express");
-const swaggerJsdoc = require("swagger-jsdoc");
-const path = require("path");
-const pgSession = require("connect-pg-simple")(session);
-const { vp_pool } = require("./db");
+import express from "express";
+import bodyParser from "body-parser";
+import cors from "cors";
+import session from "express-session";
+import swaggerUi from "swagger-ui-express";
+import YAML from "yamljs";
+import pgSession from "connect-pg-simple";
+import { vp_pool } from "./db.js";
 
-const usersRouter = require("./routes/users");
-const paymentRouter = require("./routes/payment");
-const pagesRouter = require("./routes/pages");
-const servicesRouter = require("./routes/services");
-const statisticsRouter = require("./routes/statistics");
-const uploadRouter = require("./routes/upload");
-const refillRouter = require("./routes/refill");
-const panelsRouter = require("./routes/panels");
-const supportRouter = require("./routes/support");
-const ordersRouter = require("./routes/orders");
-const crudRouter = require("./routes/crud");
-const ratesRouter = require("./routes/rates");
-const apiRouter = require("./routes/api");
-const siteRouter = require("./routes/site");
-const providersRouter = require("./routes/providers");
-const { getDocs } = require("./crud");
+// Routes
+import userRouter from "./routes/user.js";
+import oauthRoutes from "./routes/oauth.js";
+import panelRoutes from "./routes/panel.js";
+import { getDocs } from "./crud.js";
 
 const app = express();
 
-let allowedOrigins = ["http://localhost:5173", "http://localhost:4001"];
+let allowedOrigins = [];
 
 async function updateAllowedOrigins() {
   const registered_panels = await getDocs("registered_panels", null, {
@@ -36,11 +24,11 @@ async function updateAllowedOrigins() {
 
   const domains = registered_panels.map((panel) => panel.uid);
   allowedOrigins = [
-    "http://localhost:5173",
-    "http://localhost:4001",
+    "http://localhost:3000",
+    "http://localhost:6060",
     ...domains.flatMap((domain) => [
       `https://${domain}`,
-      `https://${domain}:4001`,
+      `https://${domain}:6060`,
     ]),
   ];
 }
@@ -62,10 +50,10 @@ app.use(
 );
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
-
+const pgSess = pgSession(session);
 app.use(
   session({
-    store: new pgSession({
+    store: new pgSess({
       pool: vp_pool,
       tableName: "user_sessions",
       createTableIfMissing: true,
@@ -81,63 +69,11 @@ app.use(
 );
 
 // Public routes
-app.use("/user", usersRouter);
-app.use("/payment", paymentRouter);
-app.use("/pages", pagesRouter);
-app.use("/service", servicesRouter);
-app.use("/statistics", statisticsRouter);
-app.use("/upload", uploadRouter);
-app.use("/refill", refillRouter);
-app.use("/panel", panelsRouter);
-app.use("/support", supportRouter);
-app.use("/order", ordersRouter);
-app.use("/crud", crudRouter);
-app.use("/rates", ratesRouter);
-app.use("/", apiRouter);
-app.use("/site", siteRouter);
-app.use("/providers", providersRouter);
+app.use("/user", userRouter);
+app.use("/auth", oauthRoutes);
+app.use("/panel", panelRoutes);
 
-// ----------- Swagger Setup -------------
-
-const swaggerOptions = {
-  definition: {
-    openapi: "3.0.0",
-    info: {
-      title: "Valid Panel - Social Media Store API Documentation",
-      version: "1.0.0",
-      description:
-        "Comprehensive API documentation for the Social Media Store feature of Valid Panel, covering all user and admin endpoints related to service ordering, wallet operations, referrals, authentication, and store management.",
-      contact: {
-        name: "Valid Code",
-        url: "https://linkedin.com/in/thevalidcode",
-        email: "thevalidcode@gmail.com",
-      },
-    },
-    servers: [
-      {
-        url: "https://validpanel.com/sys/api",
-        description: "Public testing server (use this to test endpoints)",
-      },
-      {
-        url: "https://{domain}/sys/api",
-        description: "Custom panel domain (replace `{domain}` with your own)",
-        variables: {
-          domain: {
-            default: "yourdomain.com",
-            description: "Your custom panel domain (e.g. `myreseller.com`)",
-          },
-        },
-      },
-      {
-        url: "http://localhost:4001",
-        description: "Local development server",
-      },
-    ],
-  },
-  apis: [path.join(__dirname, "/routes/*.js")],
-};
-
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
+const swaggerDocument = YAML.load("./docs/swagger-bundled.yaml");
 
 // Middleware to protect swagger docs for admin only
 function isAdmin(req, res, next) {
@@ -147,7 +83,12 @@ function isAdmin(req, res, next) {
   return res.status(401).send("Unauthorized. Admin login required.");
 }
 
-app.use("/admin/docs", isAdmin, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use(
+  "/admin/docs",
+  isAdmin,
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument)
+);
 
 // ----------- Admin Login Routes -------------
 
@@ -284,4 +225,4 @@ app.post("/admin/logout", (req, res) => {
   });
 });
 
-module.exports = app;
+export default app;

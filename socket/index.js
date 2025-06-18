@@ -1,4 +1,4 @@
-const { updatePanelDoc } = require("../crud");
+import {  updatePanelDoc  } from '../crud.js';
 
 function setupSocket(io) {
   io.on("connection", (socket) => {
@@ -41,4 +41,4 @@ function setupSocket(io) {
   });
 }
 
-module.exports = { setupSocket };
+export {  setupSocket  };
