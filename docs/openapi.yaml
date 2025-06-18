@@ -16,6 +16,9 @@ servers:
   - url: https://validpanel.com:6060
     description: Public testing server (use this to test endpoints)
 
+  - url: https://auth.validpanel.com
+    description: Public server (use this for auth endpoints)
+
   - url: https://{domain}:6060
     description: Custom panel domain (replace `{domain}` with your own)
     variables:

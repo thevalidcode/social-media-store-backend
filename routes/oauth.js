@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { verifyGoogleIdToken } from "../helpers/googleverify.js";
 import { getDocs, addPanelDoc } from "../crud.js";
+import { v4 as uuidv4 } from "uuid";
 
 const router = express.Router();
 
@@ -70,7 +71,7 @@ router.get("/callback/google", async (req, res) => {
       grant_type: "authorization_code",
     });
 
-    const { id_token, access_token } = tokenRes.data;
+    const { id_token } = tokenRes.data;
 
     // Verify ID token and extract user info
     const googleUser = await verifyGoogleIdToken(id_token); // e.g., { email, name, picture }
