@@ -1,7 +1,7 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { verifyGoogleIdToken } from "../helpers/googleVerify.js";
+import { verifyGoogleIdToken } from "../helpers/googleverify.js";
 import { getDocs, addPanelDoc } from "../crud.js";
 
 const router = express.Router();
