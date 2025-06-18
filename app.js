@@ -70,7 +70,7 @@ app.use(
 
 // Public routes
 app.use("/user", userRouter);
-app.use("/auth", oauthRoutes);
+app.use("/api/auth/panel", oauthRoutes);
 app.use("/panel", panelRoutes);
 
 const swaggerDocument = YAML.load("./docs/swagger-bundled.yaml");

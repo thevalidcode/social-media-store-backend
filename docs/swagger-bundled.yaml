@@ -271,27 +271,34 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-  /auth/google:
-    post:
+  /api/auth/panel/login/google:
+    get:
       tags:
         - Auth
-      summary: Google Sign-In
-      description: Sign in or register a user using Google OAuth token.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GoogleAuthRequest'
+      summary: Redirect user to Google OAuth login
+      description: Generates and redirects to Google's OAuth login URL with the panel ID and redirect URL embedded in state.
+      parameters:
+        - in: query
+          name: redirect
+          required: true
+          schema:
+            type: string
+            format: uri
+          description: URL to redirect back to after successful login
+        - in: query
+          name: panel_id
+          required: true
+          schema:
+            type: integer
+          description: Numeric panel ID
       responses:
-        '200':
-          $ref: '#/components/responses/GoogleLoginResponse'
+        '302':
+          description: |
+            Redirects the user to the original `redirect` URL provided, with a `token` and `email` as query parameters.
+            Example: `https://your-app.com/dashboard?token=abc123&email=user@example.com`
+            The client should extract the `token` and use it in the `Authorization` header (`Bearer token`) to authenticate subsequent requests. The backend will use this to populate `req.auth`.
         '400':
           $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
 components:
   schemas:
     UserUpdateRequest:

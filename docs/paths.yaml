@@ -35,5 +35,5 @@
 /panel/current-admin:
   $ref: "./paths/panel.yaml#/panel_current_admin"
 
-/auth/google:
-  $ref: "./paths/auth.yaml#/auth_google"
+/api/auth/panel/login/google:
+  $ref: "./paths/auth.yaml#/auth_google_redirect"
