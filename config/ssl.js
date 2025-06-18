@@ -1,6 +1,6 @@
 import fs from "fs";
 import tls from "tls";
-import {  getDocs  } from '../crud.js';
+import { getDocs } from "../crud.js";
 
 const env = process.env.NODE_ENV;
 
@@ -12,7 +12,10 @@ async function loadCertificates() {
   });
 
   domains
-    .filter((domain) => domain.uid !== "localhost:5173") // remove localhost:5173 explicitly
+    .filter(
+      (domain) =>
+        domain.uid !== "localhost:5173" && domain.uid !== "localhost:3000"
+    ) // remove localhost:3000 explicitly
     .forEach((domain) => {
       sslOptions[domain.uid] = env === "production" && {
         cert: fs.readFileSync(
@@ -24,8 +27,8 @@ async function loadCertificates() {
 }
 
 async function SNICallback(domain, cb) {
-  if (domain === "localhost:5173") {
-    return cb(new Error("SSL certificate not available for localhost:5173"));
+  if (domain === "localhost:5173" || domain === "localhost:3000") {
+    return cb(new Error("SSL certificate not available for localhost"));
   }
 
   let ctx = sslOptions[domain];
@@ -53,7 +56,4 @@ async function SNICallback(domain, cb) {
 
 loadCertificates();
 
-export { 
-  sslOptions,
-  SNICallback,
- };
+export { sslOptions, SNICallback };

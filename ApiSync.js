@@ -1,12 +1,15 @@
-import { 
+import {
   getDocs,
   addPanelDoc,
   updatePanelDoc,
   addDoc,
   updateDoc,
- } from './crud.js';
-import axios from 'axios';import https from 'https';import convertCurrency from './utils/ConvertCurrency.js';import {  sendEmail  } from './utils/emails.js';
-import {  vsp_pool  } from './db.js';
+} from "./crud.js";
+import axios from "axios";
+import https from "https";
+import convertCurrency from "./utils/ConvertCurrency.js";
+import { sendEmail } from "./utils/emails.js";
+import { vsp_pool } from "./db.js";
 const rateKey = process.env.RATE_KEY;
 const agent = new https.Agent({
   keepAlive: true,
@@ -390,7 +393,7 @@ const getOrderDetailsFromMainServer = async (orderData, panel_id) => {
       }
     }
 
-    /* always update live provider info ----------------------------- */
+    /* always update live provider info */
     await updatePanelDoc(
       "orders",
       orderData.uid,
@@ -909,7 +912,7 @@ const processdrip_feedOrders = async () => {
   }
 };
 
-export { 
+export {
   sendOrderToMainServer,
   sendRefillToMainServer,
   sync_orderDetails,
@@ -921,4 +924,4 @@ export {
   updateRefillStatus,
   updateServices,
   processdrip_feedOrders,
- };
+};
