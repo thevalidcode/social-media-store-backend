@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
+    "migrate": "node models/index.js",
     "build": "swagger-cli bundle docs/openapi.yaml -o docs/swagger-bundled.yaml -t yaml"
   },
   "keywords": [],

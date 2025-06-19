@@ -60,7 +60,7 @@ CreateUserInput:
     panel_id:
       type: number
     ref:
-      type: string
+      type: number
 
 PanelId:
   type: object

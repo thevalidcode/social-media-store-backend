@@ -214,7 +214,7 @@ export const updateUser = async (req, res) => {
 
   // 1. build the whitelist
   const allowedFields = ["username", "full_name"];
-  if (role === "admin") allowedFields.push("balance"); // push without reassignment
+  if (role === "admin") allowedFields.push("balance");
 
   // 2. filter incoming data
   const safeUpdate = {};

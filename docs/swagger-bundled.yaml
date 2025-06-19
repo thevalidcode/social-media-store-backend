@@ -336,7 +336,7 @@ components:
         key:
           type: string
         role:
-          type: string
+          type: number
     UserPublic:
       type: object
       properties:

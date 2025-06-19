@@ -1,5 +1,6 @@
-import nodemailer from 'nodemailer';import {  addPanelDoc, getDocs, updatePanelDoc  } from '../crud.js';
-import {  getTemplate  } from './emailTemplates.js';
+import nodemailer from "nodemailer";
+import { addPanelDoc, getDocs, updatePanelDoc } from "../crud.js";
+import { getTemplate } from "./emailTemplates.js";
 
 const transporter = nodemailer.createTransport({
   sendmail: true,
@@ -14,8 +15,8 @@ const interpolateHtml = (html, variables) => {
 };
 
 const getEmailTemplate = async (type, data, logo_url, panel_id) => {
-  const templates = await getDocs("notifications", panel_id, {
-    find: { field: "uid", operator: "===", value: "email_templates" },
+  const template = await getDocs("email_templates", panel_id, {
+    find: { type: type },
   });
 
   const variables = {
@@ -23,15 +24,15 @@ const getEmailTemplate = async (type, data, logo_url, panel_id) => {
     ...data,
   };
 
-  if (!templates[type]) {
+  if (!template) {
     await updatePanelDoc(
-      "notifications",
       "email_templates",
-      { [type]: "" },
+      template.uid,
+      { type: type },
       panel_id
     );
   }
-  const interpolatedHtml = interpolateHtml(templates[type] || "", variables);
+  const interpolatedHtml = interpolateHtml(template.content || "", variables);
   const defaultTemplate = getTemplate(type, variables);
   const htmlTemplate = interpolatedHtml ? interpolatedHtml : defaultTemplate;
 
@@ -96,18 +97,16 @@ const sendEmail = async (
 ) => {
   try {
     if (type === "new_order" && data.price <= 0) return;
-    const adminEmails = await getDocs("notifications", panel_id, {
-      find: { field: "uid", operator: "===", value: "admin_emails" },
-    }).emails;
+    const adminEmails = await getDocs("admin_emails", panel_id);
     const general = await getDocs("general", panel_id, {
       find: { field: "uid", operator: "===", value: "site" },
     });
 
-    adminEmails.map((email) =>
-      sendEmailConfig(from, email, type, data, general.logo_url, panel_id)
+    adminEmails.map((doc) =>
+      sendEmailConfig(from, doc.email, type, data, general.logo_url, panel_id)
     );
   } catch (error) {
-    console.error({ error });
+    console.error({ error: error.messsage });
   }
 };
 
@@ -122,10 +121,10 @@ const sendUserEmail = async (
     const general = await getDocs("general", panel_id, {
       find: { field: "uid", operator: "===", value: "site" },
     });
-    sendEmailConfig(from, to, type, data, general.logo_url, panel_id);
+    await sendEmailConfig(from, to, type, data, general.logo_url, panel_id);
   } catch (error) {
-    console.error({ error });
+    console.error({ error: error.messsage });
   }
 };
 
-export {  sendEmail, sendUserEmail  };
+export { sendEmail, sendUserEmail };
