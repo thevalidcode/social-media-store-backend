@@ -32,7 +32,7 @@ if (env === "production") {
 }
 
 // Cron jobs
-startCronJobs();
+// startCronJobs();
 
 // Socket setup
 const io = new Server(mainServer, {
