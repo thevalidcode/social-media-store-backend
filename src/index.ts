@@ -3,7 +3,7 @@ import https from "https";
 import { Server } from "socket.io";
 import app from "./app";
 import { SNICallback } from "./config/ssl";
-import { startCronJobs } from "./cronJobs/index";
+// import { startCronJobs } from "./cronJobs/index";
 import { setupSocket } from "./socket/index";
 import { env } from "./config/env";
 

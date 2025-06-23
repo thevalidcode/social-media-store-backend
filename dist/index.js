@@ -8,6 +8,7 @@ const https_1 = __importDefault(require("https"));
 const socket_io_1 = require("socket.io");
 const app_1 = __importDefault(require("./app"));
 const ssl_1 = require("./config/ssl");
+// import { startCronJobs } from "./cronJobs/index";
 const index_1 = require("./socket/index");
 const env_1 = require("./config/env");
 let mainServer;
