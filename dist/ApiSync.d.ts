@@ -1,0 +1,12 @@
+declare const sendOrderToMainServer: (orderData: any, panel_id: number, serviceData: any) => Promise<boolean>;
+declare const sendRefillToMainServer: (orderId: number, panel_id: number) => Promise<boolean>;
+declare const updateRefillStatus: (refillId: string, panel_id: number) => Promise<boolean>;
+declare const updateOrderStatus: (orderId: string, panel_id: number) => Promise<void>;
+declare const sync_orders: () => Promise<void>;
+declare const updateServices: () => Promise<void>;
+declare const syncServices: () => Promise<void>;
+declare const sync_orderDetails: () => Promise<void>;
+declare function getCurrentRates(): Promise<any>;
+declare const saveRates: () => Promise<void>;
+declare const processdrip_feedOrders: () => Promise<void>;
+export { sendOrderToMainServer, sendRefillToMainServer, sync_orderDetails, syncServices, updateOrderStatus, sync_orders, saveRates, getCurrentRates, updateRefillStatus, updateServices, processdrip_feedOrders, };
