@@ -9,7 +9,7 @@ async function createCategoriesTable() {
       status TEXT NOT NULL DEFAULT 'active',
       position INTEGER NOT NULL,
       uid TEXT PRIMARY KEY,
-      panel_id INTEGER REFERENCES panels(panel_id) ON DELETE CASCADE
+      panel_id NOT NULL INTEGER REFERENCES panels(panel_id) ON DELETE CASCADE
     );
   `);
 

@@ -3,7 +3,7 @@ import { pool } from "../config/db";
 async function createUserTable() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
-      id INTEGER,
+      id INTEGER NOT NULL,
       ref_code INTEGER UNIQUE GENERATED ALWAYS AS IDENTITY,
       uid TEXT PRIMARY KEY,
       email TEXT NOT NULL,
@@ -29,7 +29,7 @@ async function createUserTable() {
   const existingCols = res.rows.map((row) => row.column_name);
 
   const expected: Record<string, string> = {
-    id: `ALTER TABLE users ADD COLUMN id INTEGER`,
+    id: `ALTER TABLE users ADD COLUMN id INTEGER NOT NULL`,
     ref_code: `ALTER TABLE users ADD COLUMN ref_code INTEGER UNIQUE GENERATED ALWAYS AS IDENTITY`,
     uid: `ALTER TABLE users ADD COLUMN uid TEXT PRIMARY KEY`,
     email: `ALTER TABLE users ADD COLUMN email TEXT NOT NULL`,

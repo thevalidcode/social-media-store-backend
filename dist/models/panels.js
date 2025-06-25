@@ -8,7 +8,7 @@ async function createPanelsTable() {
       uid TEXT UNIQUE NOT NULL,
       ssl BOOLEAN NOT NULL DEFAULT false,
       plan TEXT NOT NULL DEFAULT 'starter',
-      timestamp TIMESTAMP DEFAULT NOW()
+      timestamp TIMESTAMP NOT NULL DEFAULT NOW()
     );
   `);
     const res = await db_1.pool.query(`
@@ -21,7 +21,7 @@ async function createPanelsTable() {
         uid: `ALTER TABLE panels ADD COLUMN uid TEXT UNIQUE NOT NULL`,
         ssl: `ALTER TABLE panels ADD COLUMN ssl BOOLEAN NOT NULL DEFAULT false`,
         plan: `ALTER TABLE panels ADD COLUMN plan TEXT NOT NULL DEFAULT 'starter'`,
-        timestamp: `ALTER TABLE panels ADD COLUMN timestamp TIMESTAMP DEFAULT NOW()`,
+        timestamp: `ALTER TABLE panels ADD COLUMN timestamp TIMESTAMP NOT NULL DEFAULT NOW()`,
     };
     for (const [col, sql] of Object.entries(expected)) {
         if (!existingCols.includes(col)) {

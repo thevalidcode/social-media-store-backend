@@ -8,8 +8,8 @@ const https_1 = __importDefault(require("https"));
 const socket_io_1 = require("socket.io");
 const app_1 = __importDefault(require("./app"));
 const ssl_1 = require("./config/ssl");
-// import { startCronJobs } from "./cronJobs/index";
-const index_1 = require("./socket/index");
+const index_1 = require("./cronJobs/index");
+const index_2 = require("./socket/index");
 const env_1 = require("./config/env");
 let mainServer;
 if (env_1.env.NODE_ENV === "production") {
@@ -32,11 +32,11 @@ else {
     });
 }
 // Optional: Enable cron jobs
-// startCronJobs();
+(0, index_1.startCronJobs)();
 const io = new socket_io_1.Server(mainServer, {
     cors: {
         origin: "*",
     },
     pingTimeout: 5000,
 });
-(0, index_1.setupSocket)(io);
+(0, index_2.setupSocket)(io);

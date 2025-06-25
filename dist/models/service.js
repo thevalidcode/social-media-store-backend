@@ -4,7 +4,7 @@ const db_1 = require("../config/db");
 async function createServiceTable() {
     await db_1.pool.query(`
     CREATE TABLE IF NOT EXISTS services (
-      id INTEGER,
+      id INTEGER NOT NULL,
       uid TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       description TEXT,
@@ -37,7 +37,7 @@ async function createServiceTable() {
   `);
     const existingCols = res.rows.map((row) => row.column_name);
     const expected = {
-        id: `ALTER TABLE services ADD COLUMN id INTEGER`,
+        id: `ALTER TABLE services ADD COLUMN id INTEGER NOT NULL`,
         uid: `ALTER TABLE services ADD COLUMN uid TEXT PRIMARY KEY`,
         name: `ALTER TABLE services ADD COLUMN name TEXT NOT NULL`,
         description: `ALTER TABLE services ADD COLUMN description TEXT`,

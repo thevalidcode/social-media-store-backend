@@ -35,7 +35,8 @@ User:
 
 UserPublic:
   type: object
-  additionalProperties: true
+  additionalProperties:
+   type: string | number
   properties:
     id:
       type: string

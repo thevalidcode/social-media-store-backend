@@ -10,7 +10,6 @@
 // import convertCurrency from "./utils/ConvertCurrency";
 // import { sendEmail } from "./utils/emails";
 // import { pool } from "./config/db";
-// const rateKey = process.env.RATE_KEY;
 // const agent = new https.Agent({
 //   keepAlive: true,
 //   rejectUnauthorized: false,
@@ -725,44 +724,6 @@
 //     }
 //   } catch (error) {
 //     console.error("Error syncing order details", error);
-//   }
-// };
-
-// async function getCurrentRates() {
-//   try {
-//     const response = await axios.get(
-//       `http://apilayer.net/api/live?access_key=${rateKey}`
-//     );
-//     let data = response.data;
-//     data.timestamp = new Date();
-
-//     const quotes = {};
-//     for (const [currencyCode, rate] of Object.entries(data.quotes)) {
-//       const formattedCurrencyCode = currencyCode.substring(3);
-//       quotes[formattedCurrencyCode] = rate;
-//     }
-//     quotes["USD"] = 1;
-//     data.quotes = quotes;
-
-//     return data;
-//   } catch (error) {
-//     return null;
-//   }
-// }
-
-// const saveRates = async () => {
-//   const rates = await getCurrentRates();
-//   if (rates) {
-//     try {
-//       const existingRates = await getDocs("currencies");
-//       if (existingRates.length !== 0) {
-//         await updateDoc("currencies", "latest", rates);
-//       } else {
-//         await addDoc("currencies", { uid: "latest", ...rates });
-//       }
-//     } catch (error) {
-//       console.error("Error saving exchange rates to JSON database:", error);
-//     }
 //   }
 // };
 
