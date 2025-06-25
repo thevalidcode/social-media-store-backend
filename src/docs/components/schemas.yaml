@@ -1,0 +1,185 @@
+UserUpdateRequest:
+  type: object
+  required:
+    - uid
+  properties:
+    uid:
+      type: string
+      example: "abc123"
+    username:
+      type: string
+      example: "validuser"
+    full_name:
+      type: string
+      example: "Valid Name"
+    balance:
+      type: number
+      example: 100.50
+User:
+  type: object
+  properties:
+    id:
+      type: string
+    email:
+      type: string
+    username:
+      type: string
+    password:
+      type: string
+    status:
+      type: string
+    key:
+      type: string
+    role:
+      type: string
+
+UserPublic:
+  type: object
+  additionalProperties: true
+  properties:
+    id:
+      type: string
+    email:
+      type: string
+    username:
+      type: string
+
+AuthenticateUser:
+  type: object
+  required:
+    - email
+    - password
+    - panel_id
+  properties:
+    panel_id:
+      type: number
+    email:
+      type: string
+    password:
+      type: string
+
+CreateUserInput:
+  type: object
+  required:
+    - email
+    - username
+    - password
+    - panel_id
+  properties:
+    email:
+      type: string
+    username:
+      type: string
+    password:
+      type: string
+    panel_id:
+      type: number
+    ref:
+      type: number
+
+PanelData:
+  type: object
+  properties:
+    panel_id:
+      type: number
+      description: Unique identifier for the panel
+    plan:
+      type: string
+      description: The plan associated with the panel
+      example: "starter"
+    timestamp:
+      type: string
+      format: date-time
+      description: Timestamp when the panel was created
+      example: "2023-10-01T12:00:00Z"
+
+DesignStyles:
+  type: object
+  description: Theme design style with customizable color schema
+  properties:
+    id:
+      type: integer
+      example: 1
+    title:
+      type: string
+      example: Aesthetic
+    hex:
+      type: string
+      format: color
+      example: "#B4AEE8"
+    schema:
+      type: object
+      description: Light and dark theme variables
+      properties:
+        ":root":
+          type: object
+          additionalProperties:
+            type: string
+          description: CSS variables for light mode
+        ".dark":
+          type: object
+          additionalProperties:
+            type: string
+          description: CSS variables for dark mode
+  required:
+    - title
+    - hex
+    - schema
+
+SiteData:
+  type: object
+  description: Flexible object holding site‑wide configuration
+  additionalProperties: true
+  properties:
+    logo_url:
+      type: string
+      format: uri
+      example: "https://example.com/logo.png"
+    title:
+      type: string
+      example: "Example Site"
+    description:
+      type: string
+      example: "This is an example site description."
+
+ExchangeRates:
+  type: object
+  description: Key‑value map of currency codes to their exchange rates, the base currency is USD
+  additionalProperties:
+    type: number
+  example:
+    NGN: 1000
+    AFN: 1000
+    EUR: 1000
+    USD: 1
+    KES: 150
+
+AdminPublic:
+  type: object
+  properties:
+    id:
+      type: string
+    email:
+      type: string
+    username:
+      type: string
+    role:
+      type: string
+  required:
+    - id
+    - email
+    - username
+    - role
+
+GoogleAuthRequest:
+  type: object
+  required:
+    - id_token
+    - panel_id
+  properties:
+    id_token:
+      type: string
+      description: Google OAuth ID token
+    panel_id:
+      type: number
+      description: The panel identifier to fetch/store user

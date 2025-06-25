@@ -1,0 +1,13 @@
+import express from "express";
+const router = express.Router();
+import * as panels from "../controllers/panel";
+import { authenticate } from "../middleware/authenticate";
+
+router.get("/data", panels.getPanelData);
+router.get("/styles", panels.getStyles);
+router.get("/site-data", panels.getSiteData);
+router.get("/rates", panels.getRates);
+router.get("/current-user", authenticate, panels.getCurrentUser);
+router.get("/current-admin", authenticate, panels.getCurrentAdmin);
+
+export default router;
