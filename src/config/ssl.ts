@@ -15,7 +15,7 @@ type SSLOptions = {
 const sslOptions: SSLOptions = {};
 
 async function loadCertificates(): Promise<void> {
-  const domains = await getDocs("registered_panels", null, {
+  const domains = await getDocs("panels", null, {
     filter: { field: "ssl", operator: "===", value: true },
   });
 
@@ -49,7 +49,7 @@ async function SNICallback(
   let ctx = sslOptions[domain];
 
   if (!ctx) {
-    const result = await getDocs("registered_panels", null, {
+    const result = await getDocs("panels", null, {
       find: { field: "uid", operator: "===", value: domain },
     });
 

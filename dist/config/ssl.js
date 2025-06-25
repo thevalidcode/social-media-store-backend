@@ -13,7 +13,7 @@ const env = env_1.env.NODE_ENV;
 const sslOptions = {};
 exports.sslOptions = sslOptions;
 async function loadCertificates() {
-    const domains = await (0, crud_1.getDocs)("registered_panels", null, {
+    const domains = await (0, crud_1.getDocs)("panels", null, {
         filter: { field: "ssl", operator: "===", value: true },
     });
     domains
@@ -33,7 +33,7 @@ async function SNICallback(domain, cb) {
     }
     let ctx = sslOptions[domain];
     if (!ctx) {
-        const result = await (0, crud_1.getDocs)("registered_panels", null, {
+        const result = await (0, crud_1.getDocs)("panels", null, {
             find: { field: "uid", operator: "===", value: domain },
         });
         const newDomain = Array.isArray(result) ? result[0] : result;

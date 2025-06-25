@@ -14,7 +14,7 @@ const getPanelData = async (req, res) => {
     }
     const { domain } = parsed.data;
     try {
-        const panels = await (0, crud_1.getDocs)("registered_panels");
+        const panels = await (0, crud_1.getDocs)("panels");
         const panel = panels.find((p) => p.uid === domain);
         if (!panel) {
             res.status(404).json({ error: "Panel not found for the given domain" });
@@ -23,7 +23,7 @@ const getPanelData = async (req, res) => {
         res.json({
             panel_id: panel.panel_id,
             plan: panel.plan,
-            created_at: panel.created_at,
+            timestamp: panel.timestamp,
         });
     }
     catch (err) {
@@ -67,7 +67,7 @@ const getSiteData = async (req, res) => {
 exports.getSiteData = getSiteData;
 const getRates = async (_req, res) => {
     try {
-        const result = await (0, crud_1.getDocs)("exchange_rates", null, {
+        const result = await (0, crud_1.getDocs)("currencies", null, {
             find: { field: "uid", operator: "==", value: "latest" },
         });
         res.json(result.quotes);

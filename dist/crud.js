@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ensureColumnsExist = exports.createTableIfNotExists = exports.updatePanelDoc = exports.updateDoc = exports.deletePanelDocs = exports.deleteDocs = exports.deletePanelDoc = exports.deleteDoc = exports.addPanelDocs = exports.addDocs = exports.addPanelDoc = exports.addDoc = exports.getDocs = void 0;
+exports.ensureColumnsExist = exports.createTableIfNotExists = exports.updatePanelDoc = exports.deletePanelDocs = exports.deletePanelDoc = exports.addPanelDocs = exports.addPanelDoc = exports.getDocs = void 0;
 const uuid_1 = require("uuid");
 const db_1 = require("./config/db");
 const buildWhereClause = (queryObj = {}, offset = 1) => {
@@ -71,8 +71,7 @@ const getDocs = async (col, panel_id = null, query = {}) => {
             where = where ? `${where} AND ${cond.clause}` : `WHERE ${cond.clause}`;
             values = [...values, ...cond.values];
         }
-        const pool = panel_id ? db_1.vsp_pool : db_1.vp_pool;
-        const res = await pool.query(`SELECT * FROM ${col} ${where}`, values);
+        const res = await db_1.pool.query(`SELECT * FROM ${col} ${where}`, values);
         let docs = res.rows;
         if (query.find) {
             if (docs.length === 1)
@@ -175,46 +174,23 @@ const ensureColumnsExist = async (pool, table, records) => {
     }
 };
 exports.ensureColumnsExist = ensureColumnsExist;
-const addDoc = async (col, data) => {
-    try {
-        if (!data.uid)
-            data.uid = (0, uuid_1.v4)();
-        if (data.id === undefined || data.id === null) {
-            const { rows } = await db_1.vp_pool.query(`SELECT MAX(id) AS max_id FROM ${col} WHERE id IS NOT NULL`);
-            data.id = rows[0].max_id !== null ? Number(rows[0].max_id) + 1 : 1;
-        }
-        await createTableIfNotExists(db_1.vp_pool, col, data);
-        await ensureColumnsExist(db_1.vp_pool, col, [data]);
-        const keys = Object.keys(data);
-        const values = Object.values(data).map((v) => typeof v === "object" && v !== null && !(v instanceof Date)
-            ? JSON.stringify(v)
-            : v);
-        const params = keys.map((_, i) => `$${i + 1}`).join(", ");
-        const result = await db_1.vp_pool.query(`INSERT INTO ${col} (${keys.join(", ")}) VALUES (${params}) RETURNING *`, values);
-        return { ...result.rows[0], uid: data.uid };
-    }
-    catch (err) {
-        return { error: err.message };
-    }
-};
-exports.addDoc = addDoc;
 const addPanelDoc = async (col, data, panel_id) => {
     data.panel_id = panel_id;
     if (!data.uid)
         data.uid = (0, uuid_1.v4)();
     try {
         if (data.id === undefined || data.id === null) {
-            const { rows } = await db_1.vsp_pool.query(`SELECT MAX(id) AS max_id FROM ${col} WHERE panel_id = $1 AND id IS NOT NULL`, [panel_id]);
+            const { rows } = await db_1.pool.query(`SELECT MAX(id) AS max_id FROM ${col} WHERE panel_id = $1 AND id IS NOT NULL`, [panel_id]);
             data.id = rows[0].max_id !== null ? Number(rows[0].max_id) + 1 : 1;
         }
-        await createTableIfNotExists(db_1.vsp_pool, col, data);
-        await ensureColumnsExist(db_1.vsp_pool, col, [data]);
+        await createTableIfNotExists(db_1.pool, col, data);
+        await ensureColumnsExist(db_1.pool, col, [data]);
         const keys = Object.keys(data);
         const values = Object.values(data).map((v) => typeof v === "object" && v !== null && !(v instanceof Date)
             ? JSON.stringify(v)
             : v);
         const params = keys.map((_, i) => `$${i + 1}`).join(", ");
-        const result = await db_1.vsp_pool.query(`INSERT INTO ${col} (${keys.join(", ")}) VALUES (${params}) RETURNING *`, values);
+        const result = await db_1.pool.query(`INSERT INTO ${col} (${keys.join(", ")}) VALUES (${params}) RETURNING *`, values);
         return { ...result.rows[0], uid: data.uid };
     }
     catch (err) {
@@ -222,14 +198,6 @@ const addPanelDoc = async (col, data, panel_id) => {
     }
 };
 exports.addPanelDoc = addPanelDoc;
-const addDocs = async (col, docs) => {
-    for (const doc of docs) {
-        const result = await addDoc(col, doc);
-        if (result.error)
-            return result;
-    }
-};
-exports.addDocs = addDocs;
 const addPanelDocs = async (col, docs, panel_id) => {
     for (const doc of docs) {
         const result = await addPanelDoc(col, doc, panel_id);
@@ -238,36 +206,24 @@ const addPanelDocs = async (col, docs, panel_id) => {
     }
 };
 exports.addPanelDocs = addPanelDocs;
-const deleteDoc = async (col, uid) => {
-    await db_1.vsp_pool.query(`DELETE FROM ${col} WHERE uid = $1`, [uid]);
-};
-exports.deleteDoc = deleteDoc;
 const deletePanelDoc = async (col, uid, panel_id) => {
-    await db_1.vsp_pool.query(`DELETE FROM ${col} WHERE uid = $1 AND panel_id = $2`, [
+    await db_1.pool.query(`DELETE FROM ${col} WHERE uid = $1 AND panel_id = $2`, [
         uid,
         panel_id,
     ]);
 };
 exports.deletePanelDoc = deletePanelDoc;
-const deleteDocs = async (col, uids) => {
-    await db_1.vp_pool.query(`DELETE FROM ${col} WHERE uid = ANY($1)`, [uids]);
-};
-exports.deleteDocs = deleteDocs;
 const deletePanelDocs = async (col, uids, panel_id) => {
-    await db_1.vsp_pool.query(`DELETE FROM ${col} WHERE uid = ANY($1) AND panel_id = $2`, [uids, panel_id]);
+    await db_1.pool.query(`DELETE FROM ${col} WHERE uid = ANY($1) AND panel_id = $2`, [
+        uids,
+        panel_id,
+    ]);
 };
 exports.deletePanelDocs = deletePanelDocs;
-const updateDoc = async (col, uid, newData) => {
-    const keys = Object.keys(newData);
-    const values = Object.values(newData);
-    const sets = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
-    await db_1.vp_pool.query(`UPDATE ${col} SET ${sets} WHERE uid = $${keys.length + 1}`, [...values, uid]);
-};
-exports.updateDoc = updateDoc;
 const updatePanelDoc = async (col, uid, newData, panel_id) => {
     const keys = Object.keys(newData);
     const values = Object.values(newData);
     const sets = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
-    await db_1.vsp_pool.query(`UPDATE ${col} SET ${sets} WHERE uid = $${keys.length + 1} AND panel_id = $${keys.length + 2}`, [...values, uid, panel_id]);
+    await db_1.pool.query(`UPDATE ${col} SET ${sets} WHERE uid = $${keys.length + 1} AND panel_id = $${keys.length + 2}`, [...values, uid, panel_id]);
 };
 exports.updatePanelDoc = updatePanelDoc;

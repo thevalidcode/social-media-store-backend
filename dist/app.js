@@ -21,10 +21,10 @@ const app = (0, express_1.default)();
 // --- Dynamic CORS ---
 let allowedOrigins = [];
 async function updateAllowedOrigins() {
-    const registered_panels = await (0, crud_1.getDocs)("registered_panels", null, {
+    const panels = await (0, crud_1.getDocs)("panels", null, {
         filter: { field: "ssl", operator: "===", value: true },
     });
-    const domains = registered_panels.map((panel) => panel.uid);
+    const domains = panels.map((panel) => panel.uid);
     allowedOrigins = [
         "http://localhost:3000",
         "http://localhost:6060",
@@ -53,7 +53,7 @@ app.use(express_1.default.urlencoded({ extended: true }));
 const pgSess = (0, connect_pg_simple_1.default)(express_session_1.default);
 app.use((0, express_session_1.default)({
     store: new pgSess({
-        pool: db_1.vp_pool,
+        pool: db_1.pool,
         tableName: "user_sessions",
         createTableIfMissing: true,
     }),

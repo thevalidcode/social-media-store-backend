@@ -12,7 +12,7 @@ const db_1 = require("../config/db");
 const checkApiKey = async (api_key) => {
     try {
         const query = `SELECT * FROM users WHERE api_key = $1 LIMIT 1`;
-        const result = await db_1.vsp_pool.query(query, [api_key]);
+        const result = await db_1.pool.query(query, [api_key]);
         if (result.rowCount === 1) {
             return { message: "API key is valid.", userData: result.rows[0] };
         }

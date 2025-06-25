@@ -3,7 +3,7 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import session from "express-session";
 import pgSession from "connect-pg-simple";
-import { vp_pool } from "./config/db";
+import { pool } from "./config/db";
 import { env } from "./config/env";
 
 // Routes
@@ -20,11 +20,11 @@ const app = express();
 let allowedOrigins: string[] = [];
 
 async function updateAllowedOrigins(): Promise<void> {
-  const registered_panels = await getDocs("registered_panels", null, {
+  const panels = await getDocs("panels", null, {
     filter: { field: "ssl", operator: "===", value: true },
   });
 
-  const domains = registered_panels.map((panel: any) => panel.uid);
+  const domains = panels.map((panel: any) => panel.uid);
   allowedOrigins = [
     "http://localhost:3000",
     "http://localhost:6060",
@@ -59,7 +59,7 @@ const pgSess = pgSession(session);
 app.use(
   session({
     store: new pgSess({
-      pool: vp_pool,
+      pool: pool,
       tableName: "user_sessions",
       createTableIfMissing: true,
     }),

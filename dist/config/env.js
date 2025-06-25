@@ -20,8 +20,6 @@ exports.env = {
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || "",
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || "",
     ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || "",
-    VSP_DB_NAME: process.env.VSP_DB_NAME || "",
-    VSP_DB_USER: process.env.VSP_DB_USER || "",
-    VP_DB_NAME: process.env.VP_DB_NAME || "",
-    VP_DB_USER: process.env.VP_DB_USER || "",
+    DB_NAME: process.env.DB_NAME || "",
+    DB_USER: process.env.DB_USER || "",
 };

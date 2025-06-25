@@ -17,7 +17,7 @@ const isValidStoreDomain = async (url) => {
     if (!match)
         return false;
     const domain = match[1];
-    const panel = await (0, crud_1.getDocs)("registered_panels", null, {
+    const panel = await (0, crud_1.getDocs)("panels", null, {
         find: { field: "uid", operator: "==", value: domain },
     });
     return !!panel;

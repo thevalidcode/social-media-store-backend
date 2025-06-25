@@ -1,24 +1,23 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const db_1 = require("../config/db");
-async function createStylesTable() {
+async function createCurrenciesTable() {
     await db_1.pool.query(`
-    CREATE TABLE IF NOT EXISTS styles (
+    CREATE TABLE IF NOT EXISTS currencies (
       id SERIAL PRIMARY KEY,
-      title TEXT NOT NULL,
-      hex TEXT NOT NULL,
-      schema JSONB NOT NULL
+      timestamp TIMESTAMP DEFAULT NOW(),
+      quotes JSONB NOT NULL
     );
   `);
     const res = await db_1.pool.query(`
     SELECT column_name FROM information_schema.columns 
-    WHERE table_name = 'styles';
+    WHERE table_name = 'currencies';
   `);
     const existingCols = res.rows.map((row) => row.column_name);
     const expected = {
-        title: "ALTER TABLE styles ADD COLUMN title TEXT NOT NULL",
-        hex: "ALTER TABLE styles ADD COLUMN hex TEXT NOT NULL",
-        schema: "ALTER TABLE styles ADD COLUMN schema JSONB NOT NULL",
+        id: "ALTER TABLE currencies ADD COLUMN id SERIAL PRIMARY KEY",
+        timestamp: "ALTER TABLE currencies ADD COLUMN timestamp TIMESTAMP DEFAULT NOW()",
+        quotes: "ALTER TABLE currencies ADD COLUMN quotes JSONB NOT NULL",
     };
     for (const [col, sql] of Object.entries(expected)) {
         if (!existingCols.includes(col)) {
@@ -26,4 +25,4 @@ async function createStylesTable() {
         }
     }
 }
-exports.default = createStylesTable;
+exports.default = createCurrenciesTable;

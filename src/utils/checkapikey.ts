@@ -1,5 +1,5 @@
 import { getDocs } from "../crud";
-import { vsp_pool } from "../config/db";
+import { pool } from "../config/db";
 
 /**
  * Response format for API key checks.
@@ -20,7 +20,7 @@ interface ApiKeyCheckResponse {
 const checkApiKey = async (api_key: string): Promise<ApiKeyCheckResponse> => {
   try {
     const query = `SELECT * FROM users WHERE api_key = $1 LIMIT 1`;
-    const result = await vsp_pool.query(query, [api_key]);
+    const result = await pool.query(query, [api_key]);
 
     if (result.rowCount === 1) {
       return { message: "API key is valid.", userData: result.rows[0] };

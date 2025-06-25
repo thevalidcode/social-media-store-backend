@@ -26,20 +26,14 @@ paths:
     post:
       tags:
         - Users
-      summary: Authenticate and log in a user
-      parameters:
-        - in: body
-          name: email
-          schema:
-            type: string
-        - in: query
-          name: password
-          schema:
-            type: string
-        - in: query
-          name: panel_id
-          schema:
-            type: number
+      summary: Authenticate and log in a user or admin
+      description: 'This endpoint allows a user or admin to log in by providing their email, password and panel ID.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticateUser'
       responses:
         '200':
           $ref: '#/components/responses/LoginResponse'
@@ -171,11 +165,11 @@ paths:
           $ref: '#/components/responses/AccessDenied'
         '500':
           $ref: '#/components/responses/ServerError'
-  /panel/panel_id:
+  /panel/data:
     get:
       tags:
         - Panel
-      summary: Get the internal panel ID for a custom domain
+      summary: Get the panel data for a custom domain
       parameters:
         - in: query
           name: domain
@@ -184,7 +178,7 @@ paths:
             type: string
       responses:
         '200':
-          $ref: '#/components/responses/PanelIdResponse'
+          $ref: '#/components/responses/PanelDataResponse'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -339,12 +333,26 @@ components:
           type: string
     UserPublic:
       type: object
+      additionalProperties: true
       properties:
         id:
           type: string
         email:
           type: string
         username:
+          type: string
+    AuthenticateUser:
+      type: object
+      required:
+        - email
+        - password
+        - panel_id
+      properties:
+        panel_id:
+          type: number
+        email:
+          type: string
+        password:
           type: string
     CreateUserInput:
       type: object
@@ -364,13 +372,21 @@ components:
           type: number
         ref:
           type: number
-    PanelId:
+    PanelData:
       type: object
       properties:
         panel_id:
           type: number
-      required:
-        - panel_id
+          description: Unique identifier for the panel
+        plan:
+          type: string
+          description: The plan associated with the panel
+          example: starter
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the panel was created
+          example: '2023-10-01T12:00:00Z'
     DesignStyles:
       type: object
       description: Theme design style with customizable color schema
@@ -407,11 +423,28 @@ components:
       type: object
       description: Flexible object holding site‑wide configuration
       additionalProperties: true
+      properties:
+        logo_url:
+          type: string
+          format: uri
+          example: 'https://example.com/logo.png'
+        title:
+          type: string
+          example: Example Site
+        description:
+          type: string
+          example: This is an example site description.
     ExchangeRates:
       type: object
-      description: Key‑value map of currency pairs to numeric rates
+      description: 'Key‑value map of currency codes to their exchange rates, the base currency is USD'
       additionalProperties:
         type: number
+      example:
+        NGN: 1000
+        AFN: 1000
+        EUR: 1000
+        USD: 1
+        KES: 150
     AdminPublic:
       type: object
       properties:
@@ -538,12 +571,12 @@ components:
               error:
                 type: string
                 example: Error performing request.
-    PanelIdResponse:
-      description: Panel ID lookup result
+    PanelDataResponse:
+      description: Panel Data lookup result
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/PanelId'
+            $ref: '#/components/schemas/PanelData'
     DesignStylesResponse:
       description: Design styles configuration
       content:

@@ -12,8 +12,6 @@ export declare const env: {
     GOOGLE_CLIENT_SECRET: string;
     GOOGLE_CLIENT_ID: string;
     ADMIN_PASSWORD: string;
-    VSP_DB_NAME: string;
-    VSP_DB_USER: string;
-    VP_DB_NAME: string;
-    VP_DB_USER: string;
+    DB_NAME: string;
+    DB_USER: string;
 };

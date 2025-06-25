@@ -1,12 +1,20 @@
+import createPanelsTable from "./panels";
+import createProvidersTable from "./providers";
+import createCategoriesTable from "./categories";
 import createUserTable from "./user";
 import createServiceTable from "./service";
-import createStylesTable from "./styles";
+import createDesignStylesTable from "./design_styles";
+import createCurrenciesTable from "./currencies";
 
 (async (): Promise<void> => {
   try {
+    await createPanelsTable();
+    await createProvidersTable();
+    await createCategoriesTable();
     await createUserTable();
     await createServiceTable();
-    await createStylesTable();
+    await createDesignStylesTable();
+    await createCurrenciesTable();
 
     console.log("Tables created successfully.");
     process.exit(0);

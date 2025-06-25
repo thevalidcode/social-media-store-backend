@@ -9,15 +9,15 @@
 // import https from "https";
 // import convertCurrency from "./utils/ConvertCurrency";
 // import { sendEmail } from "./utils/emails";
-// import { vsp_pool } from "./config/db";
+// import { pool } from "./config/db";
 // const rateKey = process.env.RATE_KEY;
 // const agent = new https.Agent({
 //   keepAlive: true,
 //   rejectUnauthorized: false,
 // });
 
-// const exchange_rates = async (): Promise<Record<string, number>> => {
-//   const data = await getDocs("exchange_rates", null, {
+// const currencies = async (): Promise<Record<string, number>> => {
+//   const data = await getDocs("currencies", null, {
 //     find: { field: "uid", operator: "===", value: "latest" },
 //   });
 //   return data?.quotes || { USD: 1 };
@@ -260,7 +260,7 @@
 //       return services.find((svc) => svc.id === orderData.service_id);
 //     };
 
-//     const rates = await exchange_rates();
+//     const rates = await currencies();
 
 //     if (resp.status === "Canceled" && orderData.status !== "Canceled") {
 //       const newBalance = safeFloat(user.balance) + safeFloat(orderData.price);
@@ -425,7 +425,7 @@
 //       order: order.provider_order_id,
 //     };
 //     const { data: resp } = await axios.post(url, data, { httpsAgent: agent });
-//     const rates = await exchange_rates();
+//     const rates = await currencies();
 
 //     await updatePanelDoc(
 //       "orders",
@@ -448,7 +448,7 @@
 //   table: string,
 //   column: string
 // ): Promise<boolean> => {
-//   const res = await vsp_pool.query(
+//   const res = await pool.query(
 //     `SELECT column_name FROM information_schema.columns WHERE table_name = $1 AND column_name = $2`,
 //     [table, column]
 //   );
@@ -458,7 +458,7 @@
 // const sync_orders = async (): Promise<void> => {
 //   try {
 //     const panelIds = (
-//       await vsp_pool.query(`SELECT DISTINCT panel_id FROM orders`)
+//       await pool.query(`SELECT DISTINCT panel_id FROM orders`)
 //     ).rows.map((r: any) => r.panel_id);
 
 //     for (const panel_id of panelIds) {
@@ -488,7 +488,7 @@
 // const updateServices = async (): Promise<void> => {
 //   try {
 //     const panelIds = (
-//       await vsp_pool.query(`SELECT DISTINCT panel_id FROM services`)
+//       await pool.query(`SELECT DISTINCT panel_id FROM services`)
 //     ).rows.map((r: any) => r.panel_id);
 
 //     for (const panel_id of panelIds) {
@@ -600,7 +600,7 @@
 //  * ------------------------------------------------------------------ */
 // const syncServices = async () => {
 //   try {
-//     const panels = await getDocs("registered_panels");
+//     const panels = await getDocs("panels");
 
 //     for (const p of panels) {
 //       const panel_id = p.panel_id;
@@ -709,7 +709,7 @@
 
 // const sync_orderDetails = async () => {
 //   try {
-//     const panelIdsResult = await vsp_pool.query(
+//     const panelIdsResult = await pool.query(
 //       `SELECT DISTINCT panel_id FROM orders`
 //     );
 //     const panelIds = panelIdsResult.rows.map((row) => row.panel_id);
@@ -754,11 +754,11 @@
 //   const rates = await getCurrentRates();
 //   if (rates) {
 //     try {
-//       const existingRates = await getDocs("exchange_rates");
+//       const existingRates = await getDocs("currencies");
 //       if (existingRates.length !== 0) {
-//         await updateDoc("exchange_rates", "latest", rates);
+//         await updateDoc("currencies", "latest", rates);
 //       } else {
-//         await addDoc("exchange_rates", { uid: "latest", ...rates });
+//         await addDoc("currencies", { uid: "latest", ...rates });
 //       }
 //     } catch (error) {
 //       console.error("Error saving exchange rates to JSON database:", error);
@@ -768,7 +768,7 @@
 
 // const processdrip_feedOrders = async () => {
 //   try {
-//     const panelIdsResult = await vsp_pool.query(
+//     const panelIdsResult = await pool.query(
 //       `SELECT DISTINCT panel_id FROM orders`
 //     );
 //     const panelIds = panelIdsResult.rows.map((row) => row.panel_id);

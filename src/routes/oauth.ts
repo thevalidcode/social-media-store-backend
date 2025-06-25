@@ -14,7 +14,7 @@ const isValidStoreDomain = async (url: string): Promise<boolean> => {
   const match = url.match(/^https?:\/\/([^/]+)/i);
   if (!match) return false;
   const domain = match[1];
-  const panel = await getDocs("registered_panels", null, {
+  const panel = await getDocs("panels", null, {
     find: { field: "uid", operator: "==", value: domain },
   });
   return !!panel;
