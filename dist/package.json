@@ -10,7 +10,7 @@
     "swagger": "npx swagger-cli bundle src/docs/openapi.yaml -o src/docs/swagger-bundled.yaml -t yaml",
     "copy:extras": "xcopy package.json dist\\ /Y && xcopy src\\docs dist\\docs\\ /E /I /Y",
     "dev:migrate": "ts-node src/models/index.ts",
-    "migrate": "node src/models/index.js"
+    "migrate": "node models/index.js"
   },
   "keywords": [],
   "author": "",
