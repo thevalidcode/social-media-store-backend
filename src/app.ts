@@ -2,8 +2,6 @@ import express, { Request, Response, NextFunction } from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import session from "express-session";
-import swaggerUi from "swagger-ui-express";
-import YAML from "yamljs";
 import pgSession from "connect-pg-simple";
 import { vp_pool } from "./config/db";
 import { env } from "./config/env";

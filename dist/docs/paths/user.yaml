@@ -70,19 +70,16 @@ user_delete:
       $ref: "../components/responses.yaml#/ServerError"
 
 user_me:
-  get:
+  post:
     tags: [Users]
-    summary: Authenticate and log in a user
-    parameters:
-      - in: query
-        name: email
-        schema: { type: string }
-      - in: query
-        name: password
-        schema: { type: string }
-      - in: query
-        name: panel_id
-        schema: { type: number }
+    summary: Authenticate and log in a user or admin
+    description: This endpoint allows a user or admin to log in by providing their email, password and panel ID.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas.yaml#/AuthenticateUser"
     responses:
       "200":
         $ref: "../components/responses.yaml#/LoginResponse"

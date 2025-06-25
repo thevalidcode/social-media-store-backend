@@ -104,12 +104,12 @@ ServerError:
             type: string
             example: Error performing request.
 
-PanelIdResponse:
-  description: Panel ID lookup result
+PanelDataResponse:
+  description: Panel Data lookup result
   content:
     application/json:
       schema:
-        $ref: "./schemas.yaml#/PanelId"
+        $ref: "./schemas.yaml#/PanelData"
 
 DesignStylesResponse:
   description: Design styles configuration

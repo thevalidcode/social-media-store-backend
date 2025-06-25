@@ -17,8 +17,8 @@
   delete:
     $ref: "./paths/user.yaml#/user_delete"
 
-/panel/panel_id:
-  $ref: "./paths/panel.yaml#/panel_panel_id"
+/panel/data:
+  $ref: "./paths/panel.yaml#/panel_data"
 
 /panel/styles:
   $ref: "./paths/panel.yaml#/panel_styles"

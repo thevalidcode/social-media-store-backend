@@ -23,12 +23,12 @@ servers:
     description: Local development server
 paths:
   /user/me:
-    get:
+    post:
       tags:
         - Users
       summary: Authenticate and log in a user
       parameters:
-        - in: query
+        - in: body
           name: email
           schema:
             type: string
@@ -373,8 +373,36 @@ components:
         - panel_id
     DesignStyles:
       type: object
-      description: Flexible object holding style and theme settings
-      additionalProperties: true
+      description: Theme design style with customizable color schema
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Aesthetic
+        hex:
+          type: string
+          format: color
+          example: '#B4AEE8'
+        schema:
+          type: object
+          description: Light and dark theme variables
+          properties:
+            ':root':
+              type: object
+              additionalProperties:
+                type: string
+              description: CSS variables for light mode
+            .dark:
+              type: object
+              additionalProperties:
+                type: string
+              description: CSS variables for dark mode
+      required:
+        - title
+        - hex
+        - schema
     SiteData:
       type: object
       description: Flexible object holding site‑wide configuration

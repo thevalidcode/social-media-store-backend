@@ -114,7 +114,7 @@ export const createUser = async (
 };
 
 export const me = async (req: Request, res: Response): Promise<void> => {
-  const parsed = meQuerySchema.safeParse(req.query);
+  const parsed = meQuerySchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;

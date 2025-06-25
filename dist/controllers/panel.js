@@ -1,12 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getCurrentAdmin = exports.getCurrentUser = exports.getRates = exports.getSiteData = exports.getStyles = exports.getPanelId = void 0;
+exports.getCurrentAdmin = exports.getCurrentUser = exports.getRates = exports.getSiteData = exports.getStyles = exports.getPanelData = void 0;
 const zod_1 = require("zod");
 const crud_1 = require("../crud");
 const panelIdQuerySchema = zod_1.z.object({ domain: zod_1.z.string().min(1) });
 const panelIdSchema = zod_1.z.object({ panel_id: zod_1.z.coerce.number() });
 const uidQuerySchema = zod_1.z.object({ uid: zod_1.z.string().min(1) });
-const getPanelId = async (req, res) => {
+const getPanelData = async (req, res) => {
     const parsed = panelIdQuerySchema.safeParse(req.query);
     if (!parsed.success) {
         res.status(400).json({ error: parsed.error.flatten() });
@@ -20,13 +20,17 @@ const getPanelId = async (req, res) => {
             res.status(404).json({ error: "Panel not found for the given domain" });
             return;
         }
-        res.json({ panel_id: panel.panel_id });
+        res.json({
+            panel_id: panel.panel_id,
+            plan: panel.plan,
+            created_at: panel.created_at,
+        });
     }
     catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
-exports.getPanelId = getPanelId;
+exports.getPanelData = getPanelData;
 const getStyles = async (req, res) => {
     const parsed = panelIdSchema.safeParse(req.query);
     if (!parsed.success) {
@@ -35,10 +39,8 @@ const getStyles = async (req, res) => {
     }
     const { panel_id } = parsed.data;
     try {
-        const result = await (0, crud_1.getDocs)("design", panel_id, {
-            find: { field: "uid", operator: "==", value: "design" },
-        });
-        res.json(result);
+        const result = await (0, crud_1.getDocs)("design_styles", panel_id);
+        res.json(result[0]);
     }
     catch (err) {
         res.status(500).json({ error: err.message });

@@ -1,8 +1,8 @@
-panel_panel_id:
+panel_data:
   get:
     tags:
       - Panel
-    summary: Get the internal panel ID for a custom domain
+    summary: Get the panel data for a custom domain
     parameters:
       - in: query
         name: domain
@@ -11,7 +11,7 @@ panel_panel_id:
           type: string
     responses:
       "200":
-        $ref: "../components/responses.yaml#/PanelIdResponse"
+        $ref: "../components/responses.yaml#/PanelDataResponse"
       "404":
         $ref: "../components/responses.yaml#/NotFound"
       "500":

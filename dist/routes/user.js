@@ -41,7 +41,7 @@ const router = express_1.default.Router();
 const users = __importStar(require("../controllers/user"));
 const authenticate_1 = require("../middleware/authenticate");
 router.get("/", authenticate_1.authenticate, users.getUsers);
-router.get("/me", users.me);
+router.post("/me", users.me);
 router.post("/", users.createUser);
 router.get("/:uid", users.getUserByUid);
 router.put("/", authenticate_1.authenticate, users.updateUser);

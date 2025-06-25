@@ -40,7 +40,7 @@ const express_1 = __importDefault(require("express"));
 const router = express_1.default.Router();
 const panels = __importStar(require("../controllers/panel"));
 const authenticate_1 = require("../middleware/authenticate");
-router.get("/panel_id", panels.getPanelId);
+router.get("/data", panels.getPanelData);
 router.get("/styles", panels.getStyles);
 router.get("/site-data", panels.getSiteData);
 router.get("/rates", panels.getRates);

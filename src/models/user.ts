@@ -1,4 +1,4 @@
-import {vsp_pool} from "../config/db";
+import { vsp_pool } from "../config/db";
 
 async function createUserTable() {
   await vsp_pool.query(`

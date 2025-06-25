@@ -3,7 +3,7 @@ const router = express.Router();
 import * as panels from "../controllers/panel";
 import { authenticate } from "../middleware/authenticate";
 
-router.get("/panel_id", panels.getPanelId);
+router.get("/data", panels.getPanelData);
 router.get("/styles", panels.getStyles);
 router.get("/site-data", panels.getSiteData);
 router.get("/rates", panels.getRates);
