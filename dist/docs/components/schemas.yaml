@@ -36,7 +36,7 @@ User:
 UserPublic:
   type: object
   additionalProperties:
-   type: string | number
+    type: string | number
   properties:
     id:
       type: string
@@ -184,3 +184,301 @@ GoogleAuthRequest:
     panel_id:
       type: number
       description: The panel identifier to fetch/store user
+
+Service:
+  type: object
+  properties:
+    id:
+      type: number
+    uid:
+      type: string
+    name:
+      type: string
+    category:
+      type: string
+    type:
+      type: string
+    min:
+      type: number
+    max:
+      type: number
+    price:
+      type: number
+    provider_price:
+      type: number
+    provider_id:
+      type: number
+    description:
+      type: string
+    refill_days:
+      type: number
+    sync_quantity:
+      type: boolean
+    sync_cat_and_name:
+      type: boolean
+    drip_feed:
+      type: boolean
+    network:
+      type: string
+    refill:
+      type: boolean
+    cancel:
+      type: boolean
+    position:
+      type: number
+    status:
+      type: string
+    panel_id:
+      type: number
+
+ServicePublic:
+  type: object
+  properties:
+    id:
+      type: number
+    name:
+      type: string
+    type:
+      type: string
+    min:
+      type: number
+    max:
+      type: number
+    price:
+      type: number
+    category:
+      type: string
+    description:
+      type: string
+
+ServiceCreateInput:
+  type: object
+  required:
+    - name
+    - category
+    - type
+    - min
+    - max
+    - price
+  properties:
+    name:
+      type: string
+    category:
+      type: string
+    type:
+      type: string
+    min:
+      type: number
+    max:
+      type: number
+    price:
+      type: number
+    provider_price:
+      type: number
+    provider_id:
+      type: number
+    description:
+      type: string
+    position:
+      type: number
+    refill_days:
+      type: number
+    sync_quantity:
+      type: boolean
+    sync_cat_and_name:
+      type: boolean
+    drip_feed:
+      type: boolean
+    network:
+      type: string
+    refill:
+      type: boolean
+    cancel:
+      type: boolean
+
+ServiceUpdateInput:
+  type: object
+  required:
+    - uid
+  properties:
+    uid:
+      type: string
+    name:
+      type: string
+    type:
+      type: string
+    status:
+      type: string
+    min:
+      type: number
+    max:
+      type: number
+    refill_days:
+      type: number
+    sync_quantity:
+      type: boolean
+    sync_cat_and_name:
+      type: boolean
+    drip_feed:
+      type: boolean
+    category:
+      type: string
+    description:
+      type: string
+    price:
+      type: number
+    position:
+      type: number
+
+DeleteServiceInput:
+  type: object
+  required:
+    - uid
+  properties:
+    uid:
+      type: string
+
+DeleteMultipleServicesInput:
+  type: object
+  required:
+    - uids
+  properties:
+    uids:
+      type: array
+      items:
+        type: string
+
+Category:
+  type: object
+  properties:
+    id:
+      type: number
+    uid:
+      type: string
+    name:
+      type: string
+    description:
+      type: string
+    status:
+      type: string
+    position:
+      type: number
+
+CategoryCreateRequest:
+  type: object
+  required:
+    - name
+  properties:
+    name:
+      type: string
+    description:
+      type: string
+
+CategoryUpdateRequest:
+  type: object
+  required:
+    - uid
+  properties:
+    uid:
+      type: string
+    name:
+      type: string
+    position:
+      type: number
+    description:
+      type: string
+
+DeleteByUid:
+  type: object
+  required:
+    - uid
+  properties:
+    uid:
+      type: string
+
+DeleteMultiple:
+  type: object
+  required:
+    - uids
+  properties:
+    uids:
+      type: array
+      items:
+        type: string
+
+Provider:
+  type: object
+  properties:
+    uid:
+      type: string
+    name:
+      type: string
+    url:
+      type: string
+    percentage:
+      type: number
+    sync:
+      type: boolean
+
+ProviderCreateRequest:
+  type: object
+  required:
+    - name
+    - url
+    - percentage
+    - api_key
+    - sync
+  properties:
+    name:
+      type: string
+    url:
+      type: string
+    percentage:
+      type: number
+    api_key:
+      type: string
+    sync:
+      type: boolean
+
+ProviderUpdateRequest:
+  type: object
+  required:
+    - uid
+    - api_key
+  properties:
+    uid:
+      type: string
+    name:
+      type: string
+    url:
+      type: string
+    percentage:
+      type: number
+    api_key:
+      type: string
+    sync:
+      type: boolean
+
+ImportProviderServicesRequest:
+  type: object
+  required:
+    - provider_services_id
+    - import_percent
+    - category
+    - provider
+  properties:
+    provider_services_id:
+      type: array
+      items:
+        type: number
+    import_percent:
+      type: number
+    category:
+      type: object
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+    provider:
+      type: string

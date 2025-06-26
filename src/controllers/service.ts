@@ -6,8 +6,6 @@ import {
   deletePanelDoc,
   deletePanelDocs,
 } from "../crud";
-import { v4 as uuidv4 } from "uuid";
-import axios from "axios";
 import type { Request, Response } from "express";
 
 const getServicesSchema = z.object({

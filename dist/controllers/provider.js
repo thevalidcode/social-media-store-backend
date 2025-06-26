@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateService = exports.getProviders = exports.addProvider = exports.importServices = void 0;
+exports.deleteMultipleProviders = exports.deleteProvider = exports.updateProvider = exports.getProviders = exports.addProvider = exports.importServices = void 0;
 const zod_1 = require("zod");
 const axios_1 = __importDefault(require("axios"));
 const uuid_1 = require("uuid");
@@ -117,7 +117,7 @@ exports.importServices = importServices;
 const addProviderSchema = zod_1.z.object({
     percentage: zod_1.z.coerce.number(),
     name: zod_1.z.string(),
-    api_key: zod_1.z.string(),
+    api_key: zod_1.z.string().trim(),
     url: zod_1.z.string(),
     sync: zod_1.z.boolean(),
 });
@@ -148,7 +148,7 @@ const addProvider = async (req, res) => {
         const existingProviders = await (0, crud_1.getDocs)("providers", panel_id, {
             find: { url: newProvider.url },
         });
-        if (!existingProviders) {
+        if (existingProviders) {
             res.status(400).json({ error: "Provider already exists." });
             return;
         }
@@ -184,17 +184,17 @@ const getProviders = async (req, res) => {
     }
 };
 exports.getProviders = getProviders;
-const updateServiceSchema = zod_1.z.object({
-    percentage: zod_1.z.coerce.number(),
-    name: zod_1.z.string(),
-    api_key: zod_1.z.string(),
+const updateProviderSchema = zod_1.z.object({
+    percentage: zod_1.z.coerce.number().optional(),
+    name: zod_1.z.string().optional(),
+    api_key: zod_1.z.string().trim(),
+    url: zod_1.z.string().optional(),
+    sync: zod_1.z.boolean().optional(),
     uid: zod_1.z.string(),
-    url: zod_1.z.string(),
-    sync: zod_1.z.boolean(),
 });
-const updateService = async (req, res) => {
+const updateProvider = async (req, res) => {
     const authParsed = authSchema.safeParse(req.auth);
-    const parsed = updateServiceSchema.safeParse(req.body);
+    const parsed = updateProviderSchema.safeParse(req.body);
     if (!parsed.success) {
         res.status(400).json({ error: parsed.error.flatten() });
         return;
@@ -210,14 +210,81 @@ const updateService = async (req, res) => {
         return;
     }
     try {
-        await (0, crud_1.updatePanelDoc)("services", reqData.uid, reqData, panel_id);
-        const service = await (0, crud_1.getDocs)("services", panel_id, {
-            find: { field: "uid", operator: "==", value: reqData.uid },
+        const key = (0, encrypt_1.encryptKey)(reqData.api_key);
+        const newProvider = {
+            ...reqData,
+            api_key: key,
+        };
+        await (0, crud_1.updatePanelDoc)("providers", reqData.uid, newProvider, panel_id);
+        const service = await (0, crud_1.getDocs)("providers", panel_id, {
+            find: { uid: reqData.uid },
         });
-        res.status(200).json({ success: "Service updated successfully.", service });
+        res
+            .status(200)
+            .json({ success: "Provider updated successfully.", service });
     }
     catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
-exports.updateService = updateService;
+exports.updateProvider = updateProvider;
+const deleteProviderSchema = zod_1.z.object({
+    uid: zod_1.z.string(),
+});
+const deleteProvider = async (req, res) => {
+    const authParsed = authSchema.safeParse(req.auth);
+    const parsed = deleteProviderSchema.safeParse(req.body);
+    if (!authParsed.success || !parsed.success) {
+        res.status(400).json({
+            error: {
+                auth: !authParsed.success ? authParsed.error.flatten() : undefined,
+                body: !parsed.success ? parsed.error.flatten() : undefined,
+            },
+        });
+        return;
+    }
+    const { panel_id, role } = authParsed.data;
+    const { uid } = parsed.data;
+    if (role === "user") {
+        res.status(403).json({ error: "Access denied. Admins only." });
+        return;
+    }
+    try {
+        await (0, crud_1.deletePanelDoc)("providers", uid, panel_id);
+        res.status(200).json({ success: "Provider deleted successfully." });
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+exports.deleteProvider = deleteProvider;
+const deleteMultipleProviderSchema = zod_1.z.object({
+    uids: zod_1.z.array(zod_1.z.string()),
+});
+const deleteMultipleProviders = async (req, res) => {
+    const authParsed = authSchema.safeParse(req.auth);
+    const parsed = deleteMultipleProviderSchema.safeParse(req.body);
+    if (!authParsed.success || !parsed.success) {
+        res.status(400).json({
+            error: {
+                auth: !authParsed.success ? authParsed.error.flatten() : undefined,
+                body: !parsed.success ? parsed.error.flatten() : undefined,
+            },
+        });
+        return;
+    }
+    const { panel_id, role } = authParsed.data;
+    const { uids } = parsed.data;
+    if (role === "user") {
+        res.status(403).json({ error: "Access denied. Admins only." });
+        return;
+    }
+    try {
+        await (0, crud_1.deletePanelDocs)("providers", uids, panel_id);
+        res.status(200).json({ success: "Providers deleted successfully." });
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+exports.deleteMultipleProviders = deleteMultipleProviders;

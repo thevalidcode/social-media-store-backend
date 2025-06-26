@@ -11,7 +11,9 @@ import userRouter from "./routes/user";
 import oauthRoutes from "./routes/oauth";
 import panelRoutes from "./routes/panel";
 import serviceRoutes from "./routes/service";
+import providerRoutes from "./routes/provider";
 import adminRoutes from "./routes/admin";
+import categoryRoutes from "./routes/category";
 import { getDocs } from "./crud";
 import swaggerRouter from "./middleware/swagger";
 
@@ -79,6 +81,8 @@ app.use("/user", userRouter);
 app.use("/api/auth/panel", oauthRoutes);
 app.use("/panel", panelRoutes);
 app.use("/service", serviceRoutes);
+app.use("/provider", providerRoutes);
+app.use("/category", categoryRoutes);
 app.use("/admin", adminRoutes);
 
 // --- Swagger ---

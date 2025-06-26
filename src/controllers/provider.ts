@@ -3,7 +3,13 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import type { Request, Response } from "express";
 
-import { getDocs, addPanelDoc, updatePanelDoc } from "../crud";
+import {
+  getDocs,
+  addPanelDoc,
+  updatePanelDoc,
+  deletePanelDoc,
+  deletePanelDocs,
+} from "../crud";
 import { decryptKey, encryptKey } from "../utils/encrypt";
 
 // Auth and input validation
@@ -154,7 +160,7 @@ export const importServices = async (
 const addProviderSchema = z.object({
   percentage: z.coerce.number(),
   name: z.string(),
-  api_key: z.string(),
+  api_key: z.string().trim(),
   url: z.string(),
   sync: z.boolean(),
 });
@@ -194,7 +200,7 @@ export const addProvider = async (
     const existingProviders = await getDocs("providers", panel_id, {
       find: { url: newProvider.url },
     });
-    if (!existingProviders) {
+    if (existingProviders) {
       res.status(400).json({ error: "Provider already exists." });
       return;
     }
@@ -237,21 +243,21 @@ export const getProviders = async (
   }
 };
 
-const updateServiceSchema = z.object({
-  percentage: z.coerce.number(),
-  name: z.string(),
-  api_key: z.string(),
+const updateProviderSchema = z.object({
+  percentage: z.coerce.number().optional(),
+  name: z.string().optional(),
+  api_key: z.string().trim(),
+  url: z.string().optional(),
+  sync: z.boolean().optional(),
   uid: z.string(),
-  url: z.string(),
-  sync: z.boolean(),
 });
 
-export const updateService = async (
+export const updateProvider = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   const authParsed = authSchema.safeParse(req.auth);
-  const parsed = updateServiceSchema.safeParse(req.body);
+  const parsed = updateProviderSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -268,13 +274,94 @@ export const updateService = async (
     return;
   }
   try {
-    await updatePanelDoc("services", reqData.uid, reqData, panel_id);
+    const key = encryptKey(reqData.api_key);
+    const newProvider = {
+      ...reqData,
+      api_key: key,
+    };
+    await updatePanelDoc("providers", reqData.uid, newProvider, panel_id);
 
-    const service = await getDocs("services", panel_id, {
-      find: { field: "uid", operator: "==", value: reqData.uid },
+    const service = await getDocs("providers", panel_id, {
+      find: { uid: reqData.uid },
     });
-    res.status(200).json({ success: "Service updated successfully.", service });
+    res
+      .status(200)
+      .json({ success: "Provider updated successfully.", service });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+const deleteProviderSchema = z.object({
+  uid: z.string(),
+});
+
+export const deleteProvider = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authParsed = authSchema.safeParse(req.auth);
+  const parsed = deleteProviderSchema.safeParse(req.body);
+
+  if (!authParsed.success || !parsed.success) {
+    res.status(400).json({
+      error: {
+        auth: !authParsed.success ? authParsed.error.flatten() : undefined,
+        body: !parsed.success ? parsed.error.flatten() : undefined,
+      },
+    });
+    return;
+  }
+
+  const { panel_id, role } = authParsed.data;
+  const { uid } = parsed.data;
+
+  if (role === "user") {
+    res.status(403).json({ error: "Access denied. Admins only." });
+    return;
+  }
+
+  try {
+    await deletePanelDoc("providers", uid, panel_id);
+    res.status(200).json({ success: "Provider deleted successfully." });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const deleteMultipleProviderSchema = z.object({
+  uids: z.array(z.string()),
+});
+
+export const deleteMultipleProviders = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authParsed = authSchema.safeParse(req.auth);
+  const parsed = deleteMultipleProviderSchema.safeParse(req.body);
+
+  if (!authParsed.success || !parsed.success) {
+    res.status(400).json({
+      error: {
+        auth: !authParsed.success ? authParsed.error.flatten() : undefined,
+        body: !parsed.success ? parsed.error.flatten() : undefined,
+      },
+    });
+    return;
+  }
+
+  const { panel_id, role } = authParsed.data;
+  const { uids } = parsed.data;
+
+  if (role === "user") {
+    res.status(403).json({ error: "Access denied. Admins only." });
+    return;
+  }
+
+  try {
+    await deletePanelDocs("providers", uids, panel_id);
+    res.status(200).json({ success: "Providers deleted successfully." });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 };

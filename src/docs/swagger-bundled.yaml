@@ -295,6 +295,526 @@ paths:
             The client should extract the `token` and use it in the `Authorization` header (`Bearer token`) to authenticate subsequent requests. The backend will use this to populate `req.auth`.
         '400':
           $ref: '#/components/responses/BadRequest'
+  /service:
+    get:
+      tags:
+        - Services
+      summary: Get all active services
+      description: Returns a list of active services available to users.
+      parameters:
+        - in: query
+          name: panel_id
+          schema:
+            type: number
+          required: true
+      responses:
+        '200':
+          description: List of services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServicePublic'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    put:
+      tags:
+        - Services
+      summary: Update a service
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceUpdateInput'
+      responses:
+        '200':
+          description: Updated service object
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: string
+                    example: Service updated successfully.
+                  service:
+                    $ref: '#/components/schemas/Service'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      tags:
+        - Services
+      summary: Delete a single service
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - uid
+              properties:
+                uid:
+                  type: string
+      responses:
+        '200':
+          description: Deletion confirmation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: string
+                    example: Service deleted successfully.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /service/admin:
+    get:
+      tags:
+        - Services
+      summary: Get all services for admins
+      security:
+        - bearerAuth: []
+      description: Returns a full list of services regardless of status. Only accessible by admins.
+      responses:
+        '200':
+          description: List of services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Service'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  '/service/{provider_id}':
+    get:
+      tags:
+        - Services
+      summary: Get services by provider ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: provider_id
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Filtered services list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  services:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Service'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  '/service/{service_id}':
+    get:
+      tags:
+        - Services
+      summary: Get a service by ID (public)
+      parameters:
+        - in: path
+          name: service_id
+          required: true
+          schema:
+            type: number
+        - in: query
+          name: panel_id
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Service details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  service:
+                    $ref: '#/components/schemas/ServicePublic'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  '/service/admin/{service_id}':
+    get:
+      tags:
+        - Services
+      summary: Get a service by ID (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: service_id
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Service details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  service:
+                    $ref: '#/components/schemas/Service'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /service/multiple:
+    delete:
+      tags:
+        - Services
+      summary: Delete multiple services
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - uids
+              properties:
+                uids:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Bulk deletion confirmation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: string
+                    example: Services deleted successfully.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /service/create:
+    post:
+      tags:
+        - Services
+      summary: Create a new service
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceCreateInput'
+      responses:
+        '200':
+          description: Newly created service
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: string
+                    example: Service added successfully.
+                  service:
+                    $ref: '#/components/schemas/Service'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /category:
+    get:
+      tags:
+        - Categories
+      summary: Get all categories
+      description: Returns all service categories for a given panel.
+      parameters:
+        - in: query
+          name: panel_id
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          $ref: '#/components/responses/CategoryListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      tags:
+        - Categories
+      summary: Create a category
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/CategoryCreatedResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    put:
+      tags:
+        - Categories
+      summary: Update a category
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryUpdateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/CategoryUpdatedResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      tags:
+        - Categories
+      summary: Delete a category
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteByUid'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /category/multiple:
+    delete:
+      tags:
+        - Categories
+      summary: Delete multiple categories
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteMultiple'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  '/category/{category_id}':
+    get:
+      tags:
+        - Categories
+      summary: Get category by ID
+      description: Fetch a single category using category ID and panel ID.
+      parameters:
+        - in: path
+          name: category_id
+          required: true
+          schema:
+            type: number
+        - in: query
+          name: panel_id
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          $ref: '#/components/responses/CategoryObject'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /provider:
+    post:
+      summary: Add a new provider
+      description: Add a provider with API key and URL to fetch third-party services.
+      tags:
+        - Providers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProviderCreateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    get:
+      summary: Get all providers
+      description: Retrieve all service providers tied to the authenticated admin’s panel.
+      tags:
+        - Providers
+      responses:
+        '200':
+          description: A list of providers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  providers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Provider'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    put:
+      summary: Update provider details
+      description: 'Update a provider''s credentials, percentage, and sync settings.'
+      tags:
+        - Providers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProviderUpdateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessWithData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete a provider
+      description: Permanently remove a provider from your panel.
+      tags:
+        - Providers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteByUid'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /provider/multiple:
+    delete:
+      summary: Delete multiple providers
+      description: Batch delete providers by passing an array of UIDs.
+      tags:
+        - Providers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteMultiple'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /provider/services/import:
+    post:
+      summary: Import provider services
+      description: Imports a selection of services from a provider API into your panel with a markup percentage.
+      tags:
+        - Providers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportProviderServicesRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
 components:
   schemas:
     UserUpdateRequest:
@@ -474,6 +994,289 @@ components:
         panel_id:
           type: number
           description: The panel identifier to fetch/store user
+    Service:
+      type: object
+      properties:
+        id:
+          type: number
+        uid:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        type:
+          type: string
+        min:
+          type: number
+        max:
+          type: number
+        price:
+          type: number
+        provider_price:
+          type: number
+        provider_id:
+          type: number
+        description:
+          type: string
+        refill_days:
+          type: number
+        sync_quantity:
+          type: boolean
+        sync_cat_and_name:
+          type: boolean
+        drip_feed:
+          type: boolean
+        network:
+          type: string
+        refill:
+          type: boolean
+        cancel:
+          type: boolean
+        position:
+          type: number
+        status:
+          type: string
+        panel_id:
+          type: number
+    ServicePublic:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        type:
+          type: string
+        min:
+          type: number
+        max:
+          type: number
+        price:
+          type: number
+        category:
+          type: string
+        description:
+          type: string
+    ServiceCreateInput:
+      type: object
+      required:
+        - name
+        - category
+        - type
+        - min
+        - max
+        - price
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        type:
+          type: string
+        min:
+          type: number
+        max:
+          type: number
+        price:
+          type: number
+        provider_price:
+          type: number
+        provider_id:
+          type: number
+        description:
+          type: string
+        position:
+          type: number
+        refill_days:
+          type: number
+        sync_quantity:
+          type: boolean
+        sync_cat_and_name:
+          type: boolean
+        drip_feed:
+          type: boolean
+        network:
+          type: string
+        refill:
+          type: boolean
+        cancel:
+          type: boolean
+    ServiceUpdateInput:
+      type: object
+      required:
+        - uid
+      properties:
+        uid:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+        min:
+          type: number
+        max:
+          type: number
+        refill_days:
+          type: number
+        sync_quantity:
+          type: boolean
+        sync_cat_and_name:
+          type: boolean
+        drip_feed:
+          type: boolean
+        category:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        position:
+          type: number
+    DeleteServiceInput:
+      type: object
+      required:
+        - uid
+      properties:
+        uid:
+          type: string
+    DeleteMultipleServicesInput:
+      type: object
+      required:
+        - uids
+      properties:
+        uids:
+          type: array
+          items:
+            type: string
+    Category:
+      type: object
+      properties:
+        id:
+          type: number
+        uid:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        position:
+          type: number
+    CategoryCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+    CategoryUpdateRequest:
+      type: object
+      required:
+        - uid
+      properties:
+        uid:
+          type: string
+        name:
+          type: string
+        position:
+          type: number
+        description:
+          type: string
+    DeleteByUid:
+      type: object
+      required:
+        - uid
+      properties:
+        uid:
+          type: string
+    DeleteMultiple:
+      type: object
+      required:
+        - uids
+      properties:
+        uids:
+          type: array
+          items:
+            type: string
+    Provider:
+      type: object
+      properties:
+        uid:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+        percentage:
+          type: number
+        sync:
+          type: boolean
+    ProviderCreateRequest:
+      type: object
+      required:
+        - name
+        - url
+        - percentage
+        - api_key
+        - sync
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+        percentage:
+          type: number
+        api_key:
+          type: string
+        sync:
+          type: boolean
+    ProviderUpdateRequest:
+      type: object
+      required:
+        - uid
+        - api_key
+      properties:
+        uid:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+        percentage:
+          type: number
+        api_key:
+          type: string
+        sync:
+          type: boolean
+    ImportProviderServicesRequest:
+      type: object
+      required:
+        - provider_services_id
+        - import_percent
+        - category
+        - provider
+      properties:
+        provider_services_id:
+          type: array
+          items:
+            type: number
+        import_percent:
+          type: number
+        category:
+          type: object
+          properties:
+            value:
+              type: string
+            label:
+              type: string
+        provider:
+          type: string
   responses:
     UpdateSuccess:
       description: User updated successfully
@@ -542,16 +1345,6 @@ components:
                 type: string
               user:
                 $ref: '#/components/schemas/UserPublic'
-    BadRequest:
-      description: Missing or invalid input
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-                example: Missing required field
     AccessDenied:
       description: Access denied for non-admins
       content:
@@ -562,16 +1355,6 @@ components:
               error:
                 type: string
                 example: Access denied. Admins only.
-    ServerError:
-      description: Unexpected internal error
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-                example: Error performing request.
     PanelDataResponse:
       description: Panel Data lookup result
       content:
@@ -638,3 +1421,162 @@ components:
             properties:
               error:
                 type: string
+    ServiceListResponse:
+      description: List of available services
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/ServicePublic'
+    SingleServiceResponse:
+      description: A single service object
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              service:
+                $ref: '#/components/schemas/Service'
+    ServiceCreated:
+      description: Service created successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: string
+                example: Service added successfully.
+              service:
+                $ref: '#/components/schemas/Service'
+    ServiceDeleted:
+      description: Service deleted successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: string
+                example: Service deleted successfully.
+    ServicesDeleted:
+      description: Multiple services deleted successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: string
+                example: Services deleted successfully.
+    ServiceUpdated:
+      description: Service updated successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: string
+                example: Service updated successfully.
+              service:
+                $ref: '#/components/schemas/Service'
+    CategoryListResponse:
+      description: List of all categories
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Category'
+    CategoryCreatedResponse:
+      description: Successfully created a category
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: string
+                example: Category added successfully.
+              category:
+                $ref: '#/components/schemas/Category'
+    CategoryUpdatedResponse:
+      description: Successfully updated a category
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: string
+                example: Category updated successfully.
+              category:
+                $ref: '#/components/schemas/Category'
+    CategoryObject:
+      description: Single category object
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              category:
+                $ref: '#/components/schemas/Category'
+    SuccessResponse:
+      description: Operation successful
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: string
+                example: Operation completed successfully.
+    SuccessWithData:
+      description: Operation successful with data returned
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: string
+                example: Provider updated successfully.
+              service:
+                $ref: '#/components/schemas/Provider'
+    BadRequest:
+      description: Bad request due to invalid input
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: object
+                example:
+                  body:
+                    _errors:
+                      - Invalid input
+                    field:
+                      - Field is required
+    Forbidden:
+      description: Unauthorized access due to role or permission
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Access denied. Admins only.
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Something went wrong. Please try again later.

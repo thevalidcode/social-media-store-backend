@@ -71,17 +71,6 @@ SuccessMessage:
           user:
             $ref: "./schemas.yaml#/UserPublic"
 
-BadRequest:
-  description: Missing or invalid input
-  content:
-    application/json:
-      schema:
-        type: object
-        properties:
-          error:
-            type: string
-            example: Missing required field
-
 AccessDenied:
   description: Access denied for non-admins
   content:
@@ -92,17 +81,6 @@ AccessDenied:
           error:
             type: string
             example: Access denied. Admins only.
-
-ServerError:
-  description: Unexpected internal error
-  content:
-    application/json:
-      schema:
-        type: object
-        properties:
-          error:
-            type: string
-            example: Error performing request.
 
 PanelDataResponse:
   description: Panel Data lookup result
@@ -178,3 +156,175 @@ Unauthorized:
         properties:
           error:
             type: string
+
+ServiceListResponse:
+  description: List of available services
+  content:
+    application/json:
+      schema:
+        type: array
+        items:
+          $ref: "./schemas.yaml#/ServicePublic"
+
+SingleServiceResponse:
+  description: A single service object
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          service:
+            $ref: "./schemas.yaml#/Service"
+
+ServiceCreated:
+  description: Service created successfully
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          success:
+            type: string
+            example: Service added successfully.
+          service:
+            $ref: "./schemas.yaml#/Service"
+
+ServiceDeleted:
+  description: Service deleted successfully
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          success:
+            type: string
+            example: Service deleted successfully.
+
+ServicesDeleted:
+  description: Multiple services deleted successfully
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          success:
+            type: string
+            example: Services deleted successfully.
+
+ServiceUpdated:
+  description: Service updated successfully
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          success:
+            type: string
+            example: Service updated successfully.
+          service:
+            $ref: "./schemas.yaml#/Service"
+
+CategoryListResponse:
+  description: List of all categories
+  content:
+    application/json:
+      schema:
+        type: array
+        items:
+          $ref: "./schemas.yaml#/Category"
+
+CategoryCreatedResponse:
+  description: Successfully created a category
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          success:
+            type: string
+            example: Category added successfully.
+          category:
+            $ref: "./schemas.yaml#/Category"
+
+CategoryUpdatedResponse:
+  description: Successfully updated a category
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          success:
+            type: string
+            example: Category updated successfully.
+          category:
+            $ref: "./schemas.yaml#/Category"
+
+CategoryObject:
+  description: Single category object
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          category:
+            $ref: "./schemas.yaml#/Category"
+
+SuccessResponse:
+  description: Operation successful
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          success:
+            type: string
+            example: "Operation completed successfully."
+
+SuccessWithData:
+  description: Operation successful with data returned
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          success:
+            type: string
+            example: "Provider updated successfully."
+          service:
+            $ref: "../components/schemas.yaml#/Provider"
+
+BadRequest:
+  description: Bad request due to invalid input
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          error:
+            type: object
+            example:
+              body:
+                _errors: ["Invalid input"]
+                field: ["Field is required"]
+
+Forbidden:
+  description: Unauthorized access due to role or permission
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          error:
+            type: string
+            example: "Access denied. Admins only."
+
+ServerError:
+  description: Internal server error
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          error:
+            type: string
+            example: "Something went wrong. Please try again later."

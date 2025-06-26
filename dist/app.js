@@ -15,7 +15,9 @@ const user_1 = __importDefault(require("./routes/user"));
 const oauth_1 = __importDefault(require("./routes/oauth"));
 const panel_1 = __importDefault(require("./routes/panel"));
 const service_1 = __importDefault(require("./routes/service"));
+const provider_1 = __importDefault(require("./routes/provider"));
 const admin_1 = __importDefault(require("./routes/admin"));
+const category_1 = __importDefault(require("./routes/category"));
 const crud_1 = require("./crud");
 const swagger_1 = __importDefault(require("./middleware/swagger"));
 const app = (0, express_1.default)();
@@ -71,6 +73,8 @@ app.use("/user", user_1.default);
 app.use("/api/auth/panel", oauth_1.default);
 app.use("/panel", panel_1.default);
 app.use("/service", service_1.default);
+app.use("/provider", provider_1.default);
+app.use("/category", category_1.default);
 app.use("/admin", admin_1.default);
 // --- Swagger ---
 app.use(swagger_1.default);
