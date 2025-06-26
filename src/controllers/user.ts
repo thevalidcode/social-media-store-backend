@@ -142,7 +142,7 @@ export const me = async (req: Request, res: Response): Promise<void> => {
         .json({ error: "You’ve been banned from this site. Contact support." });
       return;
     }
-console.log(password,account)
+
     const isMatch = await bcrypt.compare(password, account.password);
     if (!isMatch) {
       res.status(400).json({ error: "Incorrect login details" });
