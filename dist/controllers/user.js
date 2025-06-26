@@ -117,7 +117,6 @@ const me = async (req, res) => {
                 .json({ error: "You’ve been banned from this site. Contact support." });
             return;
         }
-        console.log(password, account);
         const isMatch = await bcrypt_1.default.compare(password, account.password);
         if (!isMatch) {
             res.status(400).json({ error: "Incorrect login details" });
