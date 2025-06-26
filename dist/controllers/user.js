@@ -10,6 +10,7 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const uuid_1 = require("uuid");
 const crud_1 = require("../crud");
 const emails_1 = require("../utils/emails");
+const env_1 = require("../config/env");
 const createUserSchema = zod_1.z.object({
     panel_id: zod_1.z.coerce.number(),
     email: zod_1.z.string().email(),
@@ -101,11 +102,9 @@ const me = async (req, res) => {
     try {
         const user = await (0, crud_1.getDocs)("users", panel_id, {
             find: { field: "email", operator: "===", value: email },
-            removeKeys: ["password"],
         });
         const admin = await (0, crud_1.getDocs)("admins", panel_id, {
             find: { field: "email", operator: "===", value: email },
-            removeKeys: ["password"],
         });
         const account = user || admin;
         if (!account) {
@@ -118,15 +117,17 @@ const me = async (req, res) => {
                 .json({ error: "You’ve been banned from this site. Contact support." });
             return;
         }
+        console.log(password, account);
         const isMatch = await bcrypt_1.default.compare(password, account.password);
         if (!isMatch) {
             res.status(400).json({ error: "Incorrect login details" });
             return;
         }
         const key = account.key || (0, uuid_1.v4)();
-        const token = jsonwebtoken_1.default.sign({ email, panel_id, key }, process.env.JWT_SECRET, {
+        const token = jsonwebtoken_1.default.sign({ email, panel_id, key }, env_1.env.JWT_SECRET, {
             expiresIn: "7d",
         });
+        delete account.password;
         res.status(200).json({
             success: "Logged in successfully",
             token,
@@ -139,7 +140,7 @@ const me = async (req, res) => {
         });
     }
     catch (err) {
-        res.status(500).json({ error: "Login failed" });
+        res.status(500).json({ error: "Login failed " + err.message });
     }
 };
 exports.me = me;

@@ -4,6 +4,16 @@ import * as services from "../controllers/service";
 import { authenticate } from "../middleware/authenticate";
 
 router.get("/", services.getServices);
-router.post("/import", authenticate, services.importServices);
-router.post("/get-service-id", services.getServiceByID);
+router.get("/admin", authenticate, services.getServicesForAdmins);
+router.get("/:provider_id", authenticate, services.getServicesByProviderId);
+router.get("/:service_id", services.getServiceByID);
+router.get(
+  "/admin/:service_id",
+  authenticate,
+  services.getServiceByIDFromAdmin
+);
+router.put("/", authenticate, services.updateService);
+router.delete("/", authenticate, services.deleteService);
+router.delete("/multiple", authenticate, services.deleteMultipleService);
+
 export default router;

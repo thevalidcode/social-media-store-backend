@@ -10,12 +10,14 @@ const user_1 = __importDefault(require("./user"));
 const service_1 = __importDefault(require("./service"));
 const design_styles_1 = __importDefault(require("./design_styles"));
 const currencies_1 = __importDefault(require("./currencies"));
+const admin_1 = __importDefault(require("./admin"));
 (async () => {
     try {
         await (0, panels_1.default)();
         await (0, providers_1.default)();
         await (0, categories_1.default)();
         await (0, user_1.default)();
+        await (0, admin_1.default)();
         await (0, service_1.default)();
         await (0, design_styles_1.default)();
         await (0, currencies_1.default)();

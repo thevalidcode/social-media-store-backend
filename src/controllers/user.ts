@@ -11,6 +11,7 @@ import {
   deletePanelDocs,
 } from "../crud";
 import { sendEmail } from "../utils/emails";
+import { env } from "../config/env";
 
 const createUserSchema = z.object({
   panel_id: z.coerce.number(),
@@ -124,12 +125,10 @@ export const me = async (req: Request, res: Response): Promise<void> => {
   try {
     const user = await getDocs("users", panel_id, {
       find: { field: "email", operator: "===", value: email },
-      removeKeys: ["password"],
     });
 
     const admin = await getDocs("admins", panel_id, {
       find: { field: "email", operator: "===", value: email },
-      removeKeys: ["password"],
     });
 
     const account = user || admin;
@@ -143,7 +142,7 @@ export const me = async (req: Request, res: Response): Promise<void> => {
         .json({ error: "You’ve been banned from this site. Contact support." });
       return;
     }
-
+console.log(password,account)
     const isMatch = await bcrypt.compare(password, account.password);
     if (!isMatch) {
       res.status(400).json({ error: "Incorrect login details" });
@@ -151,10 +150,10 @@ export const me = async (req: Request, res: Response): Promise<void> => {
     }
 
     const key = account.key || uuidv4();
-    const token = jwt.sign({ email, panel_id, key }, process.env.JWT_SECRET!, {
+    const token = jwt.sign({ email, panel_id, key }, env.JWT_SECRET, {
       expiresIn: "7d",
     });
-
+    delete account.password;
     res.status(200).json({
       success: "Logged in successfully",
       token,
@@ -165,8 +164,8 @@ export const me = async (req: Request, res: Response): Promise<void> => {
         username: account.username,
       },
     });
-  } catch (err) {
-    res.status(500).json({ error: "Login failed" });
+  } catch (err: any) {
+    res.status(500).json({ error: "Login failed " + err.message });
   }
 };
 

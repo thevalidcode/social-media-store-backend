@@ -1,4 +1,10 @@
 import type { Request, Response } from "express";
 export declare const getServices: (req: Request, res: Response) => Promise<void>;
-export declare const importServices: (req: Request, res: Response) => Promise<void>;
+export declare const getServicesForAdmins: (req: Request, res: Response) => Promise<void>;
 export declare const getServiceByID: (req: Request, res: Response) => Promise<void>;
+export declare const getServiceByIDFromAdmin: (req: Request, res: Response) => Promise<void>;
+export declare const updateService: (req: Request, res: Response) => Promise<void>;
+export declare const deleteService: (req: Request, res: Response) => Promise<void>;
+export declare const deleteMultipleService: (req: Request, res: Response) => Promise<void>;
+export declare const getServicesByProviderId: (req: Request, res: Response) => Promise<void>;
+export declare const addService: (req: Request, res: Response) => Promise<void>;

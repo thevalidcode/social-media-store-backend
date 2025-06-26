@@ -5,6 +5,7 @@ import createUserTable from "./user";
 import createServiceTable from "./service";
 import createDesignStylesTable from "./design_styles";
 import createCurrenciesTable from "./currencies";
+import createAdminTable from "./admin";
 
 (async (): Promise<void> => {
   try {
@@ -12,6 +13,7 @@ import createCurrenciesTable from "./currencies";
     await createProvidersTable();
     await createCategoriesTable();
     await createUserTable();
+    await createAdminTable();
     await createServiceTable();
     await createDesignStylesTable();
     await createCurrenciesTable();
