@@ -24,7 +24,7 @@ async function createProvidersTable() {
         id: `ALTER TABLE providers ADD COLUMN id INTEGER NOT NULL`,
         uid: `ALTER TABLE providers ADD COLUMN uid TEXT PRIMARY KEY`,
         name: `ALTER TABLE providers ADD COLUMN name TEXT NOT NULL`,
-        key: `ALTER TABLE providers ADD COLUMN api_key TEXT NOT NULL`,
+        api_key: `ALTER TABLE providers ADD COLUMN api_key TEXT NOT NULL`,
         url: `ALTER TABLE providers ADD COLUMN url TEXT NOT NULL`,
         created_at: `ALTER TABLE providers ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT NOW()`,
         sync: `ALTER TABLE providers ADD COLUMN sync BOOLEAN NOT NULL DEFAULT FALSE`,

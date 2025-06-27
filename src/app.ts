@@ -15,7 +15,7 @@ import providerRoutes from "./routes/provider";
 import adminRoutes from "./routes/admin";
 import categoryRoutes from "./routes/category";
 import { getDocs } from "./crud";
-import swaggerRouter from "./middleware/swagger";
+import swaggerRouter from "./docs/swagger";
 
 const app = express();
 

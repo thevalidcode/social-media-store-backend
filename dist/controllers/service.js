@@ -3,36 +3,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.addService = exports.getServicesByProviderId = exports.deleteMultipleService = exports.deleteService = exports.updateService = exports.getServiceByIDFromAdmin = exports.getServiceByID = exports.getServicesForAdmins = exports.getServices = void 0;
 const zod_1 = require("zod");
 const crud_1 = require("../crud");
+const user_schema_1 = require("../schemas/user.schema");
+const service_schema_1 = require("../schemas/service.schema");
 const getServicesSchema = zod_1.z.object({
     panel_id: zod_1.z.coerce.number(),
-});
-const authSchema = zod_1.z.object({
-    panel_id: zod_1.z.coerce.number(),
-    role: zod_1.z.string(),
-    user: zod_1.z.object({}).catchall(zod_1.z.unknown()),
 });
 const serviceIdSchema = zod_1.z.object({
     service_id: zod_1.z.coerce.number(),
     panel_id: zod_1.z.coerce.number(),
-});
-const updateServiceSchema = zod_1.z.object({
-    uid: zod_1.z.string(),
-    name: zod_1.z.string().optional(),
-    type: zod_1.z.string().optional(),
-    status: zod_1.z.string().optional(),
-    min: zod_1.z.coerce.number().optional(),
-    max: zod_1.z.coerce.number().optional(),
-    refill_days: zod_1.z.coerce.number().optional(),
-    sync_quantity: zod_1.z.boolean().optional(),
-    sync_cat_and_name: zod_1.z.boolean().optional(),
-    drip_feed: zod_1.z.boolean().optional(),
-    category: zod_1.z.string().optional(),
-    description: zod_1.z.string().optional(),
-    price: zod_1.z.coerce.number().optional(),
-    position: zod_1.z.coerce.number().optional(),
-});
-const deleteServiceSchema = zod_1.z.object({
-    uid: zod_1.z.string(),
 });
 const getServices = async (req, res) => {
     const parsed = getServicesSchema.safeParse(req.query);
@@ -65,7 +43,7 @@ const getServices = async (req, res) => {
 };
 exports.getServices = getServices;
 const getServicesForAdmins = async (req, res) => {
-    const parsed = authSchema.safeParse(req.auth);
+    const parsed = user_schema_1.AuthSchema.safeParse(req.auth);
     if (!parsed.success) {
         res.status(400).json({ error: parsed.error.flatten() });
         return;
@@ -115,7 +93,7 @@ const getServiceByID = async (req, res) => {
 };
 exports.getServiceByID = getServiceByID;
 const getServiceByIDFromAdmin = async (req, res) => {
-    const authParsed = authSchema.safeParse(req.auth);
+    const authParsed = user_schema_1.AuthSchema.safeParse(req.auth);
     const parsed = serviceIdSchema.safeParse(req.params);
     if (!parsed.success) {
         res.status(400).json({ error: parsed.error.flatten() });
@@ -143,8 +121,8 @@ const getServiceByIDFromAdmin = async (req, res) => {
 };
 exports.getServiceByIDFromAdmin = getServiceByIDFromAdmin;
 const updateService = async (req, res) => {
-    const authParsed = authSchema.safeParse(req.auth);
-    const parsed = updateServiceSchema.safeParse(req.body);
+    const authParsed = user_schema_1.AuthSchema.safeParse(req.auth);
+    const parsed = service_schema_1.ServiceUpdateInputSchema.safeParse(req.body);
     if (!parsed.success) {
         res.status(400).json({ error: parsed.error.flatten() });
         return;
@@ -172,8 +150,8 @@ const updateService = async (req, res) => {
 };
 exports.updateService = updateService;
 const deleteService = async (req, res) => {
-    const authParsed = authSchema.safeParse(req.auth);
-    const parsed = deleteServiceSchema.safeParse(req.body);
+    const authParsed = user_schema_1.AuthSchema.safeParse(req.auth);
+    const parsed = service_schema_1.DeleteServiceInputSchema.safeParse(req.body);
     if (!parsed.success) {
         res.status(400).json({ error: parsed.error.flatten() });
         return;
@@ -198,12 +176,8 @@ const deleteService = async (req, res) => {
 };
 exports.deleteService = deleteService;
 const deleteMultipleService = async (req, res) => {
-    const authParsed = authSchema.safeParse(req.auth);
-    const parsed = zod_1.z
-        .object({
-        uids: zod_1.z.array(zod_1.z.string()),
-    })
-        .safeParse(req.body);
+    const authParsed = user_schema_1.AuthSchema.safeParse(req.auth);
+    const parsed = service_schema_1.DeleteMultipleServicesInputSchema.safeParse(req.body);
     if (!parsed.success) {
         res.status(400).json({ error: parsed.error.flatten() });
         return;
@@ -228,7 +202,7 @@ const deleteMultipleService = async (req, res) => {
 };
 exports.deleteMultipleService = deleteMultipleService;
 const getServicesByProviderId = async (req, res) => {
-    const authParsed = authSchema.safeParse(req.auth);
+    const authParsed = user_schema_1.AuthSchema.safeParse(req.auth);
     const parsed = zod_1.z
         .object({
         provider_id: zod_1.z.coerce.number(),
@@ -260,28 +234,8 @@ const getServicesByProviderId = async (req, res) => {
 };
 exports.getServicesByProviderId = getServicesByProviderId;
 const addService = async (req, res) => {
-    const authParsed = authSchema.safeParse(req.auth);
-    const parsed = zod_1.z
-        .object({
-        name: zod_1.z.string(),
-        category: zod_1.z.string(),
-        type: zod_1.z.string(),
-        min: zod_1.z.coerce.number(),
-        max: zod_1.z.coerce.number(),
-        price: zod_1.z.coerce.number(),
-        provider_price: zod_1.z.coerce.number().optional(),
-        provider_id: zod_1.z.coerce.number().optional(),
-        description: zod_1.z.string().optional(),
-        position: zod_1.z.coerce.number().optional(),
-        refill_days: zod_1.z.coerce.number().optional(),
-        sync_quantity: zod_1.z.boolean().optional(),
-        sync_cat_and_name: zod_1.z.boolean().optional(),
-        drip_feed: zod_1.z.boolean().optional(),
-        network: zod_1.z.string().optional(),
-        refill: zod_1.z.boolean().optional(),
-        cancel: zod_1.z.boolean().optional(),
-    })
-        .safeParse(req.body);
+    const authParsed = user_schema_1.AuthSchema.safeParse(req.auth);
+    const parsed = service_schema_1.ServiceCreateInputSchema.safeParse(req.body);
     if (!parsed.success) {
         res.status(400).json({ error: parsed.error.flatten() });
         return;

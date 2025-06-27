@@ -7,12 +7,7 @@ import {
   deletePanelDocs,
 } from "../crud";
 import type { Request, Response } from "express";
-
-const authSchema = z.object({
-  panel_id: z.coerce.number(),
-  role: z.string(),
-  user: z.object({}).catchall(z.unknown()),
-});
+import { AuthSchema } from "../schemas/user.schema";
 
 const categoryIdSchema = z.object({
   category_id: z.coerce.number(),
@@ -75,7 +70,7 @@ export const updateCategory = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = authSchema.safeParse(req.auth);
+  const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = updateCategorySchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -110,7 +105,7 @@ export const deleteCategory = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = authSchema.safeParse(req.auth);
+  const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = deleteCategorySchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -140,7 +135,7 @@ export const deleteMultipleCategory = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = authSchema.safeParse(req.auth);
+  const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = z
     .object({
       uids: z.array(z.string()),
@@ -176,7 +171,7 @@ export const addCategory = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = authSchema.safeParse(req.auth);
+  const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = z
     .object({
       name: z.string(),

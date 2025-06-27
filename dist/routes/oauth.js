@@ -82,7 +82,7 @@ router.get("/callback/google", async (req, res) => {
             };
             await (0, crud_1.addPanelDoc)("users", user, panel_id);
         }
-        const token = jsonwebtoken_1.default.sign({ email: user.email, panel_id, key: user.api_key }, env_1.env.JWT_SECRET, { expiresIn: "7d" });
+        const token = jsonwebtoken_1.default.sign({ email: user.email, panel_id, api_key: user.api_key }, env_1.env.JWT_SECRET, { expiresIn: "7d" });
         const redirectTo = `${redirectDomain}?token=${token}&email=${encodeURIComponent(user.email)}`;
         res.redirect(redirectTo);
     }

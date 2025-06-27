@@ -8,7 +8,7 @@ import { z } from "zod";
 const tokenPayloadSchema = z.object({
   email: z.string().email(),
   panel_id: z.number(),
-  key: z.string(),
+  api_key: z.string(),
 });
 
 // Extend Express Request to include `auth`
@@ -17,7 +17,7 @@ declare module "express" {
     auth?: {
       email: string;
       panel_id: number;
-      key: string;
+      api_key: string;
       role: string;
       user: any;
     };
@@ -52,13 +52,14 @@ export const authenticate = async (
       return;
     }
 
-    const { email, panel_id, key } = parsed.data;
+    const { email, panel_id, api_key } = parsed.data;
 
     const user = await getDocs("users", panel_id, { find: { email } });
     const admin = await getDocs("admins", panel_id, { find: { email } });
 
     const keyMatches =
-      (user && user.key === key) || (admin && admin.key === key);
+      (user && user.api_key === api_key) ||
+      (admin && admin.api_key === api_key);
 
     if (!keyMatches) {
       res.status(401).json({ error: "Key mismatch" });
@@ -68,7 +69,7 @@ export const authenticate = async (
     req.auth = {
       email,
       panel_id,
-      key,
+      api_key,
       role: admin ? admin.role || "admin" : "user",
       user: admin || user,
     };

@@ -7,41 +7,21 @@ import {
   deletePanelDocs,
 } from "../crud";
 import type { Request, Response } from "express";
+import { AuthSchema } from "../schemas/user.schema";
+import {
+  DeleteServiceInputSchema,
+  DeleteMultipleServicesInputSchema,
+  ServiceUpdateInputSchema,
+  ServiceCreateInputSchema,
+} from "../schemas/service.schema";
 
 const getServicesSchema = z.object({
   panel_id: z.coerce.number(),
 });
 
-const authSchema = z.object({
-  panel_id: z.coerce.number(),
-  role: z.string(),
-  user: z.object({}).catchall(z.unknown()),
-});
-
 const serviceIdSchema = z.object({
   service_id: z.coerce.number(),
   panel_id: z.coerce.number(),
-});
-
-const updateServiceSchema = z.object({
-  uid: z.string(),
-  name: z.string().optional(),
-  type: z.string().optional(),
-  status: z.string().optional(),
-  min: z.coerce.number().optional(),
-  max: z.coerce.number().optional(),
-  refill_days: z.coerce.number().optional(),
-  sync_quantity: z.boolean().optional(),
-  sync_cat_and_name: z.boolean().optional(),
-  drip_feed: z.boolean().optional(),
-  category: z.string().optional(),
-  description: z.string().optional(),
-  price: z.coerce.number().optional(),
-  position: z.coerce.number().optional(),
-});
-
-const deleteServiceSchema = z.object({
-  uid: z.string(),
 });
 
 export const getServices = async (
@@ -84,7 +64,7 @@ export const getServicesForAdmins = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const parsed = authSchema.safeParse(req.auth);
+  const parsed = AuthSchema.safeParse(req.auth);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -144,7 +124,7 @@ export const getServiceByIDFromAdmin = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = authSchema.safeParse(req.auth);
+  const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = serviceIdSchema.safeParse(req.params);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -175,8 +155,8 @@ export const updateService = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = authSchema.safeParse(req.auth);
-  const parsed = updateServiceSchema.safeParse(req.body);
+  const authParsed = AuthSchema.safeParse(req.auth);
+  const parsed = ServiceUpdateInputSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -208,8 +188,8 @@ export const deleteService = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = authSchema.safeParse(req.auth);
-  const parsed = deleteServiceSchema.safeParse(req.body);
+  const authParsed = AuthSchema.safeParse(req.auth);
+  const parsed = DeleteServiceInputSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -238,12 +218,8 @@ export const deleteMultipleService = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = authSchema.safeParse(req.auth);
-  const parsed = z
-    .object({
-      uids: z.array(z.string()),
-    })
-    .safeParse(req.body);
+  const authParsed = AuthSchema.safeParse(req.auth);
+  const parsed = DeleteMultipleServicesInputSchema.safeParse(req.body);
 
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -275,7 +251,7 @@ export const getServicesByProviderId = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = authSchema.safeParse(req.auth);
+  const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = z
     .object({
       provider_id: z.coerce.number(),
@@ -312,28 +288,8 @@ export const addService = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = authSchema.safeParse(req.auth);
-  const parsed = z
-    .object({
-      name: z.string(),
-      category: z.string(),
-      type: z.string(),
-      min: z.coerce.number(),
-      max: z.coerce.number(),
-      price: z.coerce.number(),
-      provider_price: z.coerce.number().optional(),
-      provider_id: z.coerce.number().optional(),
-      description: z.string().optional(),
-      position: z.coerce.number().optional(),
-      refill_days: z.coerce.number().optional(),
-      sync_quantity: z.boolean().optional(),
-      sync_cat_and_name: z.boolean().optional(),
-      drip_feed: z.boolean().optional(),
-      network: z.string().optional(),
-      refill: z.boolean().optional(),
-      cancel: z.boolean().optional(),
-    })
-    .safeParse(req.body);
+  const authParsed = AuthSchema.safeParse(req.auth);
+  const parsed = ServiceCreateInputSchema.safeParse(req.body);
 
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });

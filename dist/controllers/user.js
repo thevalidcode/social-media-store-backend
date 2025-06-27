@@ -11,6 +11,7 @@ const uuid_1 = require("uuid");
 const crud_1 = require("../crud");
 const emails_1 = require("../utils/emails");
 const env_1 = require("../config/env");
+const user_schema_1 = require("../schemas/user.schema");
 const createUserSchema = zod_1.z.object({
     panel_id: zod_1.z.coerce.number(),
     email: zod_1.z.string().email(),
@@ -34,9 +35,14 @@ const updateUserSchema = zod_1.z.object({
     }),
 });
 const getUsers = async (req, res) => {
-    const { panel_id, role } = req.auth;
-    if (role !== "admin") {
-        res.status(403).json({ error: "Access denied. Admins only." });
+    const parsed = user_schema_1.AuthSchema.safeParse(req.auth);
+    if (!parsed.success) {
+        res.status(400).json({ error: parsed.error.flatten() });
+        return;
+    }
+    const { panel_id, role } = parsed.data;
+    if (role === "user") {
+        res.status(403).json({ error: "Unauthorised User." });
         return;
     }
     try {
@@ -75,7 +81,7 @@ const createUser = async (req, res) => {
             await (0, crud_1.addPanelDoc)("referrals", { username, user_id: parseInt(ref) }, panel_id);
         }
         const newUser = await (0, crud_1.addPanelDoc)("users", userData, panel_id);
-        const token = jsonwebtoken_1.default.sign({ email, panel_id, key: newUser.api_key }, process.env.JWT_SECRET, { expiresIn: "7d" });
+        const token = jsonwebtoken_1.default.sign({ email, panel_id, api_key: newUser.api_key }, process.env.JWT_SECRET, { expiresIn: "7d" });
         await (0, emails_1.sendEmail)(undefined, "new_user", userData, panel_id);
         res.status(200).send({
             success: "Created Successfully",
@@ -122,8 +128,8 @@ const me = async (req, res) => {
             res.status(400).json({ error: "Incorrect login details" });
             return;
         }
-        const key = account.key || (0, uuid_1.v4)();
-        const token = jsonwebtoken_1.default.sign({ email, panel_id, key }, env_1.env.JWT_SECRET, {
+        const api_key = account.api_key || (0, uuid_1.v4)();
+        const token = jsonwebtoken_1.default.sign({ email, panel_id, api_key }, env_1.env.JWT_SECRET, {
             expiresIn: "7d",
         });
         delete account.password;
@@ -145,9 +151,14 @@ const me = async (req, res) => {
 exports.me = me;
 const getUserByUid = async (req, res) => {
     const { uid } = req.params;
-    const { panel_id, role } = req.auth;
-    if (role !== "admin") {
-        res.status(403).json({ error: "Access denied. Admins only." });
+    const parsed = user_schema_1.AuthSchema.safeParse(req.auth);
+    if (!parsed.success) {
+        res.status(400).json({ error: parsed.error.flatten() });
+        return;
+    }
+    const { panel_id, role } = parsed.data;
+    if (role === "user") {
+        res.status(403).json({ error: "Unauthorised User." });
         return;
     }
     try {
@@ -163,15 +174,20 @@ const getUserByUid = async (req, res) => {
 };
 exports.getUserByUid = getUserByUid;
 const deleteUser = async (req, res) => {
-    const { panel_id, role } = req.auth;
+    const authParsed = user_schema_1.AuthSchema.safeParse(req.auth);
+    const { uid } = req.body;
+    if (!authParsed.success) {
+        res.status(400).json({ error: authParsed.error.flatten() });
+        return;
+    }
+    const { panel_id, role } = authParsed.data;
+    if (role === "user") {
+        res.status(403).json({ error: "Access denied, Admins only." });
+        return;
+    }
     const parsed = deleteUserSchema.safeParse(req.body);
     if (!parsed.success) {
         res.status(400).json({ error: parsed.error.flatten() });
-        return;
-    }
-    const { uid } = parsed.data;
-    if (role !== "admin") {
-        res.status(403).json({ error: "Access denied. Admins only." });
         return;
     }
     try {
@@ -184,15 +200,20 @@ const deleteUser = async (req, res) => {
 };
 exports.deleteUser = deleteUser;
 const deleteUsers = async (req, res) => {
-    const { panel_id, role } = req.auth;
     const parsed = deleteUsersSchema.safeParse(req.body);
     if (!parsed.success) {
         res.status(400).json({ error: parsed.error.flatten() });
         return;
     }
     const { uids } = parsed.data;
-    if (role !== "admin") {
-        res.status(403).json({ error: "Access denied. Admins only." });
+    const authParsed = user_schema_1.AuthSchema.safeParse(req.auth);
+    if (!authParsed.success) {
+        res.status(400).json({ error: authParsed.error.flatten() });
+        return;
+    }
+    const { panel_id, role } = authParsed.data;
+    if (role === "user") {
+        res.status(403).json({ error: "Access denied, Admins only." });
         return;
     }
     try {
@@ -205,7 +226,16 @@ const deleteUsers = async (req, res) => {
 };
 exports.deleteUsers = deleteUsers;
 const updateUser = async (req, res) => {
-    const { panel_id, role } = req.auth;
+    const authParsed = user_schema_1.AuthSchema.safeParse(req.auth);
+    if (!authParsed.success) {
+        res.status(400).json({ error: authParsed.error.flatten() });
+        return;
+    }
+    const { panel_id, role } = authParsed.data;
+    if (role === "user") {
+        res.status(403).json({ error: "Access denied, Admins only." });
+        return;
+    }
     const parsed = updateUserSchema.safeParse(req.body);
     if (!parsed.success) {
         res.status(400).json({ error: parsed.error.flatten() });

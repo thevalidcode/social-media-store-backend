@@ -1,0 +1,199 @@
+import { registry } from "../components/registry";
+import { z } from "zod";
+import {
+  AuthenticateUserSchema,
+  CreateUserInputSchema,
+  UserUpdateRequestSchema,
+  UserSchema,
+  UserPublicSchema,
+} from "../../schemas/user.schema";
+
+import {
+  UpdateSuccess,
+  InvalidData,
+  UsersListResponse,
+} from "../responses/user.response";
+
+import {
+  BadRequest,
+  Forbidden,
+  ServerError,
+  SuccessResponse,
+} from "../responses/common.response";
+
+// Authenticate user
+registry.registerPath({
+  method: "post",
+  path: "/user/me",
+  summary: "Authenticate user",
+  tags: ["Users"],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: AuthenticateUserSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Authenticated user session object",
+      content: {
+        "application/json": {
+          schema: UserSchema,
+        },
+      },
+    },
+    400: BadRequest,
+    500: ServerError,
+  },
+});
+
+// Get all users (admin)
+registry.registerPath({
+  method: "get",
+  path: "/user",
+  summary: "Get all users",
+  tags: ["Users"],
+  security: [{ bearerAuth: [] }],
+  responses: {
+    200: UsersListResponse,
+    403: Forbidden,
+    500: ServerError,
+  },
+});
+
+// Get single user by UID
+registry.registerPath({
+  method: "get",
+  path: "/user/{uid}",
+  summary: "Get user by UID",
+  tags: ["Users"],
+  security: [{ bearerAuth: [] }],
+  parameters: [
+    {
+      name: "uid",
+      in: "path",
+      required: true,
+      schema: { type: "string" },
+    },
+  ],
+  responses: {
+    200: {
+      description: "Public-facing user profile",
+      content: {
+        "application/json": {
+          schema: UserPublicSchema,
+        },
+      },
+    },
+    403: Forbidden,
+    500: ServerError,
+  },
+});
+
+// Create user
+registry.registerPath({
+  method: "post",
+  path: "/user",
+  summary: "Create a new user",
+  tags: ["Users"],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: CreateUserInputSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    204: {
+      description: "User created successfully (no body)",
+      content: {
+        "application/json": {
+          schema: z.object({
+            success: z.string(),
+          }),
+        },
+      },
+    },
+    400: BadRequest,
+    500: ServerError,
+  },
+});
+
+// Update user
+registry.registerPath({
+  method: "put",
+  path: "/user",
+  summary: "Update user info",
+  tags: ["Users"],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: UserUpdateRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: UpdateSuccess,
+    400: InvalidData,
+    500: ServerError,
+  },
+});
+
+// Delete single user
+registry.registerPath({
+  method: "delete",
+  path: "/user",
+  summary: "Delete a single user",
+  tags: ["Users"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            uid: z.string(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: SuccessResponse,
+    400: BadRequest,
+    403: Forbidden,
+    500: ServerError,
+  },
+});
+
+// Delete multiple users
+registry.registerPath({
+  method: "delete",
+  path: "/user/multiple",
+  summary: "Delete multiple users",
+  tags: ["Users"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            uids: z.array(z.string()),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: SuccessResponse,
+    400: BadRequest,
+    403: Forbidden,
+    500: ServerError,
+  },
+});

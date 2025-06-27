@@ -6,9 +6,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon",
     "start": "node index.js",
-    "build": "tsc && npm run copy:extras && npm run swagger",
-    "swagger": "npx swagger-cli bundle src/docs/openapi.yaml -o src/docs/swagger-bundled.yaml -t yaml",
-    "copy:extras": "xcopy package.json dist\\ /Y && xcopy src\\docs dist\\docs\\ /E /I /Y",
+    "build": "tsc && npm run copy:extras",
+    "copy:extras": "xcopy package.json dist\\ /Y",
     "dev:migrate": "ts-node src/models/index.ts",
     "migrate": "node models/index.js"
   },
@@ -16,6 +15,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^7.3.4",
     "axios": "^1.6.8",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",

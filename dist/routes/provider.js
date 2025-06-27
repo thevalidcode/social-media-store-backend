@@ -41,6 +41,7 @@ const router = express_1.default.Router();
 const providers = __importStar(require("../controllers/provider"));
 const authenticate_1 = require("../middleware/authenticate");
 router.post("/services/import", authenticate_1.authenticate, providers.importServices);
+router.post("/services", authenticate_1.authenticate, providers.getProviderServices);
 router.post("/", authenticate_1.authenticate, providers.addProvider);
 router.get("/", authenticate_1.authenticate, providers.getProviders);
 router.put("/", authenticate_1.authenticate, providers.updateProvider);

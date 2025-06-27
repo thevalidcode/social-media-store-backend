@@ -101,7 +101,7 @@ router.get(
       }
 
       const token = jwt.sign(
-        { email: user.email, panel_id, key: user.api_key },
+        { email: user.email, panel_id, api_key: user.api_key },
         env.JWT_SECRET,
         { expiresIn: "7d" }
       );

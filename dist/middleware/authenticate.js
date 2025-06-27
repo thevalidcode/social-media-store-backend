@@ -12,7 +12,7 @@ const zod_1 = require("zod");
 const tokenPayloadSchema = zod_1.z.object({
     email: zod_1.z.string().email(),
     panel_id: zod_1.z.number(),
-    key: zod_1.z.string(),
+    api_key: zod_1.z.string(),
 });
 // Middleware to authenticate JWT token
 const authenticate = async (req, res, next) => {
@@ -33,10 +33,11 @@ const authenticate = async (req, res, next) => {
             res.status(401).json({ error: "Invalid token payload" });
             return;
         }
-        const { email, panel_id, key } = parsed.data;
+        const { email, panel_id, api_key } = parsed.data;
         const user = await (0, crud_1.getDocs)("users", panel_id, { find: { email } });
         const admin = await (0, crud_1.getDocs)("admins", panel_id, { find: { email } });
-        const keyMatches = (user && user.key === key) || (admin && admin.key === key);
+        const keyMatches = (user && user.api_key === api_key) ||
+            (admin && admin.api_key === api_key);
         if (!keyMatches) {
             res.status(401).json({ error: "Key mismatch" });
             return;
@@ -44,7 +45,7 @@ const authenticate = async (req, res, next) => {
         req.auth = {
             email,
             panel_id,
-            key,
+            api_key,
             role: admin ? admin.role || "admin" : "user",
             user: admin || user,
         };

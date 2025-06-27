@@ -19,7 +19,7 @@ const provider_1 = __importDefault(require("./routes/provider"));
 const admin_1 = __importDefault(require("./routes/admin"));
 const category_1 = __importDefault(require("./routes/category"));
 const crud_1 = require("./crud");
-const swagger_1 = __importDefault(require("./middleware/swagger"));
+const swagger_1 = __importDefault(require("./docs/swagger"));
 const app = (0, express_1.default)();
 // --- Dynamic CORS ---
 let allowedOrigins = [];

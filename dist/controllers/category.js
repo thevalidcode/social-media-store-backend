@@ -3,11 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.addCategory = exports.deleteMultipleCategory = exports.deleteCategory = exports.updateCategory = exports.getCategoryByID = exports.getCategories = void 0;
 const zod_1 = require("zod");
 const crud_1 = require("../crud");
-const authSchema = zod_1.z.object({
-    panel_id: zod_1.z.coerce.number(),
-    role: zod_1.z.string(),
-    user: zod_1.z.object({}).catchall(zod_1.z.unknown()),
-});
+const user_schema_1 = require("../schemas/user.schema");
 const categoryIdSchema = zod_1.z.object({
     category_id: zod_1.z.coerce.number(),
     panel_id: zod_1.z.coerce.number(),
@@ -57,7 +53,7 @@ const getCategoryByID = async (req, res) => {
 };
 exports.getCategoryByID = getCategoryByID;
 const updateCategory = async (req, res) => {
-    const authParsed = authSchema.safeParse(req.auth);
+    const authParsed = user_schema_1.AuthSchema.safeParse(req.auth);
     const parsed = updateCategorySchema.safeParse(req.body);
     if (!parsed.success) {
         res.status(400).json({ error: parsed.error.flatten() });
@@ -88,7 +84,7 @@ const updateCategory = async (req, res) => {
 };
 exports.updateCategory = updateCategory;
 const deleteCategory = async (req, res) => {
-    const authParsed = authSchema.safeParse(req.auth);
+    const authParsed = user_schema_1.AuthSchema.safeParse(req.auth);
     const parsed = deleteCategorySchema.safeParse(req.body);
     if (!parsed.success) {
         res.status(400).json({ error: parsed.error.flatten() });
@@ -114,7 +110,7 @@ const deleteCategory = async (req, res) => {
 };
 exports.deleteCategory = deleteCategory;
 const deleteMultipleCategory = async (req, res) => {
-    const authParsed = authSchema.safeParse(req.auth);
+    const authParsed = user_schema_1.AuthSchema.safeParse(req.auth);
     const parsed = zod_1.z
         .object({
         uids: zod_1.z.array(zod_1.z.string()),
@@ -144,7 +140,7 @@ const deleteMultipleCategory = async (req, res) => {
 };
 exports.deleteMultipleCategory = deleteMultipleCategory;
 const addCategory = async (req, res) => {
-    const authParsed = authSchema.safeParse(req.auth);
+    const authParsed = user_schema_1.AuthSchema.safeParse(req.auth);
     const parsed = zod_1.z
         .object({
         name: zod_1.z.string(),

@@ -1,6 +1,5 @@
 import { z } from "zod";
 import axios from "axios";
-import { v4 as uuidv4 } from "uuid";
 import type { Request, Response } from "express";
 
 import {
@@ -11,27 +10,67 @@ import {
   deletePanelDocs,
 } from "../crud";
 import { decryptKey, encryptKey } from "../utils/encrypt";
+import { AuthSchema } from "../schemas/user.schema";
+import {
+  ImportProviderServicesRequestSchema,
+  ProviderServicesSchema,
+} from "../schemas/provider.schema";
 
-// Auth and input validation
-const authSchema = z.object({
-  panel_id: z.coerce.number(),
-  role: z.string(),
-  user: z.object({}).catchall(z.unknown()),
-});
+export const getProviderServices = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authParsed = AuthSchema.safeParse(req.auth);
+  const bodyParsed = ProviderServicesSchema.safeParse(req.body);
+  if (!authParsed.success || !bodyParsed.success) {
+    res.status(400).json({
+      error: {
+        auth: !authParsed.success ? authParsed.error.flatten() : undefined,
+        body: !bodyParsed.success ? bodyParsed.error.flatten() : undefined,
+      },
+    });
+    return;
+  }
 
-const importSchema = z.object({
-  provider_services_id: z.array(z.coerce.number()),
-  import_percent: z.coerce.number(),
-  category: z.object({ value: z.string(), label: z.string() }),
-  provider: z.string(),
-});
+  const { panel_id, role } = authParsed.data;
+  const { provider } = bodyParsed.data;
+
+  if (role === "user") {
+    res.status(403).json({ error: "Access denied. Admins only." });
+    return;
+  }
+  try {
+    const providerData = await getDocs("providers", panel_id, {
+      find: { url: provider },
+    });
+
+    if (!providerData) {
+      res.status(404).json({ error: "Provider not found." });
+      return;
+    }
+
+    const decryptedKey = decryptKey(
+      providerData.api_key.encrypted_key,
+      providerData.api_key.iv
+    );
+
+    const providerResponse = await axios.post(`${provider}`, {
+      action: "services",
+      key: decryptedKey,
+    });
+
+    res.status(200).json(providerResponse.data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
 export const importServices = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = authSchema.safeParse(req.auth);
-  const bodyParsed = importSchema.safeParse(req.body);
+  const authParsed = AuthSchema.safeParse(req.auth);
+  const bodyParsed = ImportProviderServicesRequestSchema.safeParse(req.body);
 
   if (!authParsed.success || !bodyParsed.success) {
     res.status(400).json({
@@ -101,12 +140,9 @@ export const importServices = async (
           await addPanelDoc(
             "categories",
             {
-              id: categoryId,
               name: service.category,
-              timestamp: new Date(),
               status: "active",
               position: categoryId,
-              uid: uuidv4(),
             },
             panel_id
           );
@@ -132,7 +168,6 @@ export const importServices = async (
           description: service.description || "",
           provider_price: baseRate,
           panel_id,
-          timestamp: new Date(),
           status: "active",
           sync_quantity: true,
           sync_cat_and_name: true,
@@ -145,7 +180,6 @@ export const importServices = async (
           drip_feed: false,
           provider,
           provider_currency,
-          uid: uuidv4(),
         },
         panel_id
       );
@@ -169,7 +203,7 @@ export const addProvider = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = authSchema.safeParse(req.auth);
+  const authParsed = AuthSchema.safeParse(req.auth);
   const bodyParsed = addProviderSchema.safeParse(req.body);
 
   if (!authParsed.success || !bodyParsed.success) {
@@ -216,7 +250,7 @@ export const getProviders = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = authSchema.safeParse(req.auth);
+  const authParsed = AuthSchema.safeParse(req.auth);
 
   if (!authParsed.success) {
     res.status(400).json({
@@ -256,7 +290,7 @@ export const updateProvider = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = authSchema.safeParse(req.auth);
+  const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = updateProviderSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -300,7 +334,7 @@ export const deleteProvider = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = authSchema.safeParse(req.auth);
+  const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = deleteProviderSchema.safeParse(req.body);
 
   if (!authParsed.success || !parsed.success) {
@@ -337,7 +371,7 @@ export const deleteMultipleProviders = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = authSchema.safeParse(req.auth);
+  const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = deleteMultipleProviderSchema.safeParse(req.body);
 
   if (!authParsed.success || !parsed.success) {
