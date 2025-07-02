@@ -49,6 +49,17 @@ export const AuthenticateUserSchema = z
   })
   .openapi("AuthenticateUser");
 
+export const AuthenticateUserResponseSchema = z.object({
+  success: z.literal("Logged in successfully"),
+  role: z.enum(["user", "admin"]),
+  token: z.string().jwt(),
+  user: z.object({
+    id: z.coerce.number().describe("User id"),
+    email: z.string().email().describe("User email"),
+    username: z.string().describe("User username"),
+  }),
+});
+
 export const CreateUserInputSchema = z
   .object({
     email: z.string().email().describe("User email"),

@@ -19,8 +19,10 @@ const provider_1 = __importDefault(require("./routes/provider"));
 const admin_1 = __importDefault(require("./routes/admin"));
 const category_1 = __importDefault(require("./routes/category"));
 const order_1 = __importDefault(require("./routes/order"));
+const version_1 = __importDefault(require("./routes/version"));
 const crud_1 = require("./crud");
 const swagger_1 = __importDefault(require("./docs/swagger"));
+const path_1 = __importDefault(require("path"));
 const app = (0, express_1.default)();
 // --- Dynamic CORS ---
 let allowedOrigins = [];
@@ -53,6 +55,7 @@ app.use((0, cors_1.default)({
 // --- Middleware ---
 app.use(body_parser_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
+app.use("/assets", express_1.default.static(path_1.default.join(__dirname, "public", "assets")));
 // --- Session ---
 const pgSess = (0, connect_pg_simple_1.default)(express_session_1.default);
 app.use((0, express_session_1.default)({
@@ -78,6 +81,7 @@ app.use("/provider", provider_1.default);
 app.use("/category", category_1.default);
 app.use("/order", order_1.default);
 app.use("/admin", admin_1.default);
+app.use("/", version_1.default);
 // --- Swagger ---
 app.use(swagger_1.default);
 exports.default = app;

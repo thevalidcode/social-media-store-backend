@@ -6,10 +6,10 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon",
     "start": "node index.js",
-    "build": "tsc && npm run copy:extras",
-    "copy:extras": "xcopy package.json dist\\ /Y",
+    "build": "tsc && node src/copy-static.js",
     "dev:migrate": "ts-node src/models/index.ts",
-    "migrate": "node models/index.js"
+    "migrate": "node models/index.js",
+    "release": "standard-version && git push --follow-tags"
   },
   "keywords": [],
   "author": "",
@@ -59,6 +59,7 @@
     "@types/swagger-ui-express": "^4.1.8",
     "@types/uuid": "^10.0.0",
     "@types/yamljs": "^0.2.34",
+    "standard-version": "^9.5.0",
     "swagger-cli": "^4.0.4",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",

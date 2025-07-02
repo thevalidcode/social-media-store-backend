@@ -1,10 +1,10 @@
 import { registry } from "../components/registry";
 import { z } from "zod";
 import {
+  AuthenticateUserResponseSchema,
   AuthenticateUserSchema,
   CreateUserInputSchema,
   UserUpdateRequestSchema,
-  UserSchema,
   UserPublicSchema,
 } from "../../schemas/user.schema";
 
@@ -41,7 +41,7 @@ registry.registerPath({
       description: "Authenticated user session object",
       content: {
         "application/json": {
-          schema: UserSchema,
+          schema: AuthenticateUserResponseSchema,
         },
       },
     },
@@ -110,11 +110,17 @@ registry.registerPath({
   },
   responses: {
     204: {
-      description: "User created successfully (no body)",
+      description: "User created successfully",
       content: {
         "application/json": {
           schema: z.object({
             success: z.string(),
+            token: z.string().jwt(),
+            user: z.object({
+              id: z.coerce.number().describe("User id"),
+              email: z.string().email().describe("User email"),
+              username: z.string().describe("User username"),
+            }),
           }),
         },
       },

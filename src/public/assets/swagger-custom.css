@@ -1,0 +1,12 @@
+.topbar-wrapper .link svg {
+  visibility: hidden;
+  display: none;
+}
+
+.topbar-wrapper .link::after {
+  content: "Social Media Store";
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: white;
+  font-weight: bold;
+  font-size: 24px;
+}

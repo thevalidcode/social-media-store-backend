@@ -92,6 +92,42 @@ export declare const AuthenticateUserSchema: z.ZodObject<{
     email: string;
     panel_id: number;
 }>;
+export declare const AuthenticateUserResponseSchema: z.ZodObject<{
+    success: z.ZodLiteral<"Logged in successfully">;
+    role: z.ZodEnum<["user", "admin"]>;
+    token: z.ZodString;
+    user: z.ZodObject<{
+        id: z.ZodNumber;
+        email: z.ZodString;
+        username: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        id: number;
+        username: string;
+        email: string;
+    }, {
+        id: number;
+        username: string;
+        email: string;
+    }>;
+}, "strip", z.ZodTypeAny, {
+    user: {
+        id: number;
+        username: string;
+        email: string;
+    };
+    success: "Logged in successfully";
+    role: "user" | "admin";
+    token: string;
+}, {
+    user: {
+        id: number;
+        username: string;
+        email: string;
+    };
+    success: "Logged in successfully";
+    role: "user" | "admin";
+    token: string;
+}>;
 export declare const CreateUserInputSchema: z.ZodObject<{
     email: z.ZodString;
     username: z.ZodString;

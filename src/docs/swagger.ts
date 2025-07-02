@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import swaggerUi from "swagger-ui-express";
 import { OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi";
 import { registry } from "./paths/index.paths";
+import { API_VERSION } from "../version";
 
 const swaggerRouter = Router();
 
@@ -15,7 +16,7 @@ const openApiDocument = generator.generateDocument({
   openapi: "3.0.0",
   info: {
     title: "Valid Panel - Social Media Store API Documentation",
-    version: "1.0.0",
+    version: API_VERSION,
     description:
       "Comprehensive API documentation for the Social Media Store feature of Valid Panel, covering all user and admin endpoints related to service ordering, wallet operations, referrals, authentication, and store management.",
     contact: {
@@ -54,7 +55,11 @@ swaggerRouter.use(
   "/admin/docs",
   isAdmin,
   swaggerUi.serve,
-  swaggerUi.setup(openApiDocument)
+  swaggerUi.setup(openApiDocument, {
+    customCssUrl: "/assets/swagger-custom.css",
+    customfavIcon: "/assets/validpanel-removedbg.png",
+    customSiteTitle: "Social Media Store API Docs",
+  })
 );
 
 export default swaggerRouter;

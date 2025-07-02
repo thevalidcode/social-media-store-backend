@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import session from "express-session";
@@ -15,8 +15,10 @@ import providerRoutes from "./routes/provider";
 import adminRoutes from "./routes/admin";
 import categoryRoutes from "./routes/category";
 import orderRoutes from "./routes/order";
+import versionRouter from "./routes/version";
 import { getDocs } from "./crud";
 import swaggerRouter from "./docs/swagger";
+import path from "path";
 
 const app = express();
 
@@ -56,6 +58,7 @@ app.use(
 // --- Middleware ---
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/assets", express.static(path.join(__dirname, "public", "assets")));
 
 // --- Session ---
 const pgSess = pgSession(session);
@@ -86,6 +89,7 @@ app.use("/provider", providerRoutes);
 app.use("/category", categoryRoutes);
 app.use("/order", orderRoutes);
 app.use("/admin", adminRoutes);
+app.use("/", versionRouter);
 
 // --- Swagger ---
 app.use(swaggerRouter);

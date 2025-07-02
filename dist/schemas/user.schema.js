@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GoogleAuthRequestSchema = exports.AdminPublicSchema = exports.CreateUserInputSchema = exports.AuthenticateUserSchema = exports.UserUpdateRequestSchema = exports.UserPublicSchema = exports.UserSchema = exports.AuthSchema = void 0;
+exports.GoogleAuthRequestSchema = exports.AdminPublicSchema = exports.CreateUserInputSchema = exports.AuthenticateUserResponseSchema = exports.AuthenticateUserSchema = exports.UserUpdateRequestSchema = exports.UserPublicSchema = exports.UserSchema = exports.AuthSchema = void 0;
 const zod_1 = require("zod");
 const zod_to_openapi_1 = require("@asteasolutions/zod-to-openapi");
 (0, zod_to_openapi_1.extendZodWithOpenApi)(zod_1.z);
@@ -45,6 +45,16 @@ exports.AuthenticateUserSchema = zod_1.z
     password: zod_1.z.string().describe("User password"),
 })
     .openapi("AuthenticateUser");
+exports.AuthenticateUserResponseSchema = zod_1.z.object({
+    success: zod_1.z.literal("Logged in successfully"),
+    role: zod_1.z.enum(["user", "admin"]),
+    token: zod_1.z.string().jwt(),
+    user: zod_1.z.object({
+        id: zod_1.z.coerce.number().describe("User id"),
+        email: zod_1.z.string().email().describe("User email"),
+        username: zod_1.z.string().describe("User username"),
+    }),
+});
 exports.CreateUserInputSchema = zod_1.z
     .object({
     email: zod_1.z.string().email().describe("User email"),

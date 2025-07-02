@@ -23,6 +23,7 @@ registry.registerPath({
   path: "/provider",
   summary: "Add a new provider",
   tags: ["Providers"],
+  security: [{ bearerAuth: [] }],
   request: {
     body: {
       content: {
@@ -46,6 +47,7 @@ registry.registerPath({
   path: "/provider",
   summary: "Get all providers",
   tags: ["Providers"],
+  security: [{ bearerAuth: [] }],
   responses: {
     200: ProviderListResponse,
     400: BadRequest,
@@ -60,6 +62,7 @@ registry.registerPath({
   path: "/provider",
   summary: "Update provider details",
   tags: ["Providers"],
+  security: [{ bearerAuth: [] }],
   request: {
     body: {
       content: {
@@ -83,6 +86,7 @@ registry.registerPath({
   path: "/provider",
   summary: "Delete a provider",
   tags: ["Providers"],
+  security: [{ bearerAuth: [] }],
   request: {
     body: {
       content: {
@@ -112,6 +116,7 @@ registry.registerPath({
   path: "/provider/multiple",
   summary: "Delete multiple providers",
   tags: ["Providers"],
+  security: [{ bearerAuth: [] }],
   request: {
     body: {
       content: {
@@ -144,6 +149,7 @@ registry.registerPath({
   path: "/provider/services/import",
   summary: "Import provider services",
   tags: ["Providers"],
+  security: [{ bearerAuth: [] }],
   request: {
     body: {
       content: {
@@ -166,6 +172,7 @@ registry.registerPath({
   path: "/provider/services/",
   summary: "Get provider services",
   tags: ["Providers"],
+  security: [{ bearerAuth: [] }],
   request: {
     body: {
       content: {

@@ -25,7 +25,7 @@ registry_1.registry.registerPath({
             description: "Authenticated user session object",
             content: {
                 "application/json": {
-                    schema: user_schema_1.UserSchema,
+                    schema: user_schema_1.AuthenticateUserResponseSchema,
                 },
             },
         },
@@ -91,11 +91,17 @@ registry_1.registry.registerPath({
     },
     responses: {
         204: {
-            description: "User created successfully (no body)",
+            description: "User created successfully",
             content: {
                 "application/json": {
                     schema: zod_1.z.object({
                         success: zod_1.z.string(),
+                        token: zod_1.z.string().jwt(),
+                        user: zod_1.z.object({
+                            id: zod_1.z.coerce.number().describe("User id"),
+                            email: zod_1.z.string().email().describe("User email"),
+                            username: zod_1.z.string().describe("User username"),
+                        }),
                     }),
                 },
             },

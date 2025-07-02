@@ -7,6 +7,7 @@ const express_1 = require("express");
 const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
 const zod_to_openapi_1 = require("@asteasolutions/zod-to-openapi");
 const index_paths_1 = require("./paths/index.paths");
+const version_1 = require("../version");
 const swaggerRouter = (0, express_1.Router)();
 function isAdmin(req, res, next) {
     if (req.session && req.session.isAdmin)
@@ -18,7 +19,7 @@ const openApiDocument = generator.generateDocument({
     openapi: "3.0.0",
     info: {
         title: "Valid Panel - Social Media Store API Documentation",
-        version: "1.0.0",
+        version: version_1.API_VERSION,
         description: "Comprehensive API documentation for the Social Media Store feature of Valid Panel, covering all user and admin endpoints related to service ordering, wallet operations, referrals, authentication, and store management.",
         contact: {
             name: "Valid Code",
@@ -51,5 +52,9 @@ const openApiDocument = generator.generateDocument({
         },
     ],
 });
-swaggerRouter.use("/admin/docs", isAdmin, swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(openApiDocument));
+swaggerRouter.use("/admin/docs", isAdmin, swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(openApiDocument, {
+    customCssUrl: "/assets/swagger-custom.css",
+    customfavIcon: "/assets/validpanel-removedbg.png",
+    customSiteTitle: "Social Media Store API Docs",
+}));
 exports.default = swaggerRouter;

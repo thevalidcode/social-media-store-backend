@@ -1,3 +1,11 @@
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 
-export const registry = new OpenAPIRegistry();
+const registry = new OpenAPIRegistry();
+
+registry.registerComponent("securitySchemes", "BearerAuth", {
+  type: "http",
+  scheme: "bearer",
+  bearerFormat: "JWT",
+});
+
+export { registry };
