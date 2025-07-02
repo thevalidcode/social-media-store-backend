@@ -9,7 +9,7 @@
     "build": "tsc && node src/copy-static.js",
     "dev:migrate": "ts-node src/models/index.ts",
     "migrate": "node models/index.js",
-    "release": "standard-version && git push --follow-tags"
+    "release": "standard-version && node src/copy-static.js && git push --follow-tags"
   },
   "keywords": [],
   "author": "",
