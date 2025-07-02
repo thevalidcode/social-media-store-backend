@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.2](https://github.com/thevalidcode/social-media-store-backend/compare/v1.1.1...v1.1.2) (2025-07-02)
+
+
+### Bug Fixes
+
+* Used ftp-deploy to manage files that arent build by typescript. ([f49b123](https://github.com/thevalidcode/social-media-store-backend/commit/f49b12312e1309aaded4c801807204d2028f5b1d))
+
 ### [1.1.1](https://github.com/thevalidcode/social-media-store-backend/compare/v1.1.0...v1.1.1) (2025-07-02)
 
 
