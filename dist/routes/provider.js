@@ -44,7 +44,7 @@ router.post("/services/import", authenticate_1.authenticate, providers.importSer
 router.post("/services", authenticate_1.authenticate, providers.getProviderServices);
 router.post("/", authenticate_1.authenticate, providers.addProvider);
 router.get("/", authenticate_1.authenticate, providers.getProviders);
-router.put("/", authenticate_1.authenticate, providers.updateProvider);
+router.patch("/", authenticate_1.authenticate, providers.updateProvider);
 router.delete("/", authenticate_1.authenticate, providers.deleteProvider);
 router.delete("/multiple", authenticate_1.authenticate, providers.deleteMultipleProviders);
 exports.default = router;

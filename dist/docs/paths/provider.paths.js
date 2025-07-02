@@ -39,9 +39,9 @@ registry_1.registry.registerPath({
         500: common_response_1.ServerError,
     },
 });
-// PUT /provider
+// PATCH /provider
 registry_1.registry.registerPath({
-    method: "put",
+    method: "patch",
     path: "/provider",
     summary: "Update provider details",
     tags: ["Providers"],

@@ -2,6 +2,7 @@ import { z } from "zod";
 export declare const AuthSchema: z.ZodObject<{
     panel_id: z.ZodNumber;
     email: z.ZodString;
+    uid: z.ZodString;
     api_key: z.ZodString;
     role: z.ZodString;
     user: z.ZodObject<{}, "strip", z.ZodUnknown, z.objectOutputType<{}, z.ZodUnknown, "strip">, z.objectInputType<{}, z.ZodUnknown, "strip">>;
@@ -9,6 +10,7 @@ export declare const AuthSchema: z.ZodObject<{
     user: {} & {
         [k: string]: unknown;
     };
+    uid: string;
     email: string;
     panel_id: number;
     api_key: string;
@@ -17,6 +19,7 @@ export declare const AuthSchema: z.ZodObject<{
     user: {} & {
         [k: string]: unknown;
     };
+    uid: string;
     email: string;
     panel_id: number;
     api_key: string;

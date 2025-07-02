@@ -107,7 +107,7 @@ registry_1.registry.registerPath({
 });
 // Admin: Update a service
 registry_1.registry.registerPath({
-    method: "put",
+    method: "patch",
     path: "/service",
     summary: "Update a service",
     tags: ["Services"],

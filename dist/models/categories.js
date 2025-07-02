@@ -5,7 +5,7 @@ async function createCategoriesTable() {
     await db_1.pool.query(`
     CREATE TABLE IF NOT EXISTS categories (
       id INTEGER NOT NULL,
-      name TEXT UNIQUE NOT NULL,
+      name TEXT NOT NULL,
       timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
       status TEXT NOT NULL DEFAULT 'active',
       description TEXT NOT NULL DEFAULT '',
@@ -21,7 +21,7 @@ async function createCategoriesTable() {
     const existingCols = res.rows.map((row) => row.column_name);
     const expected = {
         id: `ALTER TABLE categories ADD COLUMN id INTEGER NOT NULL`,
-        name: `ALTER TABLE categories ADD COLUMN name TEXT UNIQUE NOT NULL`,
+        name: `ALTER TABLE categories ADD COLUMN name TEXT NOT NULL`,
         timestamp: `ALTER TABLE categories ADD COLUMN timestamp TIMESTAMP NOT NULL DEFAULT NOW()`,
         status: `ALTER TABLE categories ADD COLUMN status TEXT  NOT NULL  DEFAULT 'active'`,
         description: `ALTER TABLE categories ADD COLUMN description TEXT NOT NULL DEFAULT ''`,

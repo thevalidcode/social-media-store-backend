@@ -43,7 +43,7 @@ const authenticate_1 = require("../middleware/authenticate");
 router.get("/", categories.getCategories);
 router.get("/:category_id", categories.getCategoryByID);
 router.post("/", authenticate_1.authenticate, categories.addCategory);
-router.put("/", authenticate_1.authenticate, categories.updateCategory);
+router.patch("/", authenticate_1.authenticate, categories.updateCategory);
 router.delete("/", authenticate_1.authenticate, categories.deleteCategory);
 router.delete("/multiple", authenticate_1.authenticate, categories.deleteMultipleCategory);
 exports.default = router;

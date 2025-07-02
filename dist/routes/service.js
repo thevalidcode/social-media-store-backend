@@ -45,7 +45,7 @@ router.get("/admin", authenticate_1.authenticate, services.getServicesForAdmins)
 router.get("/:provider_id", authenticate_1.authenticate, services.getServicesByProviderId);
 router.get("/:service_id", services.getServiceByID);
 router.get("/admin/:service_id", authenticate_1.authenticate, services.getServiceByIDFromAdmin);
-router.put("/", authenticate_1.authenticate, services.updateService);
+router.patch("/", authenticate_1.authenticate, services.updateService);
 router.delete("/", authenticate_1.authenticate, services.deleteService);
 router.delete("/multiple", authenticate_1.authenticate, services.deleteMultipleService);
 exports.default = router;

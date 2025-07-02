@@ -49,9 +49,9 @@ registry_1.registry.registerPath({
         500: common_response_1.ServerError,
     },
 });
-// PUT /category (Admin)
+// PATCH /category (Admin)
 registry_1.registry.registerPath({
-    method: "put",
+    method: "patch",
     path: "/category",
     summary: "Update a category",
     tags: ["Categories"],

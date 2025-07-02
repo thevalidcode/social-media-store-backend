@@ -7,6 +7,7 @@ const zod_to_openapi_1 = require("@asteasolutions/zod-to-openapi");
 exports.AuthSchema = zod_1.z.object({
     panel_id: zod_1.z.coerce.number(),
     email: zod_1.z.string().email(),
+    uid: zod_1.z.string(),
     api_key: zod_1.z.string(),
     role: zod_1.z.string(),
     user: zod_1.z.object({}).catchall(zod_1.z.unknown()),

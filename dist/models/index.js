@@ -10,6 +10,7 @@ const user_1 = __importDefault(require("./user"));
 const service_1 = __importDefault(require("./service"));
 const design_styles_1 = __importDefault(require("./design_styles"));
 const currencies_1 = __importDefault(require("./currencies"));
+const orders_1 = __importDefault(require("./orders"));
 const admin_1 = __importDefault(require("./admin"));
 (async () => {
     try {
@@ -20,6 +21,7 @@ const admin_1 = __importDefault(require("./admin"));
         await (0, admin_1.default)();
         await (0, service_1.default)();
         await (0, design_styles_1.default)();
+        await (0, orders_1.default)();
         await (0, currencies_1.default)();
         console.log("Tables created successfully.");
         process.exit(0);

@@ -18,6 +18,7 @@ const service_1 = __importDefault(require("./routes/service"));
 const provider_1 = __importDefault(require("./routes/provider"));
 const admin_1 = __importDefault(require("./routes/admin"));
 const category_1 = __importDefault(require("./routes/category"));
+const order_1 = __importDefault(require("./routes/order"));
 const crud_1 = require("./crud");
 const swagger_1 = __importDefault(require("./docs/swagger"));
 const app = (0, express_1.default)();
@@ -75,6 +76,7 @@ app.use("/panel", panel_1.default);
 app.use("/service", service_1.default);
 app.use("/provider", provider_1.default);
 app.use("/category", category_1.default);
+app.use("/order", order_1.default);
 app.use("/admin", admin_1.default);
 // --- Swagger ---
 app.use(swagger_1.default);

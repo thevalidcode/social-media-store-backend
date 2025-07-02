@@ -10,3 +10,4 @@ require("./provider.paths");
 require("./category.paths");
 require("./panel.paths");
 require("./auth.paths");
+require("./order.paths");
