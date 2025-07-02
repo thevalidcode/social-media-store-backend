@@ -13,6 +13,12 @@ jobs:
       - name: 🚚 Get latest code
         uses: actions/checkout@v4
 
+      - name: 🗂 Copy public folder to dist
+        run: cp -r src/public dist/public
+
+      - name: 📦 Copy package.json to dist
+        run: cp package.json dist/package.json
+
       - name: 📂 Sync backend files
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:

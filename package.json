@@ -6,10 +6,10 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon",
     "start": "node index.js",
-    "build": "tsc && node src/copy-static.js",
+    "build": "tsc",
     "dev:migrate": "ts-node src/models/index.ts",
     "migrate": "node models/index.js",
-    "release": "standard-version && node src/copy-static.js && git push --follow-tags"
+    "release": "standard-version && git push --follow-tags"
   },
   "keywords": [],
   "author": "",
