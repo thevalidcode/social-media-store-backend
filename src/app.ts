@@ -14,6 +14,7 @@ import serviceRoutes from "./routes/service";
 import providerRoutes from "./routes/provider";
 import adminRoutes from "./routes/admin";
 import categoryRoutes from "./routes/category";
+import orderRoutes from "./routes/order";
 import { getDocs } from "./crud";
 import swaggerRouter from "./docs/swagger";
 
@@ -83,6 +84,7 @@ app.use("/panel", panelRoutes);
 app.use("/service", serviceRoutes);
 app.use("/provider", providerRoutes);
 app.use("/category", categoryRoutes);
+app.use("/order", orderRoutes);
 app.use("/admin", adminRoutes);
 
 // --- Swagger ---

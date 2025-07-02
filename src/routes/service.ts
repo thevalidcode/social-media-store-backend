@@ -12,7 +12,7 @@ router.get(
   authenticate,
   services.getServiceByIDFromAdmin
 );
-router.put("/", authenticate, services.updateService);
+router.patch("/", authenticate, services.updateService);
 router.delete("/", authenticate, services.deleteService);
 router.delete("/multiple", authenticate, services.deleteMultipleService);
 

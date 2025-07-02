@@ -1,14 +1,18 @@
 import { v4 as uuidv4 } from "uuid";
-import { pool } from "./config/db";
 import { Pool } from "pg";
+import { pool } from "./config/db";
 
-type QueryObject =
-  | Record<string, any>
-  | {
-      field: string;
-      operator: string;
-      value: any;
-    };
+type Operator = "===" | "!==" | "in" | "contains" | "range";
+
+type Condition = {
+  field: string;
+  operator: Operator;
+  value: any;
+};
+
+type RawObject = Record<string, any>;
+
+export type QueryObject = Condition | Condition[] | RawObject;
 
 interface QueryOptions {
   find?: QueryObject;
@@ -16,70 +20,79 @@ interface QueryOptions {
   sort?: { property: string; order?: "asc" | "desc" };
   removeKeys?: string[];
   leaveKeys?: string[];
+  limit?: number;
+  offset?: number;
+  or?: boolean; // new: enable OR logic when using array of conditions
 }
 
 const buildWhereClause = (
-  queryObj: QueryObject = {},
-  offset = 1
+  input: QueryObject,
+  startIndex: number,
+  useOr = false
 ): { clause: string; values: any[] } => {
-  const values: any[] = [];
   const clauses: string[] = [];
+  const values: any[] = [];
 
-  if (Array.isArray(queryObj)) {
-    const subClauses = queryObj.map((cond) => {
-      const { clause, values: subValues } = buildWhereClause(cond, offset);
-      values.push(...subValues);
-      offset += subValues.length;
-      return `(${clause})`;
+  if (Array.isArray(input)) {
+    input.forEach((condition) => {
+      const offset = startIndex + values.length;
+      const { clause, values: subVals } = buildWhereClause(condition, offset);
+      clauses.push(`(${clause})`);
+      values.push(...subVals);
     });
-    return { clause: subClauses.join(" OR "), values };
+    return { clause: clauses.join(useOr ? " OR " : " AND "), values };
   }
 
-  if ("field" in queryObj && "operator" in queryObj && "value" in queryObj) {
-    let { field, operator, value } = queryObj;
+  if ("field" in input && "operator" in input && "value" in input) {
+    const { field } = input;
+    let { operator, value } = input;
+
     switch (operator) {
       case "===":
-        operator = "=";
+        clauses.push(`${field} = $${startIndex}`);
+        values.push(value);
         break;
       case "!==":
-        operator = "!=";
+        clauses.push(`${field} != $${startIndex}`);
+        values.push(value);
         break;
       case "in":
-        operator = "IN";
+        if (!Array.isArray(value))
+          throw new Error("Value for 'in' must be an array");
+        const placeholders = value
+          .map((_, i) => `$${startIndex + i}`)
+          .join(", ");
+        clauses.push(`${field} IN (${placeholders})`);
+        values.push(...value);
         break;
       case "contains":
-        operator = "ILIKE";
-        value = `%${value}%`;
+        clauses.push(`${field} ILIKE $${startIndex}`);
+        values.push(`%${value}%`);
         break;
       case "range":
-        if (!Array.isArray(value) || value.length !== 2) {
+        if (!Array.isArray(value) || value.length !== 2)
           throw new Error("Range must be [min, max]");
-        }
-        clauses.push(`${field} BETWEEN $${offset} AND $${offset + 1}`);
+        clauses.push(`${field} BETWEEN $${startIndex} AND $${startIndex + 1}`);
         values.push(value[0], value[1]);
-        return { clause: clauses.join(" AND "), values };
+        break;
+      default:
+        throw new Error(`Unsupported operator: ${operator}`);
     }
 
-    if (operator === "IN" && Array.isArray(value)) {
-      const placeholders = value.map((_, i) => `$${i + offset}`).join(", ");
-      clauses.push(`${field} IN (${placeholders})`);
-      values.push(...value);
-    } else {
-      clauses.push(`${field} ${operator} $${offset}`);
-      values.push(value);
-    }
-  } else {
-    Object.entries(queryObj).forEach(([key, val], idx) => {
-      clauses.push(`${key} = $${offset + idx}`);
-      values.push(val);
-    });
+    return { clause: clauses.join(" AND "), values };
   }
+
+  // Fallback: raw object
+  Object.entries(input).forEach(([key, val], i) => {
+    clauses.push(`${key} = $${startIndex + i}`);
+    values.push(val);
+  });
 
   return { clause: clauses.join(" AND "), values };
 };
 
 const getDocs = async (
-  col: string,
+  table: string,
   panel_id: number | null = null,
   query: QueryOptions = {}
 ): Promise<any> => {
@@ -87,30 +100,47 @@ const getDocs = async (
     let where = "";
     let values: any[] = [];
 
-    if (panel_id) {
-      where = "WHERE panel_id = $1";
+    if (panel_id !== null) {
+      where = `WHERE panel_id = $1`;
       values.push(panel_id);
     }
 
-    if (query.find || query.filter) {
-      const q = query.find || query.filter;
-      const cond = buildWhereClause(q, values.length + 1);
-      where = where ? `${where} AND ${cond.clause}` : `WHERE ${cond.clause}`;
-      values = [...values, ...cond.values];
+    const filterInput = query.find || query.filter;
+    if (filterInput) {
+      const { clause, values: filterVals } = buildWhereClause(
+        filterInput,
+        values.length + 1,
+        query.or ?? false
+      );
+      where = where ? `${where} AND ${clause}` : `WHERE ${clause}`;
+      values.push(...filterVals);
     }
-    const res = await pool.query(`SELECT * FROM ${col} ${where}`, values);
-    let docs = res.rows;
 
-    if (query.find) {
+    let sql = `SELECT * FROM ${table} ${where}`;
+
+    // Add LIMIT and OFFSET
+    if (query.limit) {
+      sql += ` LIMIT ${query.limit}`;
+    }
+    if (query.offset) {
+      sql += ` OFFSET ${query.offset}`;
+    }
+
+    const result = await pool.query(sql, values);
+    let docs = result.rows;
+
+    // Handle find return type
+    if (query.find && !Array.isArray(query.find)) {
       if (docs.length === 1) return docs[0];
       if (docs.length > 1)
         throw new Error("Multiple documents found for 'find'");
       return null;
     }
 
+    // Sorting (client-side)
     if (query.sort) {
       const { property, order = "asc" } = query.sort;
-      docs.sort((a, b) =>
+      docs = docs.sort((a, b) =>
         a[property] < b[property]
           ? order === "asc"
             ? -1
@@ -123,6 +153,7 @@ const getDocs = async (
       );
     }
 
+    // removeKeys
     if (query.removeKeys) {
       docs = docs.map((doc) => {
         query.removeKeys!.forEach((key) => delete doc[key]);
@@ -130,17 +161,18 @@ const getDocs = async (
       });
     }
 
+    // leaveKeys
     if (query.leaveKeys) {
       docs = docs.map((doc) => {
-        const filtered: Record<string, any> = {};
+        const cleaned: Record<string, any> = {};
         query.leaveKeys!.forEach((key) => {
-          if (key in doc) filtered[key] = doc[key];
+          if (key in doc) cleaned[key] = doc[key];
         });
-        return filtered;
+        return cleaned;
       });
     }
 
-    return docs || [];
+    return docs;
   } catch (err: any) {
     return { error: err.message };
   }

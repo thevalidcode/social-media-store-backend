@@ -6,6 +6,7 @@ extendZodWithOpenApi(z);
 export const AuthSchema = z.object({
   panel_id: z.coerce.number(),
   email: z.string().email(),
+  uid: z.string(),
   api_key: z.string(),
   role: z.string(),
   user: z.object({}).catchall(z.unknown()),

@@ -126,7 +126,7 @@ registry.registerPath({
 
 // Update user
 registry.registerPath({
-  method: "put",
+  method: "patch",
   path: "/user",
   summary: "Update user info",
   tags: ["Users"],

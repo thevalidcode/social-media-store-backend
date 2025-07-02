@@ -54,9 +54,9 @@ registry.registerPath({
   },
 });
 
-// PUT /provider
+// PATCH /provider
 registry.registerPath({
-  method: "put",
+  method: "patch",
   path: "/provider",
   summary: "Update provider details",
   tags: ["Providers"],

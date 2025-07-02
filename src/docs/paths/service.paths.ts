@@ -131,7 +131,7 @@ registry.registerPath({
 
 // Admin: Update a service
 registry.registerPath({
-  method: "put",
+  method: "patch",
   path: "/service",
   summary: "Update a service",
   tags: ["Services"],

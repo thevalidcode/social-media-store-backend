@@ -63,9 +63,9 @@ registry.registerPath({
   },
 });
 
-// PUT /category (Admin)
+// PATCH /category (Admin)
 registry.registerPath({
-  method: "put",
+  method: "patch",
   path: "/category",
   summary: "Update a category",
   tags: ["Categories"],

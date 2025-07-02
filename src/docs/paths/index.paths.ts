@@ -7,5 +7,6 @@ import "./provider.paths";
 import "./category.paths";
 import "./panel.paths";
 import "./auth.paths";
+import "./order.paths";
 
 export { registry };
