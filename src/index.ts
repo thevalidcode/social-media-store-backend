@@ -32,7 +32,6 @@ if (env.NODE_ENV === "production") {
   });
 }
 
-// Optional: Enable cron jobs
 startCronJobs();
 
 const io = new Server(mainServer, {

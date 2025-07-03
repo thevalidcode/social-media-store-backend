@@ -12,12 +12,16 @@ const design_styles_1 = __importDefault(require("./design_styles"));
 const currencies_1 = __importDefault(require("./currencies"));
 const orders_1 = __importDefault(require("./orders"));
 const admin_1 = __importDefault(require("./admin"));
+const refill_1 = __importDefault(require("./refill"));
+const affiliate_settings_1 = __importDefault(require("./affiliate_settings"));
 (async () => {
     try {
         await (0, panels_1.default)();
         await (0, providers_1.default)();
         await (0, categories_1.default)();
         await (0, user_1.default)();
+        await (0, affiliate_settings_1.default)();
+        await (0, refill_1.default)();
         await (0, admin_1.default)();
         await (0, service_1.default)();
         await (0, design_styles_1.default)();

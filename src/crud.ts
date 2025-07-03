@@ -34,46 +34,80 @@ const buildWhereClause = (
   const values: any[] = [];
 
   if (Array.isArray(input)) {
-    input.forEach((condition) => {
-      const offset = startIndex + values.length;
-      const { clause, values: subVals } = buildWhereClause(condition, offset);
+    input.forEach((condition, idx) => {
+      const { clause, values: subVals } = buildWhereClause(
+        condition,
+        startIndex + values.length,
+        false
+      );
       clauses.push(`(${clause})`);
       values.push(...subVals);
     });
     return { clause: clauses.join(useOr ? " OR " : " AND "), values };
   }
 
+  // Handle structured conditions
   if ("field" in input && "operator" in input && "value" in input) {
-    const { field } = input;
-    let { operator, value } = input;
+    const { field, operator, value } = input;
 
     switch (operator) {
       case "===":
+      case "$eq":
         clauses.push(`${field} = $${startIndex}`);
         values.push(value);
         break;
       case "!==":
+      case "$ne":
         clauses.push(`${field} != $${startIndex}`);
         values.push(value);
         break;
       case "in":
+      case "$in":
         if (!Array.isArray(value))
           throw new Error("Value for 'in' must be an array");
-        const placeholders = value
+        const placeholdersIn = value
           .map((_, i) => `$${startIndex + i}`)
           .join(", ");
-        clauses.push(`${field} IN (${placeholders})`);
+        clauses.push(`${field} IN (${placeholdersIn})`);
+        values.push(...value);
+        break;
+      case "$nin":
+        if (!Array.isArray(value))
+          throw new Error("Value for '$nin' must be an array");
+        const placeholdersNotIn = value
+          .map((_, i) => `$${startIndex + i}`)
+          .join(", ");
+        clauses.push(`${field} NOT IN (${placeholdersNotIn})`);
         values.push(...value);
         break;
       case "contains":
+      case "$regex":
         clauses.push(`${field} ILIKE $${startIndex}`);
         values.push(`%${value}%`);
         break;
       case "range":
-        if (!Array.isArray(value) || value.length !== 2)
+      case "$range":
+        if (!Array.isArray(value) || value.length !== 2) {
           throw new Error("Range must be [min, max]");
+        }
         clauses.push(`${field} BETWEEN $${startIndex} AND $${startIndex + 1}`);
         values.push(value[0], value[1]);
+        break;
+      case "$lt":
+        clauses.push(`${field} < $${startIndex}`);
+        values.push(value);
+        break;
+      case "$lte":
+        clauses.push(`${field} <= $${startIndex}`);
+        values.push(value);
+        break;
+      case "$gt":
+        clauses.push(`${field} > $${startIndex}`);
+        values.push(value);
+        break;
+      case "$gte":
+        clauses.push(`${field} >= $${startIndex}`);
+        values.push(value);
         break;
       default:
         throw new Error(`Unsupported operator: ${operator}`);
@@ -82,10 +116,67 @@ const buildWhereClause = (
     return { clause: clauses.join(" AND "), values };
   }
 
-  // Fallback: raw object
-  Object.entries(input).forEach(([key, val], i) => {
-    clauses.push(`${key} = $${startIndex + i}`);
-    values.push(val);
+  // Handle raw object style
+  Object.entries(input).forEach(([field, val]) => {
+    if (typeof val === "object" && val !== null && !Array.isArray(val)) {
+      Object.entries(val).forEach(([op, v]) => {
+        const idx = startIndex + values.length;
+        switch (op) {
+          case "$eq":
+            clauses.push(`${field} = $${idx}`);
+            values.push(v);
+            break;
+          case "$ne":
+            clauses.push(`${field} != $${idx}`);
+            values.push(v);
+            break;
+          case "$lt":
+            clauses.push(`${field} < $${idx}`);
+            values.push(v);
+            break;
+          case "$lte":
+            clauses.push(`${field} <= $${idx}`);
+            values.push(v);
+            break;
+          case "$gt":
+            clauses.push(`${field} > $${idx}`);
+            values.push(v);
+            break;
+          case "$gte":
+            clauses.push(`${field} >= $${idx}`);
+            values.push(v);
+            break;
+          case "$in":
+            if (!Array.isArray(v)) throw new Error(`$in must be an array`);
+            const inPlaceholders = v.map((_, i) => `$${idx + i}`).join(", ");
+            clauses.push(`${field} IN (${inPlaceholders})`);
+            values.push(...v);
+            break;
+          case "$nin":
+            if (!Array.isArray(v)) throw new Error(`$nin must be an array`);
+            const notInPlaceholders = v.map((_, i) => `$${idx + i}`).join(", ");
+            clauses.push(`${field} NOT IN (${notInPlaceholders})`);
+            values.push(...v);
+            break;
+          case "$regex":
+            clauses.push(`${field} ILIKE $${idx}`);
+            values.push(`%${v}%`);
+            break;
+          case "$range":
+            if (!Array.isArray(v) || v.length !== 2)
+              throw new Error("Range must be [min, max]");
+            clauses.push(`${field} BETWEEN $${idx} AND $${idx + 1}`);
+            values.push(v[0], v[1]);
+            break;
+          default:
+            throw new Error(`Unsupported operator in raw object: ${op}`);
+        }
+      });
+    } else {
+      const idx = startIndex + values.length;
+      clauses.push(`${field} = $${idx}`);
+      values.push(val);
+    }
   });
 
   return { clause: clauses.join(" AND "), values };
@@ -214,6 +305,24 @@ const createTableIfNotExists = async (
 
   const sql = `CREATE TABLE IF NOT EXISTS ${col} (${columns})`;
   await pool.query(sql);
+};
+
+export const columnExists = async (
+  table: string,
+  column: string
+): Promise<boolean> => {
+  if (typeof table !== "string" || typeof column !== "string") return false;
+  if (!table.trim() || !column.trim()) return false;
+
+  const query = `
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_name = $1 AND column_name = $2
+  `;
+
+  const res = await pool.query<{ column_name: string }>(query, [table, column]);
+
+  return (res.rowCount ?? 0) > 0;
 };
 
 const ensureColumnsExist = async (

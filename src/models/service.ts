@@ -24,7 +24,7 @@ async function createServiceTable() {
       refill BOOLEAN,
       percentage REAL,
       drip_feed BOOLEAN DEFAULT FALSE,
-      provider TEXT NOT NULL,
+      provider TEXT,
       provider_currency TEXT,
       refill_days INTEGER,
       price NUMERIC(10, 2) NOT NULL DEFAULT 0.00
@@ -59,7 +59,7 @@ async function createServiceTable() {
     refill: `ALTER TABLE services ADD COLUMN refill BOOLEAN`,
     percentage: `ALTER TABLE services ADD COLUMN percentage REAL`,
     drip_feed: `ALTER TABLE services ADD COLUMN drip_feed BOOLEAN DEFAULT FALSE`,
-    provider: `ALTER TABLE services ADD COLUMN provider TEXT NOT NULL`,
+    provider: `ALTER TABLE services ADD COLUMN provider TEXT`,
     provider_currency: `ALTER TABLE services ADD COLUMN provider_currency TEXT`,
     refill_days: `ALTER TABLE services ADD COLUMN refill_days INTEGER`,
     price: `ALTER TABLE services ADD COLUMN price NUMERIC(10, 2) NOT NULL DEFAULT 0.00`,

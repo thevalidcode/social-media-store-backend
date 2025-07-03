@@ -22,6 +22,7 @@ interface QueryOptions {
 }
 declare const getDocs: (table: string, panel_id?: number | null, query?: QueryOptions) => Promise<any>;
 declare const createTableIfNotExists: (pool: Pool, col: string, data: Record<string, any>) => Promise<void>;
+export declare const columnExists: (table: string, column: string) => Promise<boolean>;
 declare const ensureColumnsExist: (pool: Pool, table: string, records: any[]) => Promise<void>;
 declare const addPanelDoc: (col: string, data: any, panel_id: number) => Promise<any>;
 declare const addPanelDocs: (col: string, docs: any[], panel_id: number) => Promise<any>;

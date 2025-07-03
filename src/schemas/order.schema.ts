@@ -76,6 +76,7 @@ export const placeOrderSchema = z.object({
   comments: z.string().optional(),
   drip_feed: z.boolean().optional(),
   interval: z.coerce.number().optional(),
+  runs: z.coerce.number().optional(),
   user_uid: z.string(),
 });
 

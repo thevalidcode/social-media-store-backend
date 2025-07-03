@@ -10,7 +10,7 @@ import {
   deletePanelDoc,
   deletePanelDocs,
 } from "../crud";
-import { sendEmail } from "../utils/emails";
+import { sendEmail } from "../emails";
 import { env } from "../config/env";
 import { AuthSchema } from "../schemas/user.schema";
 

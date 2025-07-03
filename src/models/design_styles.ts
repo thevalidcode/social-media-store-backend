@@ -23,7 +23,7 @@ async function createDesignStylesTable() {
     id: "ALTER TABLE design_styles ADD COLUMN id INTEGER NOT NULL",
     uid: "ALTER TABLE design_styles ADD COLUMN uid TEXT PRIMARY KEY",
     panel_id:
-      "ALTER TABLE design_styles ADD COLUMN uid INTEGER NOT NULL REFERENCES panels(panel_id) ON DELETE CASCADE",
+      "ALTER TABLE design_styles ADD COLUMN panel_id INTEGER NOT NULL REFERENCES panels(panel_id) ON DELETE CASCADE",
     title: "ALTER TABLE design_styles ADD COLUMN title TEXT NOT NULL",
     hex: "ALTER TABLE design_styles ADD COLUMN hex TEXT NOT NULL",
     schema: "ALTER TABLE design_styles ADD COLUMN schema JSONB NOT NULL",

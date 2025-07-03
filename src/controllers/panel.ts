@@ -73,10 +73,8 @@ export const getSiteData = async (
 
 export const getRates = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const result = await getDocs("currencies", null, {
-      find: { field: "uid", operator: "==", value: "latest" },
-    });
-    res.json(result.quotes);
+    const result = await getDocs("currencies", 1);
+    res.json(result[0].quotes);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

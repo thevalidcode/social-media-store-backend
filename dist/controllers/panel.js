@@ -67,10 +67,8 @@ const getSiteData = async (req, res) => {
 exports.getSiteData = getSiteData;
 const getRates = async (_req, res) => {
     try {
-        const result = await (0, crud_1.getDocs)("currencies", null, {
-            find: { field: "uid", operator: "==", value: "latest" },
-        });
-        res.json(result.quotes);
+        const result = await (0, crud_1.getDocs)("currencies", 1);
+        res.json(result[0].quotes);
     }
     catch (err) {
         res.status(500).json({ error: err.message });

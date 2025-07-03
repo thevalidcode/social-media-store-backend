@@ -31,7 +31,6 @@ else {
         console.log("Development server running on http://localhost:6060/");
     });
 }
-// Optional: Enable cron jobs
 (0, index_1.startCronJobs)();
 const io = new socket_io_1.Server(mainServer, {
     cors: {

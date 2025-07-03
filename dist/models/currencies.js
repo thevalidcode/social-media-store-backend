@@ -5,6 +5,7 @@ async function createCurrenciesTable() {
     await db_1.pool.query(`
     CREATE TABLE IF NOT EXISTS currencies (
       id SERIAL PRIMARY KEY,
+      uid TEXT UNIQUE NOT NULL,
       timestamp TIMESTAMP DEFAULT NOW(),
       quotes JSONB NOT NULL
     );
@@ -16,6 +17,7 @@ async function createCurrenciesTable() {
     const existingCols = res.rows.map((row) => row.column_name);
     const expected = {
         id: "ALTER TABLE currencies ADD COLUMN id SERIAL PRIMARY KEY",
+        uid: "ALTER TABLE currencies ADD COLUMN uid TEXT UNIQUE NOT NULL",
         timestamp: "ALTER TABLE currencies ADD COLUMN timestamp TIMESTAMP DEFAULT NOW()",
         quotes: "ALTER TABLE currencies ADD COLUMN quotes JSONB NOT NULL",
     };

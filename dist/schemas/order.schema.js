@@ -75,6 +75,7 @@ exports.placeOrderSchema = zod_1.z.object({
     comments: zod_1.z.string().optional(),
     drip_feed: zod_1.z.boolean().optional(),
     interval: zod_1.z.coerce.number().optional(),
+    runs: zod_1.z.coerce.number().optional(),
     user_uid: zod_1.z.string(),
 });
 exports.updateOrderSchema = zod_1.z.object({

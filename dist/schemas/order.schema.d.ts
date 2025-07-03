@@ -137,6 +137,7 @@ export declare const placeOrderSchema: z.ZodObject<{
     comments: z.ZodOptional<z.ZodString>;
     drip_feed: z.ZodOptional<z.ZodBoolean>;
     interval: z.ZodOptional<z.ZodNumber>;
+    runs: z.ZodOptional<z.ZodNumber>;
     user_uid: z.ZodString;
 }, "strip", z.ZodTypeAny, {
     url: string;
@@ -146,6 +147,7 @@ export declare const placeOrderSchema: z.ZodObject<{
     drip_feed?: boolean | undefined;
     comments?: string | undefined;
     interval?: number | undefined;
+    runs?: number | undefined;
 }, {
     url: string;
     service_id: number;
@@ -154,6 +156,7 @@ export declare const placeOrderSchema: z.ZodObject<{
     drip_feed?: boolean | undefined;
     comments?: string | undefined;
     interval?: number | undefined;
+    runs?: number | undefined;
 }>;
 export declare const updateOrderSchema: z.ZodObject<{
     update: z.ZodObject<{

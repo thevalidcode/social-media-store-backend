@@ -1,6 +1,6 @@
 import axios from "axios";
-import { addPanelDoc, getDocs, updatePanelDoc } from "../../crud";
-import { env } from "../../config/env";
+import { addPanelDoc, getDocs, updatePanelDoc } from "../crud";
+import { env } from "../config/env";
 
 const rateKey = env.RATE_KEY;
 async function getCurrentRates() {
@@ -25,12 +25,12 @@ const saveRates = async () => {
   const rates = await getCurrentRates();
   if (rates) {
     try {
-      const existingRates = await getDocs("currencies");
+      const existingRates = await getDocs("currencies", 1);
       if (existingRates.length !== 0) {
         await updatePanelDoc(
           "currencies",
           existingRates[0].uid,
-          { quotes: rates },
+          { quotes: rates, timestamp: new Date() },
           1
         );
       } else {
