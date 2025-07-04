@@ -1,10 +1,10 @@
 import express from "express";
 import bodyParser from "body-parser";
-import cors from "cors";
 import session from "express-session";
 import pgSession from "connect-pg-simple";
 import { pool } from "./config/db";
 import { env } from "./config/env";
+import cors, { CorsOptions, CorsRequest } from "cors";
 
 // Routes
 import userRouter from "./routes/user";
@@ -45,27 +45,35 @@ async function updateAllowedOrigins(): Promise<void> {
 updateAllowedOrigins();
 setInterval(updateAllowedOrigins, 5 * 60 * 1000);
 
-// --- CORS ---
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (env.NODE_ENV === "development") {
-        return callback(null, true); // Allow all in dev
-      }
 
-      if (!origin) {
-        return callback(new Error("Origin header is required by CORS"));
-      }
+const dynamicCors = function (
+  req: CorsRequest,
+  callback: (err: Error | null, options?: CorsOptions) => void
+) {
+  const origin = req.headers.origin;
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+  // Cast to `any` just for accessing `.url`
+  const url = (req as any).url || "";
 
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-  })
-);
+  const swaggerSafePaths = ["/admin/docs", "/admin/login"];
+  const isSwagger = swaggerSafePaths.some((path) => url.startsWith(path));
+
+  if (env.NODE_ENV === "development") {
+    return callback(null, { origin: true, credentials: true });
+  }
+
+  if (!origin && isSwagger) {
+    return callback(null, { origin: true, credentials: true });
+  }
+
+  if (origin && allowedOrigins.includes(origin)) {
+    return callback(null, { origin: true, credentials: true });
+  }
+
+  return callback(new Error("Not allowed by CORS"), { origin: false });
+};
+
+app.use(cors(dynamicCors));
 
 // --- Middleware ---
 app.use(bodyParser.json());
