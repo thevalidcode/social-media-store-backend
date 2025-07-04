@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.3.1](https://github.com/thevalidcode/social-media-store-backend/compare/v1.3.0...v1.3.1) (2025-07-04)
+
+
+### Bug Fixes
+
+* fixed cors issue ([49848bb](https://github.com/thevalidcode/social-media-store-backend/commit/49848bb5bba668b690d1cff07acd0526a98f00ee))
+* fixed cors issue. ([10f2d29](https://github.com/thevalidcode/social-media-store-backend/commit/10f2d29229ed49ce11eec7e131245ea35a82d161))
+
 ## [1.3.0](https://github.com/thevalidcode/social-media-store-backend/compare/v1.2.2...v1.3.0) (2025-07-04)
 
 
