@@ -106,7 +106,7 @@ app.use("/order", cors(dynamicCors), orderRoutes);
 app.use("/admin", adminRoutes);
 
 // --- Version Info ---
-app.use("/", cors(dynamicCors), versionRouter);
+app.use("/version", cors(dynamicCors), versionRouter);
 
 app.use(swaggerRouter);
 

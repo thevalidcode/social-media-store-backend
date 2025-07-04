@@ -90,6 +90,6 @@ app.use("/category", (0, cors_1.default)(dynamicCors), category_1.default);
 app.use("/order", (0, cors_1.default)(dynamicCors), order_1.default);
 app.use("/admin", admin_1.default);
 // --- Version Info ---
-app.use("/", (0, cors_1.default)(dynamicCors), version_1.default);
+app.use("/version", (0, cors_1.default)(dynamicCors), version_1.default);
 app.use(swagger_1.default);
 exports.default = app;

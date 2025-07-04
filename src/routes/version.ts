@@ -3,7 +3,7 @@ import { API_VERSION } from "../version";
 
 const router = express.Router();
 
-router.get("/version", (_, res) => {
+router.get("/", (_, res) => {
   res.json({ version: API_VERSION });
 });
 
