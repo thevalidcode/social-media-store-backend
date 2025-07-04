@@ -10,7 +10,7 @@ registry_1.registry.registerPath({
     path: "/provider",
     summary: "Add a new provider",
     tags: ["Providers"],
-    security: [{ bearerAuth: [] }],
+    security: [{ CookieAuth: [] }],
     request: {
         body: {
             content: {
@@ -33,7 +33,7 @@ registry_1.registry.registerPath({
     path: "/provider",
     summary: "Get all providers",
     tags: ["Providers"],
-    security: [{ bearerAuth: [] }],
+    security: [{ CookieAuth: [] }],
     responses: {
         200: provider_response_1.ProviderListResponse,
         400: common_response_1.BadRequest,
@@ -47,7 +47,7 @@ registry_1.registry.registerPath({
     path: "/provider",
     summary: "Update provider details",
     tags: ["Providers"],
-    security: [{ bearerAuth: [] }],
+    security: [{ CookieAuth: [] }],
     request: {
         body: {
             content: {
@@ -70,7 +70,7 @@ registry_1.registry.registerPath({
     path: "/provider",
     summary: "Delete a provider",
     tags: ["Providers"],
-    security: [{ bearerAuth: [] }],
+    security: [{ CookieAuth: [] }],
     request: {
         body: {
             content: {
@@ -99,7 +99,7 @@ registry_1.registry.registerPath({
     path: "/provider/multiple",
     summary: "Delete multiple providers",
     tags: ["Providers"],
-    security: [{ bearerAuth: [] }],
+    security: [{ CookieAuth: [] }],
     request: {
         body: {
             content: {
@@ -131,7 +131,7 @@ registry_1.registry.registerPath({
     path: "/provider/services/import",
     summary: "Import provider services",
     tags: ["Providers"],
-    security: [{ bearerAuth: [] }],
+    security: [{ CookieAuth: [] }],
     request: {
         body: {
             content: {
@@ -153,7 +153,7 @@ registry_1.registry.registerPath({
     path: "/provider/services/",
     summary: "Get provider services",
     tags: ["Providers"],
-    security: [{ bearerAuth: [] }],
+    security: [{ CookieAuth: [] }],
     request: {
         body: {
             content: {

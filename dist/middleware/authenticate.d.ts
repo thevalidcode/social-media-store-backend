@@ -5,7 +5,8 @@ declare module "express" {
             email: string;
             panel_id: number;
             api_key: string;
-            role: string;
+            role: "admin" | "user";
+            uid: string;
             user: any;
         };
     }

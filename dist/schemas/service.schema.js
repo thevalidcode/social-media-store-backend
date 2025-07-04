@@ -62,8 +62,7 @@ exports.ServiceCreateInputSchema = zod_1.z
     network: zod_1.z.string().optional(),
     refill: zod_1.z.boolean().optional(),
     cancel: zod_1.z.boolean().optional(),
-})
-    .openapi("ServiceCreateInput");
+});
 exports.ServiceUpdateInputSchema = zod_1.z
     .object({
     uid: zod_1.z.string(),
@@ -80,15 +79,12 @@ exports.ServiceUpdateInputSchema = zod_1.z
     description: zod_1.z.string().optional(),
     price: zod_1.z.number().optional(),
     position: zod_1.z.number().optional(),
-})
-    .openapi("ServiceUpdateInput");
+});
 exports.DeleteServiceInputSchema = zod_1.z
     .object({
     uid: zod_1.z.string(),
-})
-    .openapi("DeleteServiceInput");
+});
 exports.DeleteMultipleServicesInputSchema = zod_1.z
     .object({
     uids: zod_1.z.array(zod_1.z.string()),
-})
-    .openapi("DeleteMultipleServicesInput");
+});

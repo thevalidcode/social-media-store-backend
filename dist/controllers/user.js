@@ -85,11 +85,21 @@ const createUser = async (req, res) => {
             await (0, crud_1.addPanelDoc)("referrals", { username, user_id: parseInt(ref) }, panel_id);
         }
         const newUser = await (0, crud_1.addPanelDoc)("users", userData, panel_id);
-        const token = jsonwebtoken_1.default.sign({ email, panel_id, api_key: newUser.api_key }, env_1.env.JWT_SECRET, { expiresIn: "7d" });
+        const token = jsonwebtoken_1.default.sign({
+            email,
+            panel_id,
+            api_key: newUser.api_key,
+            role: "user",
+        }, env_1.env.JWT_SECRET, { expiresIn: "7d" });
+        res.cookie("auth_token", token, {
+            httpOnly: true,
+            secure: env_1.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
         await (0, emails_1.sendEmail)(undefined, "new_user", userData, panel_id);
         res.status(200).send({
             success: "Created Successfully",
-            token,
             user: {
                 id: newUser.id,
                 email: newUser.email,
@@ -133,14 +143,20 @@ const me = async (req, res) => {
             return;
         }
         const api_key = account.api_key || (0, uuid_1.v4)();
-        const token = jsonwebtoken_1.default.sign({ email, panel_id, api_key }, env_1.env.JWT_SECRET, {
+        const role = admin ? admin.role || "admin" : "user";
+        const token = jsonwebtoken_1.default.sign({ email, panel_id, api_key, role }, env_1.env.JWT_SECRET, {
             expiresIn: "7d",
+        });
+        res.cookie("auth_token", token, {
+            httpOnly: true,
+            secure: env_1.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         });
         delete account.password;
         res.status(200).json({
             success: "Logged in successfully",
-            token,
-            role: admin ? admin.role || "admin" : "user",
+            role,
             user: {
                 id: account.id,
                 email: account.email,

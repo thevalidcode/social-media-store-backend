@@ -32,7 +32,7 @@ registry_1.registry.registerPath({
     path: "/category",
     summary: "Create a new category",
     tags: ["Categories"],
-    security: [{ bearerAuth: [] }],
+    security: [{ CookieAuth: [] }],
     request: {
         body: {
             content: {
@@ -55,7 +55,7 @@ registry_1.registry.registerPath({
     path: "/category",
     summary: "Update a category",
     tags: ["Categories"],
-    security: [{ bearerAuth: [] }],
+    security: [{ CookieAuth: [] }],
     request: {
         body: {
             content: {
@@ -78,7 +78,7 @@ registry_1.registry.registerPath({
     path: "/category",
     summary: "Delete a single category",
     tags: ["Categories"],
-    security: [{ bearerAuth: [] }],
+    security: [{ CookieAuth: [] }],
     request: {
         body: {
             content: {
@@ -101,7 +101,7 @@ registry_1.registry.registerPath({
     path: "/category/multiple",
     summary: "Delete multiple categories",
     tags: ["Categories"],
-    security: [{ bearerAuth: [] }],
+    security: [{ CookieAuth: [] }],
     request: {
         body: {
             content: {

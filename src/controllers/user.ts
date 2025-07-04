@@ -71,6 +71,7 @@ export const createUser = async (
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
+
   const { panel_id, email, username, ref, password } = parsed.data;
 
   try {
@@ -95,6 +96,7 @@ export const createUser = async (
       api_key: uuidv4(),
       password: hashedPassword,
     };
+
     if (ref) {
       await addPanelDoc(
         "referrals",
@@ -104,16 +106,29 @@ export const createUser = async (
     }
 
     const newUser = await addPanelDoc("users", userData, panel_id);
+
     const token = jwt.sign(
-      { email, panel_id, api_key: newUser.api_key },
+      {
+        email,
+        panel_id,
+        api_key: newUser.api_key,
+        role: "user",
+      },
       env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
+    res.cookie("auth_token", token, {
+      httpOnly: true,
+      secure: env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
     await sendEmail(undefined, "new_user", userData, panel_id);
+
     res.status(200).send({
       success: "Created Successfully",
-      token,
       user: {
         id: newUser.id,
         email: newUser.email,
@@ -131,6 +146,7 @@ export const me = async (req: Request, res: Response): Promise<void> => {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
+
   const { email, password, panel_id } = parsed.data;
 
   try {
@@ -147,6 +163,7 @@ export const me = async (req: Request, res: Response): Promise<void> => {
       res.status(400).json({ error: "Incorrect login details" });
       return;
     }
+
     if (user && user.status === "banned") {
       res
         .status(403)
@@ -161,14 +178,25 @@ export const me = async (req: Request, res: Response): Promise<void> => {
     }
 
     const api_key = account.api_key || uuidv4();
-    const token = jwt.sign({ email, panel_id, api_key }, env.JWT_SECRET, {
+
+    const role = admin ? admin.role || "admin" : "user";
+
+    const token = jwt.sign({ email, panel_id, api_key, role }, env.JWT_SECRET, {
       expiresIn: "7d",
     });
+
+    res.cookie("auth_token", token, {
+      httpOnly: true,
+      secure: env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
     delete account.password;
+
     res.status(200).json({
       success: "Logged in successfully",
-      token,
-      role: admin ? admin.role || "admin" : "user",
+      role,
       user: {
         id: account.id,
         email: account.email,

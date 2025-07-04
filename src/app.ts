@@ -19,6 +19,7 @@ import versionRouter from "./routes/version";
 import { getDocs } from "./crud";
 import swaggerRouter from "./docs/swagger";
 import path from "path";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
@@ -48,15 +49,27 @@ setInterval(updateAllowedOrigins, 5 * 60 * 1000);
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
+      if (env.NODE_ENV === "development") {
+        return callback(null, true); // Allow all in dev
+      }
+
+      if (!origin) {
+        return callback(new Error("Origin header is required by CORS"));
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
       return callback(new Error("Not allowed by CORS"));
     },
+    credentials: true,
   })
 );
 
 // --- Middleware ---
 app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use("/assets", express.static(path.join(__dirname, "public", "assets")));
 

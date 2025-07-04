@@ -23,6 +23,7 @@ const version_1 = __importDefault(require("./routes/version"));
 const crud_1 = require("./crud");
 const swagger_1 = __importDefault(require("./docs/swagger"));
 const path_1 = __importDefault(require("path"));
+const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const app = (0, express_1.default)();
 // --- Dynamic CORS ---
 let allowedOrigins = [];
@@ -45,15 +46,22 @@ setInterval(updateAllowedOrigins, 5 * 60 * 1000);
 // --- CORS ---
 app.use((0, cors_1.default)({
     origin: function (origin, callback) {
-        if (!origin)
+        if (env_1.env.NODE_ENV === "development") {
+            return callback(null, true); // Allow all in dev
+        }
+        if (!origin) {
+            return callback(new Error("Origin header is required by CORS"));
+        }
+        if (allowedOrigins.includes(origin)) {
             return callback(null, true);
-        if (allowedOrigins.includes(origin))
-            return callback(null, true);
+        }
         return callback(new Error("Not allowed by CORS"));
     },
+    credentials: true,
 }));
 // --- Middleware ---
 app.use(body_parser_1.default.json());
+app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use("/assets", express_1.default.static(path_1.default.join(__dirname, "public", "assets")));
 // --- Session ---

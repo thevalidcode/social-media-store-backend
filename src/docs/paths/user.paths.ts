@@ -56,7 +56,7 @@ registry.registerPath({
   path: "/user",
   summary: "Get all users",
   tags: ["Users"],
-  security: [{ bearerAuth: [] }],
+  security: [{ CookieAuth: [] }],
   responses: {
     200: UsersListResponse,
     403: Forbidden,
@@ -70,7 +70,7 @@ registry.registerPath({
   path: "/user/{uid}",
   summary: "Get user by UID",
   tags: ["Users"],
-  security: [{ bearerAuth: [] }],
+  security: [{ CookieAuth: [] }],
   parameters: [
     {
       name: "uid",
@@ -158,7 +158,7 @@ registry.registerPath({
   path: "/user",
   summary: "Delete a single user",
   tags: ["Users"],
-  security: [{ bearerAuth: [] }],
+  security: [{ CookieAuth: [] }],
   request: {
     body: {
       content: {
@@ -184,7 +184,7 @@ registry.registerPath({
   path: "/user/multiple",
   summary: "Delete multiple users",
   tags: ["Users"],
-  security: [{ bearerAuth: [] }],
+  security: [{ CookieAuth: [] }],
   request: {
     body: {
       content: {

@@ -30,40 +30,32 @@ exports.UserPublicSchema = zod_1.z
     username: zod_1.z.string(),
 })
     .openapi("UserPublic");
-exports.UserUpdateRequestSchema = zod_1.z
-    .object({
+exports.UserUpdateRequestSchema = zod_1.z.object({
     uid: zod_1.z.string().describe("User UID"),
     username: zod_1.z.string().describe("Username"),
     full_name: zod_1.z.string().describe("Full name"),
     balance: zod_1.z.number().describe("User balance"),
-})
-    .openapi("UserUpdateRequest");
-exports.AuthenticateUserSchema = zod_1.z
-    .object({
+});
+exports.AuthenticateUserSchema = zod_1.z.object({
     panel_id: zod_1.z.number().describe("Associated panel ID"),
     email: zod_1.z.string().email().describe("User email"),
     password: zod_1.z.string().describe("User password"),
-})
-    .openapi("AuthenticateUser");
+});
 exports.AuthenticateUserResponseSchema = zod_1.z.object({
     success: zod_1.z.literal("Logged in successfully"),
-    role: zod_1.z.enum(["user", "admin"]),
-    token: zod_1.z.string().jwt(),
     user: zod_1.z.object({
         id: zod_1.z.coerce.number().describe("User id"),
         email: zod_1.z.string().email().describe("User email"),
         username: zod_1.z.string().describe("User username"),
     }),
 });
-exports.CreateUserInputSchema = zod_1.z
-    .object({
+exports.CreateUserInputSchema = zod_1.z.object({
     email: zod_1.z.string().email().describe("User email"),
     username: zod_1.z.string().describe("User username"),
     password: zod_1.z.string().describe("User password"),
     panel_id: zod_1.z.number().describe("Panel ID to associate with"),
     ref: zod_1.z.number().optional().describe("Optional referral ID"),
-})
-    .openapi("CreateUserInput");
+});
 exports.AdminPublicSchema = zod_1.z.object({
     id: zod_1.z.string(),
     email: zod_1.z.string().email(),
@@ -75,4 +67,4 @@ exports.GoogleAuthRequestSchema = zod_1.z
     id_token: zod_1.z.string().describe("Google OAuth ID token"),
     panel_id: zod_1.z.number().describe("Panel identifier to fetch/store user"),
 })
-    .openapi("GoogleAuthRequest");
+    .openapi("GoogleAuthResponse");

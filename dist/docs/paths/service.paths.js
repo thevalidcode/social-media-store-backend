@@ -30,7 +30,7 @@ registry_1.registry.registerPath({
     path: "/service/admin",
     summary: "Get all services for admins",
     tags: ["Services"],
-    security: [{ bearerAuth: [] }],
+    security: [{ CookieAuth: [] }],
     responses: {
         200: service_response_1.ServiceListResponse,
         403: common_response_1.Forbidden,
@@ -43,7 +43,7 @@ registry_1.registry.registerPath({
     path: "/service/{provider_id}",
     summary: "Get services by provider ID",
     tags: ["Services"],
-    security: [{ bearerAuth: [] }],
+    security: [{ CookieAuth: [] }],
     parameters: [
         {
             name: "provider_id",
@@ -90,7 +90,7 @@ registry_1.registry.registerPath({
     path: "/service/admin/{service_id}",
     summary: "Get a service by ID (admin)",
     tags: ["Services"],
-    security: [{ bearerAuth: [] }],
+    security: [{ CookieAuth: [] }],
     parameters: [
         {
             name: "service_id",
@@ -111,7 +111,7 @@ registry_1.registry.registerPath({
     path: "/service",
     summary: "Update a service",
     tags: ["Services"],
-    security: [{ bearerAuth: [] }],
+    security: [{ CookieAuth: [] }],
     request: {
         body: {
             content: {
@@ -134,7 +134,7 @@ registry_1.registry.registerPath({
     path: "/service",
     summary: "Delete a single service",
     tags: ["Services"],
-    security: [{ bearerAuth: [] }],
+    security: [{ CookieAuth: [] }],
     request: {
         body: {
             content: {
@@ -157,7 +157,7 @@ registry_1.registry.registerPath({
     path: "/service/multiple",
     summary: "Delete multiple services",
     tags: ["Services"],
-    security: [{ bearerAuth: [] }],
+    security: [{ CookieAuth: [] }],
     request: {
         body: {
             content: {
@@ -180,7 +180,7 @@ registry_1.registry.registerPath({
     path: "/service/create",
     summary: "Create a new service",
     tags: ["Services"],
-    security: [{ bearerAuth: [] }],
+    security: [{ CookieAuth: [] }],
     request: {
         body: {
             content: {

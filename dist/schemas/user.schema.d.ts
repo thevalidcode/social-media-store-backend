@@ -94,8 +94,6 @@ export declare const AuthenticateUserSchema: z.ZodObject<{
 }>;
 export declare const AuthenticateUserResponseSchema: z.ZodObject<{
     success: z.ZodLiteral<"Logged in successfully">;
-    role: z.ZodEnum<["user", "admin"]>;
-    token: z.ZodString;
     user: z.ZodObject<{
         id: z.ZodNumber;
         email: z.ZodString;
@@ -116,8 +114,6 @@ export declare const AuthenticateUserResponseSchema: z.ZodObject<{
         email: string;
     };
     success: "Logged in successfully";
-    role: "user" | "admin";
-    token: string;
 }, {
     user: {
         id: number;
@@ -125,8 +121,6 @@ export declare const AuthenticateUserResponseSchema: z.ZodObject<{
         email: string;
     };
     success: "Logged in successfully";
-    role: "user" | "admin";
-    token: string;
 }>;
 export declare const CreateUserInputSchema: z.ZodObject<{
     email: z.ZodString;

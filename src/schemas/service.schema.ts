@@ -64,7 +64,6 @@ export const ServiceCreateInputSchema = z
     refill: z.boolean().optional(),
     cancel: z.boolean().optional(),
   })
-  .openapi("ServiceCreateInput");
 
 export const ServiceUpdateInputSchema = z
   .object({
@@ -83,16 +82,13 @@ export const ServiceUpdateInputSchema = z
     price: z.number().optional(),
     position: z.number().optional(),
   })
-  .openapi("ServiceUpdateInput");
 
 export const DeleteServiceInputSchema = z
   .object({
     uid: z.string(),
   })
-  .openapi("DeleteServiceInput");
 
 export const DeleteMultipleServicesInputSchema = z
   .object({
     uids: z.array(z.string()),
   })
-  .openapi("DeleteMultipleServicesInput");

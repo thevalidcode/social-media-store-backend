@@ -89,7 +89,7 @@ registry.registerPath({
   path: "/panel/current-user",
   summary: "Get the currently authenticated user",
   tags: ["Panel"],
-  security: [{ bearerAuth: [] }],
+  security: [{ CookieAuth: [] }],
   parameters: [
     {
       name: "uid",
@@ -111,7 +111,7 @@ registry.registerPath({
   path: "/panel/current-admin",
   summary: "Get the currently authenticated admin",
   tags: ["Panel"],
-  security: [{ bearerAuth: [] }],
+  security: [{ CookieAuth: [] }],
   parameters: [
     {
       name: "uid",

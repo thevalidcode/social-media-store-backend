@@ -14,17 +14,13 @@ exports.CategorySchema = zod_1.z
     position: zod_1.z.number(),
 })
     .openapi("Category");
-exports.CategoryCreateRequestSchema = zod_1.z
-    .object({
+exports.CategoryCreateRequestSchema = zod_1.z.object({
     name: zod_1.z.string(),
     description: zod_1.z.string().optional(),
-})
-    .openapi("CategoryCreateRequest");
-exports.CategoryUpdateRequestSchema = zod_1.z
-    .object({
+});
+exports.CategoryUpdateRequestSchema = zod_1.z.object({
     uid: zod_1.z.string(),
     name: zod_1.z.string().optional(),
     position: zod_1.z.number().optional(),
     description: zod_1.z.string().optional(),
-})
-    .openapi("CategoryUpdateRequest");
+});

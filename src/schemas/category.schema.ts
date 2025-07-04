@@ -14,19 +14,14 @@ export const CategorySchema = z
   })
   .openapi("Category");
 
-export const CategoryCreateRequestSchema = z
-  .object({
-    name: z.string(),
-    description: z.string().optional(),
-  })
-  .openapi("CategoryCreateRequest");
+export const CategoryCreateRequestSchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+});
 
-export const CategoryUpdateRequestSchema = z
-  .object({
-    uid: z.string(),
-    name: z.string().optional(),
-    position: z.number().optional(),
-    description: z.string().optional(),
-  })
-  .openapi("CategoryUpdateRequest");
-
+export const CategoryUpdateRequestSchema = z.object({
+  uid: z.string(),
+  name: z.string().optional(),
+  position: z.number().optional(),
+  description: z.string().optional(),
+});

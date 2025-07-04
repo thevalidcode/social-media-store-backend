@@ -13,27 +13,22 @@ exports.ProviderSchema = zod_1.z
     sync: zod_1.z.boolean(),
 })
     .openapi("Provider");
-exports.ProviderCreateRequestSchema = zod_1.z
-    .object({
+exports.ProviderCreateRequestSchema = zod_1.z.object({
     name: zod_1.z.string(),
     url: zod_1.z.string().url(),
     percentage: zod_1.z.number(),
     api_key: zod_1.z.string(),
     sync: zod_1.z.boolean(),
-})
-    .openapi("ProviderCreateRequest");
-exports.ProviderUpdateRequestSchema = zod_1.z
-    .object({
+});
+exports.ProviderUpdateRequestSchema = zod_1.z.object({
     uid: zod_1.z.string(),
     name: zod_1.z.string().optional(),
     url: zod_1.z.string().url().optional(),
     percentage: zod_1.z.number().optional(),
     api_key: zod_1.z.string(),
     sync: zod_1.z.boolean().optional(),
-})
-    .openapi("ProviderUpdateRequest");
-exports.ImportProviderServicesRequestSchema = zod_1.z
-    .object({
+});
+exports.ImportProviderServicesRequestSchema = zod_1.z.object({
     provider_services_id: zod_1.z
         .array(zod_1.z.number())
         .describe("List of service IDs from the provider that should be imported"),
@@ -54,16 +49,13 @@ exports.ImportProviderServicesRequestSchema = zod_1.z
         .string()
         .url()
         .describe("API base URL or identifier for the third-party provider (e.g., https://api.example.com/api/v2/)"),
-})
-    .openapi("ImportProviderServicesRequest");
-exports.ProviderServicesSchema = zod_1.z
-    .object({
+});
+exports.ProviderServicesSchema = zod_1.z.object({
     provider: zod_1.z
         .string()
         .url()
         .describe("API base URL of the provider (e.g., https://api.example.com/api/v2/)"),
-})
-    .openapi("ProviderServices");
+});
 exports.ProviderServiceSchema = zod_1.z
     .object({
     service: zod_1.z.coerce.number(),
@@ -78,4 +70,4 @@ exports.ProviderServiceSchema = zod_1.z
     drip_feed: zod_1.z.boolean().optional(),
     cancel: zod_1.z.boolean().optional(),
 })
-    .openapi("ProviderServiceResponse");
+    .openapi("ProviderService");
