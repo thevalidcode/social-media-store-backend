@@ -76,12 +76,16 @@ const createUser = async (req, res) => {
             res.status(400).send({ error: "Username already exists" });
             return;
         }
-        const userData = { ...parsed.data, password: hashedPassword };
+        const userData = {
+            ...parsed.data,
+            api_key: (0, uuid_1.v4)(),
+            password: hashedPassword,
+        };
         if (ref) {
             await (0, crud_1.addPanelDoc)("referrals", { username, user_id: parseInt(ref) }, panel_id);
         }
         const newUser = await (0, crud_1.addPanelDoc)("users", userData, panel_id);
-        const token = jsonwebtoken_1.default.sign({ email, panel_id, api_key: newUser.api_key }, process.env.JWT_SECRET, { expiresIn: "7d" });
+        const token = jsonwebtoken_1.default.sign({ email, panel_id, api_key: newUser.api_key }, env_1.env.JWT_SECRET, { expiresIn: "7d" });
         await (0, emails_1.sendEmail)(undefined, "new_user", userData, panel_id);
         res.status(200).send({
             success: "Created Successfully",

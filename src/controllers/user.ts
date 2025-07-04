@@ -90,7 +90,11 @@ export const createUser = async (
       return;
     }
 
-    const userData = { ...parsed.data, password: hashedPassword };
+    const userData = {
+      ...parsed.data,
+      api_key: uuidv4(),
+      password: hashedPassword,
+    };
     if (ref) {
       await addPanelDoc(
         "referrals",
@@ -102,7 +106,7 @@ export const createUser = async (
     const newUser = await addPanelDoc("users", userData, panel_id);
     const token = jwt.sign(
       { email, panel_id, api_key: newUser.api_key },
-      process.env.JWT_SECRET!,
+      env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
