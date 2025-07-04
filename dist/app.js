@@ -5,11 +5,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const body_parser_1 = __importDefault(require("body-parser"));
+const cors_1 = __importDefault(require("cors"));
 const express_session_1 = __importDefault(require("express-session"));
 const connect_pg_simple_1 = __importDefault(require("connect-pg-simple"));
 const db_1 = require("./config/db");
 const env_1 = require("./config/env");
-const cors_1 = __importDefault(require("cors"));
 // Routes
 const user_1 = __importDefault(require("./routes/user"));
 const oauth_1 = __importDefault(require("./routes/oauth"));
@@ -43,24 +43,22 @@ async function updateAllowedOrigins() {
 }
 updateAllowedOrigins();
 setInterval(updateAllowedOrigins, 5 * 60 * 1000);
-const dynamicCors = function (req, callback) {
-    const origin = req.headers.origin;
-    // Cast to `any` just for accessing `.url`
-    const url = req.url || "";
-    const swaggerSafePaths = ["/admin/docs", "/admin/login"];
-    const isSwagger = swaggerSafePaths.some((path) => url.startsWith(path));
-    if (env_1.env.NODE_ENV === "development") {
-        return callback(null, { origin: true, credentials: true });
-    }
-    if (!origin && isSwagger) {
-        return callback(null, { origin: true, credentials: true });
-    }
-    if (origin && allowedOrigins.includes(origin)) {
-        return callback(null, { origin: true, credentials: true });
-    }
-    return callback(new Error("Not allowed by CORS"), { origin: false });
-};
-app.use((0, cors_1.default)(dynamicCors));
+// --- CORS ---
+app.use((0, cors_1.default)({
+    origin: function (origin, callback) {
+        if (env_1.env.NODE_ENV === "development") {
+            return callback(null, true); // Allow all in dev
+        }
+        if (!origin) {
+            return callback(new Error("Origin header is required by CORS"));
+        }
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+}));
 // --- Middleware ---
 app.use(body_parser_1.default.json());
 app.use((0, cookie_parser_1.default)());

@@ -1,9 +1,14 @@
 import express from "express";
-const router = express.Router();
+import cors from "cors";
 import * as admins from "../controllers/admin";
 
-router.get("/login", admins.adminLogin);
-router.post("/login", admins.authenticateAdmin);
-router.post("/logout", admins.logoutAdmin);
+const router = express.Router();
+
+// Allow all origins per route
+const openCors = cors({ origin: true, credentials: true });
+
+router.get("/login", openCors, admins.adminLogin);
+router.post("/login", openCors, admins.authenticateAdmin);
+router.post("/logout", openCors, admins.logoutAdmin);
 
 export default router;

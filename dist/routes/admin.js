@@ -37,9 +37,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const router = express_1.default.Router();
+const cors_1 = __importDefault(require("cors"));
 const admins = __importStar(require("../controllers/admin"));
-router.get("/login", admins.adminLogin);
-router.post("/login", admins.authenticateAdmin);
-router.post("/logout", admins.logoutAdmin);
+const router = express_1.default.Router();
+// Allow all origins per route
+const openCors = (0, cors_1.default)({ origin: true, credentials: true });
+router.get("/login", openCors, admins.adminLogin);
+router.post("/login", openCors, admins.authenticateAdmin);
+router.post("/logout", openCors, admins.logoutAdmin);
 exports.default = router;
