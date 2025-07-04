@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/thevalidcode/social-media-store-backend/compare/v1.2.2...v1.3.0) (2025-07-04)
+
+
+### Features
+
+* Replaced authenticattion with cookies ([cbe2fb1](https://github.com/thevalidcode/social-media-store-backend/commit/cbe2fb160c3c78504bac8433d38ab3e611420d5a))
+
 ### [1.2.2](https://github.com/thevalidcode/social-media-store-backend/compare/v1.2.1...v1.2.2) (2025-07-04)
 
 ### [1.2.1](https://github.com/thevalidcode/social-media-store-backend/compare/v1.2.0...v1.2.1) (2025-07-04)
