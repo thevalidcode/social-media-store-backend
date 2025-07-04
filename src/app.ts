@@ -1,10 +1,12 @@
 import express from "express";
 import bodyParser from "body-parser";
-import cors from "cors";
+import cors, { CorsOptions, CorsRequest } from "cors";
 import session from "express-session";
 import pgSession from "connect-pg-simple";
 import { pool } from "./config/db";
 import { env } from "./config/env";
+import cookieParser from "cookie-parser";
+import path from "path";
 
 // Routes
 import userRouter from "./routes/user";
@@ -18,12 +20,10 @@ import orderRoutes from "./routes/order";
 import versionRouter from "./routes/version";
 import { getDocs } from "./crud";
 import swaggerRouter from "./docs/swagger";
-import path from "path";
-import cookieParser from "cookie-parser";
 
 const app = express();
 
-// --- Dynamic CORS ---
+// --- Dynamic CORS Setup ---
 let allowedOrigins: string[] = [];
 
 async function updateAllowedOrigins(): Promise<void> {
@@ -45,27 +45,29 @@ async function updateAllowedOrigins(): Promise<void> {
 updateAllowedOrigins();
 setInterval(updateAllowedOrigins, 5 * 60 * 1000);
 
-// --- CORS ---
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (env.NODE_ENV === "development") {
-        return callback(null, true); // Allow all in dev
-      }
+// Define CORS Middleware for all non-/admin routes
+const dynamicCors = function (
+  req: CorsRequest,
+  callback: (err: Error | null, options?: CorsOptions) => void
+) {
+  const origin = req.headers.origin;
 
-      if (!origin) {
-        return callback(new Error("Origin header is required by CORS"));
-      }
+  if (env.NODE_ENV === "development") {
+    return callback(null, { origin: true, credentials: true });
+  }
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+  if (!origin) {
+    return callback(new Error("Origin header is required by CORS"), {
+      origin: false,
+    });
+  }
 
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-  })
-);
+  if (allowedOrigins.includes(origin)) {
+    return callback(null, { origin: true, credentials: true });
+  }
+
+  return callback(new Error("Not allowed by CORS"), { origin: false });
+};
 
 // --- Middleware ---
 app.use(bodyParser.json());
@@ -94,17 +96,18 @@ app.use(
 );
 
 // --- Public Routes ---
-app.use("/user", userRouter);
-app.use("/api/auth/panel", oauthRoutes);
-app.use("/panel", panelRoutes);
-app.use("/service", serviceRoutes);
-app.use("/provider", providerRoutes);
-app.use("/category", categoryRoutes);
-app.use("/order", orderRoutes);
+app.use("/user", cors(dynamicCors), userRouter);
+app.use("/api/auth/panel", cors(dynamicCors), oauthRoutes);
+app.use("/panel", cors(dynamicCors), panelRoutes);
+app.use("/service", cors(dynamicCors), serviceRoutes);
+app.use("/provider", cors(dynamicCors), providerRoutes);
+app.use("/category", cors(dynamicCors), categoryRoutes);
+app.use("/order", cors(dynamicCors), orderRoutes);
 app.use("/admin", adminRoutes);
-app.use("/", versionRouter);
 
-// --- Swagger ---
+// --- Version Info ---
+app.use("/", cors(dynamicCors), versionRouter);
+
 app.use(swaggerRouter);
 
 export default app;
