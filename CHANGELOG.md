@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.1](https://github.com/thevalidcode/social-media-store-backend/compare/v1.2.0...v1.2.1) (2025-07-04)
+
+
+### Bug Fixes
+
+* Fixed the user creation controlller. ([4dea390](https://github.com/thevalidcode/social-media-store-backend/commit/4dea390ad94a3eafbd8c2f78421916c2ee981818))
+
 ## [1.2.0](https://github.com/thevalidcode/social-media-store-backend/compare/v1.1.2...v1.2.0) (2025-07-03)
 
 
