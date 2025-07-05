@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.bulkUpdateOrderStatus = exports.bulkCreateOrders = exports.getOrdersByStatus = exports.deleteOrder = exports.updateOrder = exports.placeOrder = exports.getOrderByID = exports.getOrders = void 0;
+exports.bulkUpdateOrderStatus = exports.bulkCreateOrders = exports.getOrdersByStatus = exports.deleteOrder = exports.updateOrder = exports.placeOrder = exports.getOrderByID = exports.getOrdersForAdmins = exports.getOrders = void 0;
 const crud_1 = require("../crud");
 const user_schema_1 = require("../schemas/user.schema");
 const order_schema_1 = require("../schemas/order.schema");
@@ -11,16 +11,16 @@ const getOrders = async (req, res) => {
         return;
     }
     const { role, panel_id, user } = authParsed.data;
+    if (role !== "user") {
+        res.status(403).json({ error: "Access denied, Users only." });
+        return;
+    }
     try {
-        const orders = await (0, crud_1.getDocs)("orders", panel_id, role === "user"
-            ? {
-                filter: { user_uid: user.uid },
-            }
-            : undefined);
+        const orders = await (0, crud_1.getDocs)("orders", panel_id, {
+            filter: { user_uid: user.uid },
+        });
         const sorted = orders.sort((a, b) => b.id - a.id);
-        const parsedOrders = role === "user"
-            ? sorted.map((o) => order_schema_1.OrderPublicSchema.safeParse(o).data)
-            : sorted.map((o) => order_schema_1.OrderSchema.safeParse(o).data);
+        const parsedOrders = sorted.map((o) => order_schema_1.OrderPublicSchema.safeParse(o).data);
         res.status(200).json(parsedOrders);
     }
     catch (error) {
@@ -28,6 +28,28 @@ const getOrders = async (req, res) => {
     }
 };
 exports.getOrders = getOrders;
+const getOrdersForAdmins = async (req, res) => {
+    const authParsed = user_schema_1.AuthSchema.safeParse(req.auth);
+    if (!authParsed.success) {
+        res.status(400).json({ error: authParsed.error.flatten() });
+        return;
+    }
+    const { role, panel_id } = authParsed.data;
+    if (role === "user") {
+        res.status(403).json({ error: "Access denied, Admins only." });
+        return;
+    }
+    try {
+        const orders = await (0, crud_1.getDocs)("orders", panel_id);
+        const sorted = orders.sort((a, b) => b.id - a.id);
+        const parsedOrders = sorted.map((o) => order_schema_1.OrderSchema.safeParse(o).data);
+        res.status(200).json(parsedOrders);
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+exports.getOrdersForAdmins = getOrdersForAdmins;
 const getOrderByID = async (req, res) => {
     const authParsed = user_schema_1.AuthSchema.safeParse(req.auth);
     const { order_uid } = req.params;

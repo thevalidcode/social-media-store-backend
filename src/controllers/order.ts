@@ -20,21 +20,45 @@ export const getOrders = async (req: Request, res: Response): Promise<void> => {
 
   const { role, panel_id, user } = authParsed.data;
 
+  if (role !== "user") {
+    res.status(403).json({ error: "Access denied, Users only." });
+    return;
+  }
   try {
-    const orders = await getDocs(
-      "orders",
-      panel_id,
-      role === "user"
-        ? {
-            filter: { user_uid: user.uid },
-          }
-        : undefined
-    );
+    const orders = await getDocs("orders", panel_id, {
+      filter: { user_uid: user.uid },
+    });
     const sorted = orders.sort((a: any, b: any) => b.id - a.id);
-    const parsedOrders =
-      role === "user"
-        ? sorted.map((o: any) => OrderPublicSchema.safeParse(o).data)
-        : sorted.map((o: any) => OrderSchema.safeParse(o).data);
+    const parsedOrders = sorted.map(
+      (o: any) => OrderPublicSchema.safeParse(o).data
+    );
+    res.status(200).json(parsedOrders);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getOrdersForAdmins = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authParsed = AuthSchema.safeParse(req.auth);
+  if (!authParsed.success) {
+    res.status(400).json({ error: authParsed.error.flatten() });
+    return;
+  }
+
+  const { role, panel_id } = authParsed.data;
+
+  if (role === "user") {
+    res.status(403).json({ error: "Access denied, Admins only." });
+    return;
+  }
+
+  try {
+    const orders = await getDocs("orders", panel_id);
+    const sorted = orders.sort((a: any, b: any) => b.id - a.id);
+    const parsedOrders = sorted.map((o: any) => OrderSchema.safeParse(o).data);
     res.status(200).json(parsedOrders);
   } catch (error: any) {
     res.status(500).json({ error: error.message });

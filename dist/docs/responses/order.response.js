@@ -1,10 +1,18 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OrderUpdatedResponse = exports.OrderCreatedListResponse = exports.OrderCreatedResponse = exports.OrderSingleResponse = exports.OrderListResponse = void 0;
+exports.OrderUpdatedResponse = exports.OrderCreatedListResponse = exports.OrderCreatedResponse = exports.OrderSingleResponse = exports.OrderListResponse = exports.OrderPublicListResponse = void 0;
 const zod_1 = require("zod");
 const order_schema_1 = require("../../schemas/order.schema");
+exports.OrderPublicListResponse = {
+    description: "List of all user's orders.",
+    content: {
+        "application/json": {
+            schema: zod_1.z.array(order_schema_1.OrderPublicSchema),
+        },
+    },
+};
 exports.OrderListResponse = {
-    description: "List of all orders (shown schema is for admins). Regular users will receive a restricted version — see `OrderPublic` for the limited fields returned to users.",
+    description: "List of all orders.",
     content: {
         "application/json": {
             schema: zod_1.z.array(order_schema_1.OrderSchema),

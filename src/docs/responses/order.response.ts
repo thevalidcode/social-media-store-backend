@@ -1,9 +1,17 @@
 import { z } from "zod";
-import { OrderSchema } from "../../schemas/order.schema";
+import { OrderPublicSchema, OrderSchema } from "../../schemas/order.schema";
+
+export const OrderPublicListResponse = {
+  description: "List of all user's orders.",
+  content: {
+    "application/json": {
+      schema: z.array(OrderPublicSchema),
+    },
+  },
+};
 
 export const OrderListResponse = {
-  description:
-    "List of all orders (shown schema is for admins). Regular users will receive a restricted version — see `OrderPublic` for the limited fields returned to users.",
+  description: "List of all orders.",
   content: {
     "application/json": {
       schema: z.array(OrderSchema),

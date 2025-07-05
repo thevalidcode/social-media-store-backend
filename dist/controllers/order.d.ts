@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 export declare const getOrders: (req: Request, res: Response) => Promise<void>;
+export declare const getOrdersForAdmins: (req: Request, res: Response) => Promise<void>;
 export declare const getOrderByID: (req: Request, res: Response) => Promise<void>;
 export declare const placeOrder: (req: Request, res: Response) => Promise<void>;
 export declare const updateOrder: (req: Request, res: Response) => Promise<void>;

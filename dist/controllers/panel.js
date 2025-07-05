@@ -5,7 +5,6 @@ const zod_1 = require("zod");
 const crud_1 = require("../crud");
 const panelIdQuerySchema = zod_1.z.object({ domain: zod_1.z.string().min(1) });
 const panelIdSchema = zod_1.z.object({ panel_id: zod_1.z.coerce.number() });
-const uidQuerySchema = zod_1.z.object({ uid: zod_1.z.string().min(1) });
 const getPanelData = async (req, res) => {
     const parsed = panelIdQuerySchema.safeParse(req.query);
     if (!parsed.success) {
@@ -80,13 +79,7 @@ const getCurrentUser = async (req, res) => {
         res.status(401).json({ error: "Unauthorized: auth info missing" });
         return;
     }
-    const { panel_id } = req.auth;
-    const parsed = uidQuerySchema.safeParse(req.query);
-    if (!parsed.success) {
-        res.status(400).json({ error: parsed.error.flatten() });
-        return;
-    }
-    const { uid } = parsed.data;
+    const { uid, panel_id } = req.auth;
     try {
         const result = await (0, crud_1.getDocs)("users", panel_id, {
             find: { field: "uid", operator: "===", value: uid },
@@ -108,17 +101,11 @@ const getCurrentAdmin = async (req, res) => {
         res.status(401).json({ error: "Unauthorized: auth info missing" });
         return;
     }
-    const { panel_id, role } = req.auth;
+    const { panel_id, uid, role } = req.auth;
     if (role !== "admin") {
         res.status(403).json({ error: "Access denied. Admins only." });
         return;
     }
-    const parsed = uidQuerySchema.safeParse(req.query);
-    if (!parsed.success) {
-        res.status(400).json({ error: parsed.error.flatten() });
-        return;
-    }
-    const { uid } = parsed.data;
     try {
         const result = await (0, crud_1.getDocs)("admins", panel_id, {
             find: { field: "uid", operator: "===", value: uid },

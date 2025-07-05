@@ -4,6 +4,7 @@ import * as orders from "../controllers/order";
 import { authenticate } from "../middleware/authenticate";
 
 router.get("/", authenticate, orders.getOrders);
+router.get("/admin", authenticate, orders.getOrdersForAdmins);
 router.get("/:order_uid", authenticate, orders.getOrderByID);
 router.post("/", authenticate, orders.placeOrder);
 router.patch("/:order_uid", authenticate, orders.updateOrder);

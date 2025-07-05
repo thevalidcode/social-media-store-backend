@@ -41,6 +41,7 @@ const router = express_1.default.Router();
 const orders = __importStar(require("../controllers/order"));
 const authenticate_1 = require("../middleware/authenticate");
 router.get("/", authenticate_1.authenticate, orders.getOrders);
+router.get("/admin", authenticate_1.authenticate, orders.getOrdersForAdmins);
 router.get("/:order_uid", authenticate_1.authenticate, orders.getOrderByID);
 router.post("/", authenticate_1.authenticate, orders.placeOrder);
 router.patch("/:order_uid", authenticate_1.authenticate, orders.updateOrder);

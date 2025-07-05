@@ -1,4 +1,66 @@
 import { z } from "zod";
+export declare const OrderPublicListResponse: {
+    description: string;
+    content: {
+        "application/json": {
+            schema: z.ZodArray<z.ZodObject<{
+                id: z.ZodNumber;
+                price: z.ZodNumber;
+                quantity: z.ZodNumber;
+                start: z.ZodNumber;
+                remains: z.ZodNumber;
+                user_initial_balance: z.ZodNumber;
+                user_final_balance: z.ZodNumber;
+                currency: z.ZodString;
+                status: z.ZodEnum<["Pending", "Processing", "Completed", "Canceled", "In progress", "Failed"]>;
+                url: z.ZodString;
+                uid: z.ZodString;
+                service_id: z.ZodNumber;
+                comments: z.ZodOptional<z.ZodString>;
+                drip_feed: z.ZodOptional<z.ZodBoolean>;
+                interval: z.ZodOptional<z.ZodNumber>;
+                user_uid: z.ZodString;
+                timestamp: z.ZodString;
+            }, "strict", z.ZodTypeAny, {
+                timestamp: string;
+                id: number;
+                uid: string;
+                url: string;
+                price: number;
+                service_id: number;
+                currency: string;
+                status: "Pending" | "Processing" | "Completed" | "Canceled" | "In progress" | "Failed";
+                quantity: number;
+                start: number;
+                remains: number;
+                user_initial_balance: number;
+                user_final_balance: number;
+                user_uid: string;
+                drip_feed?: boolean | undefined;
+                comments?: string | undefined;
+                interval?: number | undefined;
+            }, {
+                timestamp: string;
+                id: number;
+                uid: string;
+                url: string;
+                price: number;
+                service_id: number;
+                currency: string;
+                status: "Pending" | "Processing" | "Completed" | "Canceled" | "In progress" | "Failed";
+                quantity: number;
+                start: number;
+                remains: number;
+                user_initial_balance: number;
+                user_final_balance: number;
+                user_uid: string;
+                drip_feed?: boolean | undefined;
+                comments?: string | undefined;
+                interval?: number | undefined;
+            }>, "many">;
+        };
+    };
+};
 export declare const OrderListResponse: {
     description: string;
     content: {

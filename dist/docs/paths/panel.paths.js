@@ -79,14 +79,6 @@ registry_1.registry.registerPath({
     summary: "Get the currently authenticated user",
     tags: ["Panel"],
     security: [{ CookieAuth: [] }],
-    parameters: [
-        {
-            name: "uid",
-            in: "query",
-            required: true,
-            schema: { type: "string" },
-        },
-    ],
     responses: {
         200: panel_response_1.CurrentUserResponse,
         404: panel_response_1.NotFound,
@@ -100,14 +92,6 @@ registry_1.registry.registerPath({
     summary: "Get the currently authenticated admin",
     tags: ["Panel"],
     security: [{ CookieAuth: [] }],
-    parameters: [
-        {
-            name: "uid",
-            in: "query",
-            required: true,
-            schema: { type: "string" },
-        },
-    ],
     responses: {
         200: panel_response_1.CurrentAdminResponse,
         403: common_response_1.Forbidden,

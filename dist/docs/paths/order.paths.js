@@ -8,7 +8,19 @@ const order_schema_1 = require("../../schemas/order.schema");
 registry_1.registry.registerPath({
     method: "get",
     path: "/order",
-    summary: "Get all orders for admins or user orders",
+    summary: "Get all user's orders",
+    tags: ["Orders"],
+    security: [{ CookieAuth: [] }],
+    responses: {
+        200: order_response_1.OrderPublicListResponse,
+        400: common_response_1.BadRequest,
+        500: common_response_1.ServerError,
+    },
+});
+registry_1.registry.registerPath({
+    method: "get",
+    path: "/order/admin",
+    summary: "Get all orders for admins",
     tags: ["Orders"],
     security: [{ CookieAuth: [] }],
     responses: {
