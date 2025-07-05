@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.3.4](https://github.com/thevalidcode/social-media-store-backend/compare/v1.3.3...v1.3.4) (2025-07-05)
+
+
+### Bug Fixes
+
+* made seperate route for getting of orders and fixed getting of authenticated user data. ([061c9eb](https://github.com/thevalidcode/social-media-store-backend/commit/061c9ebe3912fcd23f95aefbc15be455ab11d028))
+
 ### [1.3.3](https://github.com/thevalidcode/social-media-store-backend/compare/v1.3.2...v1.3.3) (2025-07-05)
 
 
