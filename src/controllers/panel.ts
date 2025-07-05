@@ -63,7 +63,7 @@ export const getSiteData = async (
 
   try {
     const result = await getDocs("general", panel_id, {
-      find: { field: "uid", operator: "==", value: "site" },
+      find: { field: "uid", operator: "===", value: "site" },
     });
     res.json(result);
   } catch (err: any) {
@@ -99,7 +99,7 @@ export const getCurrentUser = async (
 
   try {
     const result = await getDocs("users", panel_id, {
-      find: { field: "uid", operator: "==", value: uid },
+      find: { field: "uid", operator: "===", value: uid },
       removeKeys: ["password"],
     });
     if (!result) {
@@ -136,7 +136,7 @@ export const getCurrentAdmin = async (
 
   try {
     const result = await getDocs("admins", panel_id, {
-      find: { field: "uid", operator: "==", value: uid },
+      find: { field: "uid", operator: "===", value: uid },
       removeKeys: ["password"],
     });
     if (!result) {

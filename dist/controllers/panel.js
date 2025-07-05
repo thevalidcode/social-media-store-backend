@@ -56,7 +56,7 @@ const getSiteData = async (req, res) => {
     const { panel_id } = parsed.data;
     try {
         const result = await (0, crud_1.getDocs)("general", panel_id, {
-            find: { field: "uid", operator: "==", value: "site" },
+            find: { field: "uid", operator: "===", value: "site" },
         });
         res.json(result);
     }
@@ -89,7 +89,7 @@ const getCurrentUser = async (req, res) => {
     const { uid } = parsed.data;
     try {
         const result = await (0, crud_1.getDocs)("users", panel_id, {
-            find: { field: "uid", operator: "==", value: uid },
+            find: { field: "uid", operator: "===", value: uid },
             removeKeys: ["password"],
         });
         if (!result) {
@@ -121,7 +121,7 @@ const getCurrentAdmin = async (req, res) => {
     const { uid } = parsed.data;
     try {
         const result = await (0, crud_1.getDocs)("admins", panel_id, {
-            find: { field: "uid", operator: "==", value: uid },
+            find: { field: "uid", operator: "===", value: uid },
             removeKeys: ["password"],
         });
         if (!result) {

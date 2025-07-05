@@ -43,18 +43,18 @@ async function updateAllowedOrigins() {
 }
 updateAllowedOrigins();
 setInterval(updateAllowedOrigins, 5 * 60 * 1000);
+// Define CORS Middleware for all non-/admin routes
 const dynamicCors = function (req, callback) {
     const origin = req.headers.origin;
-    const requestHost = req.headers.host || "";
     if (env_1.env.NODE_ENV === "development") {
         return callback(null, { origin: true, credentials: true });
     }
-    // Allow any request served by your own server (based on Host header)
-    if (requestHost.includes("validpanel.com")) {
-        return callback(null, { origin: true, credentials: true });
+    if (!origin) {
+        return callback(new Error("Origin header is required by CORS"), {
+            origin: false,
+        });
     }
-    // Allow specific origins
-    if (origin && allowedOrigins.includes(origin)) {
+    if (allowedOrigins.includes(origin)) {
         return callback(null, { origin: true, credentials: true });
     }
     return callback(new Error("Not allowed by CORS"), { origin: false });

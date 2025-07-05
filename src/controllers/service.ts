@@ -37,7 +37,7 @@ export const getServices = async (
 
   try {
     const services = await getDocs("services", panel_id, {
-      filter: { field: "status", operator: "==", value: "active" },
+      filter: { field: "status", operator: "===", value: "active" },
       removeKeys: [
         "sync_quantity",
         "sync_cat_and_name",
@@ -101,7 +101,7 @@ export const getServiceByID = async (
 
   try {
     const service = await getDocs("services", panel_id, {
-      find: { field: "id", operator: "==", value: service_id },
+      find: { field: "id", operator: "===", value: service_id },
       removeKeys: [
         "provider_id",
         "provider_price",
@@ -143,7 +143,7 @@ export const getServiceByIDFromAdmin = async (
   }
   try {
     const service = await getDocs("services", panel_id, {
-      find: { field: "id", operator: "==", value: service_id },
+      find: { field: "id", operator: "===", value: service_id },
     });
     res.status(200).json({ service });
   } catch (error: any) {
@@ -176,7 +176,7 @@ export const updateService = async (
     await updatePanelDoc("services", reqData.uid, reqData, panel_id);
 
     const service = await getDocs("services", panel_id, {
-      find: { field: "uid", operator: "==", value: reqData.uid },
+      find: { field: "uid", operator: "===", value: reqData.uid },
     });
     res.status(200).json({ success: "Service updated successfully.", service });
   } catch (error: any) {
@@ -276,7 +276,7 @@ export const getServicesByProviderId = async (
   }
   try {
     const services = await getDocs("services", panel_id, {
-      filter: { field: "provider_id", operator: "==", value: provider_id },
+      filter: { field: "provider_id", operator: "===", value: provider_id },
     });
     res.status(200).json({ services });
   } catch (error: any) {

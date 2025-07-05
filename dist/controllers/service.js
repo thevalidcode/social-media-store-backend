@@ -21,7 +21,7 @@ const getServices = async (req, res) => {
     const { panel_id } = parsed.data;
     try {
         const services = await (0, crud_1.getDocs)("services", panel_id, {
-            filter: { field: "status", operator: "==", value: "active" },
+            filter: { field: "status", operator: "===", value: "active" },
             removeKeys: [
                 "sync_quantity",
                 "sync_cat_and_name",
@@ -72,7 +72,7 @@ const getServiceByID = async (req, res) => {
     const { panel_id, service_id } = parsed.data;
     try {
         const service = await (0, crud_1.getDocs)("services", panel_id, {
-            find: { field: "id", operator: "==", value: service_id },
+            find: { field: "id", operator: "===", value: service_id },
             removeKeys: [
                 "provider_id",
                 "provider_price",
@@ -111,7 +111,7 @@ const getServiceByIDFromAdmin = async (req, res) => {
     }
     try {
         const service = await (0, crud_1.getDocs)("services", panel_id, {
-            find: { field: "id", operator: "==", value: service_id },
+            find: { field: "id", operator: "===", value: service_id },
         });
         res.status(200).json({ service });
     }
@@ -140,7 +140,7 @@ const updateService = async (req, res) => {
     try {
         await (0, crud_1.updatePanelDoc)("services", reqData.uid, reqData, panel_id);
         const service = await (0, crud_1.getDocs)("services", panel_id, {
-            find: { field: "uid", operator: "==", value: reqData.uid },
+            find: { field: "uid", operator: "===", value: reqData.uid },
         });
         res.status(200).json({ success: "Service updated successfully.", service });
     }
@@ -224,7 +224,7 @@ const getServicesByProviderId = async (req, res) => {
     }
     try {
         const services = await (0, crud_1.getDocs)("services", panel_id, {
-            filter: { field: "provider_id", operator: "==", value: provider_id },
+            filter: { field: "provider_id", operator: "===", value: provider_id },
         });
         res.status(200).json({ services });
     }
