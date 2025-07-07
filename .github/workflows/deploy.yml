@@ -1,4 +1,4 @@
-name: 🚀 Deploy project on push
+name: 🚀 Deploy to server on push
 
 on:
   push:
@@ -6,43 +6,40 @@ on:
       - main
 
 jobs:
-  web-deploy:
-    name: Deploy project
+  deploy:
+    name: Upload & Run Remote Commands
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🚚 Get latest code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 🧼 Clean previous builds
-        run: rm -rf dist
-
-      - name: 🛠️ Install dependencies and build
+      - name: 🛠️ Install deps & build
         run: |
           npm ci
           npm run build
 
-      - name: 🗂 Ensure dist/public exists and copy public assets
-        run: |
-          mkdir -p dist/public
-          if [ -d "src/public" ]; then
-            cp -r src/public/* dist/public/
-          else
-            echo "No public folder found, skipping static asset copy"
-          fi
-
-      - name: 📦 Copy package.json to build output
-        run: cp package.json dist/
-
-      - name: 🔍 Check dist output before deploy
-        run: ls -la dist
-
-      - name: 📂 Deploy to server via SCP
+      - name: 📤 Upload build to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: 22
-          source: "dist/*"
-          target: "."
+          port: 2022
+          source: "./dist/**"
+          target: "social-media-store/backend"
+
+      - name: 🧠 Run post-deploy commands
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 2022
+          script: |
+            cd social-media-store/backend
+            npm install --omit=dev
+            pm2 describe social-media-store > /dev/null \
+              && pm2 restart social-media-store \
+              || pm2 start index.js --name social-media-store
+            pm2 save

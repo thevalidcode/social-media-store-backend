@@ -3,13 +3,13 @@ import { saveRates } from "../utils/currency";
 import {
   processDripFeedOrders,
   sendUnsyncedOrders,
-  syncAllPanelsOrderDetails,
+  syncAllStoresOrderDetails,
 } from "../provider/order";
 import { syncServices, updateExistingServices } from "../provider/service";
 
 function startCronJobs() {
   cron.schedule("*/5 * * * *", () => {
-    syncAllPanelsOrderDetails();
+    syncAllStoresOrderDetails();
   });
 
   cron.schedule("0 */3 * * *", () => {

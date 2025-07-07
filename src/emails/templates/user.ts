@@ -101,7 +101,7 @@ const fundsAdded = ({
           <p><strong>Method:</strong> ${method}</p>
           <p><strong>User Currency:</strong> ${currency}</p>
         </div>
-        <p>Please verify the transaction in the admin panel.</p>
+        <p>Please verify the transaction in the admin store.</p>
         <p>Thank you!</p>
       </div>
     </div>

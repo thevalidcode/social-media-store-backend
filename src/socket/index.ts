@@ -1,10 +1,10 @@
 import { Server, Socket } from "socket.io";
-import { updatePanelDoc } from "../crud";
+import { updateStoreDoc } from "../crud";
 
 // Define the structure of user data expected from the client
 interface SocketUserData {
   uid: string;
-  panel_id: number;
+  store_id: number;
 }
 
 // Extend the default Socket type to include userData
@@ -24,11 +24,11 @@ function setupSocket(io: Server): void {
       socket.userData = data;
 
       try {
-        await updatePanelDoc(
+        await updateStoreDoc(
           "users",
           data.uid,
           { status: "online", last_seen: new Date() },
-          data.panel_id
+          data.store_id
         );
       } catch (err) {
         console.error("Error updating user status on initConnection:", err);
@@ -48,14 +48,14 @@ function setupSocket(io: Server): void {
     // Handle user disconnection
     socket.on("disconnect", async () => {
       if (socket.userData) {
-        const { uid, panel_id } = socket.userData;
+        const { uid, store_id } = socket.userData;
 
         try {
-          await updatePanelDoc(
+          await updateStoreDoc(
             "users",
             uid,
             { status: "offline", last_seen: new Date() },
-            panel_id
+            store_id
           );
         } catch (err) {
           console.error("Error updating user status on disconnect:", err);

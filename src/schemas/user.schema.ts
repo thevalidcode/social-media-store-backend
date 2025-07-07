@@ -4,7 +4,7 @@ import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 extendZodWithOpenApi(z);
 
 export const AuthSchema = z.object({
-  panel_id: z.coerce.number(),
+  store_id: z.coerce.number(),
   email: z.string().email(),
   uid: z.string(),
   api_key: z.string(),
@@ -40,7 +40,7 @@ export const UserUpdateRequestSchema = z.object({
 });
 
 export const AuthenticateUserSchema = z.object({
-  panel_id: z.number().describe("Associated panel ID"),
+  store_id: z.number().describe("Associated store ID"),
   email: z.string().email().describe("User email"),
   password: z.string().describe("User password"),
 });
@@ -58,7 +58,7 @@ export const CreateUserInputSchema = z.object({
   email: z.string().email().describe("User email"),
   username: z.string().describe("User username"),
   password: z.string().describe("User password"),
-  panel_id: z.number().describe("Panel ID to associate with"),
+  store_id: z.number().describe("Store ID to associate with"),
   ref: z.number().optional().describe("Optional referral ID"),
 });
 
@@ -72,6 +72,6 @@ export const AdminPublicSchema = z.object({
 export const GoogleAuthRequestSchema = z
   .object({
     id_token: z.string().describe("Google OAuth ID token"),
-    panel_id: z.number().describe("Panel identifier to fetch/store user"),
+    store_id: z.number().describe("Store identifier to fetch/store user"),
   })
   .openapi("GoogleAuthResponse");

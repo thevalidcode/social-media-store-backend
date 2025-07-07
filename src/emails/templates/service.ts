@@ -83,7 +83,7 @@ const newService = ({
           <p><strong>Price:</strong> $${price}</p>
           <p><strong>Provider:</strong> ${provider}</p>
         </div>
-        <p>Please review the service in the admin panel.</p>
+        <p>Please review the service in the admin store.</p>
         <p>Thank you!</p>
       </div>
     </div>

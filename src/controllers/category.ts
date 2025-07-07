@@ -1,17 +1,17 @@
 import { z } from "zod";
 import {
   getDocs,
-  addPanelDoc,
-  updatePanelDoc,
-  deletePanelDoc,
-  deletePanelDocs,
+  addStoreDoc,
+  updateStoreDoc,
+  deleteStoreDoc,
+  deleteStoreDocs,
 } from "../crud";
 import type { Request, Response } from "express";
 import { AuthSchema } from "../schemas/user.schema";
 
 const categoryIdSchema = z.object({
   category_id: z.coerce.number(),
-  panel_id: z.coerce.number(),
+  store_id: z.coerce.number(),
 });
 
 const updateCategorySchema = z.object({
@@ -29,15 +29,15 @@ export const getCategories = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const parsed = z.object({ panel_id: z.coerce.number() }).safeParse(req.query);
+  const parsed = z.object({ store_id: z.coerce.number() }).safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { panel_id } = parsed.data;
+  const { store_id } = parsed.data;
 
   try {
-    const categories = await getDocs("categories", panel_id);
+    const categories = await getDocs("categories", store_id);
     const sorted = categories.sort((a: any, b: any) => a.position - b.position);
     res.status(200).json(sorted);
   } catch (error: any) {
@@ -54,10 +54,10 @@ export const getCategoryByID = async (
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { category_id, panel_id } = parsed.data;
+  const { category_id, store_id } = parsed.data;
 
   try {
-    const category = await getDocs("categories", panel_id, {
+    const category = await getDocs("categories", store_id, {
       find: { field: "id", operator: "===", value: category_id },
     });
     res.status(200).json({ category });
@@ -81,7 +81,7 @@ export const updateCategory = async (
     return;
   }
   const { uid } = parsed.data;
-  const { panel_id, role } = authParsed.data;
+  const { store_id, role } = authParsed.data;
 
   if (role === "user") {
     res.status(403).json({ error: "Unauthorised User." });
@@ -89,8 +89,8 @@ export const updateCategory = async (
   }
 
   try {
-    await updatePanelDoc("categories", uid, parsed.data, panel_id);
-    const category = await getDocs("categories", panel_id, {
+    await updateStoreDoc("categories", uid, parsed.data, store_id);
+    const category = await getDocs("categories", store_id, {
       find: { field: "uid", operator: "===", value: uid },
     });
     res
@@ -116,7 +116,7 @@ export const deleteCategory = async (
     return;
   }
   const { uid } = parsed.data;
-  const { role, panel_id } = authParsed.data;
+  const { role, store_id } = authParsed.data;
 
   if (role === "user") {
     res.status(403).json({ error: "Unauthorised User." });
@@ -124,7 +124,7 @@ export const deleteCategory = async (
   }
 
   try {
-    await deletePanelDoc("categories", uid, panel_id);
+    await deleteStoreDoc("categories", uid, store_id);
     res.status(200).json({ success: "Category deleted successfully." });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -152,7 +152,7 @@ export const deleteMultipleCategory = async (
   }
 
   const { uids } = parsed.data;
-  const { role, panel_id } = authParsed.data;
+  const { role, store_id } = authParsed.data;
 
   if (role === "user") {
     res.status(403).json({ error: "Unauthorised User." });
@@ -160,7 +160,7 @@ export const deleteMultipleCategory = async (
   }
 
   try {
-    await deletePanelDocs("categories", uids, panel_id);
+    await deleteStoreDocs("categories", uids, store_id);
     res.status(200).json({ success: "Categories deleted successfully." });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -188,14 +188,14 @@ export const addCategory = async (
     return;
   }
 
-  const { role, panel_id } = authParsed.data;
+  const { role, store_id } = authParsed.data;
   if (role === "user") {
     res.status(403).json({ error: "Unauthorised User." });
     return;
   }
 
   try {
-    const categories = await getDocs("categories", panel_id);
+    const categories = await getDocs("categories", store_id);
     const newId =
       categories.reduce((max: number, c: any) => Math.max(max, c.id), 0) + 1;
 
@@ -206,7 +206,7 @@ export const addCategory = async (
       position: newId,
     };
 
-    await addPanelDoc("categories", categoryData, panel_id);
+    await addStoreDoc("categories", categoryData, store_id);
     res.status(200).json({
       success: "Category added successfully.",
       category: categoryData,

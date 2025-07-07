@@ -1,5 +1,5 @@
 import axios from "axios";
-import { addPanelDoc, getDocs, updatePanelDoc } from "../crud";
+import { addStoreDoc, getDocs, updateStoreDoc } from "../crud";
 import { env } from "../config/env";
 
 const rateKey = env.RATE_KEY;
@@ -27,14 +27,14 @@ const saveRates = async () => {
     try {
       const existingRates = await getDocs("currencies", 1);
       if (existingRates.length !== 0) {
-        await updatePanelDoc(
+        await updateStoreDoc(
           "currencies",
           existingRates[0].uid,
           { quotes: rates, timestamp: new Date() },
           1
         );
       } else {
-        await addPanelDoc("currencies", { quotes: rates }, 1);
+        await addStoreDoc("currencies", { quotes: rates }, 1);
       }
     } catch (error: any) {
       console.error("Error saving exchange rates:", error.message || error);

@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { addPanelDoc, getDocs } from "../crud";
+import { addStoreDoc, getDocs } from "../crud";
 import { getTemplate } from "./templates";
 
 const transporter = nodemailer.createTransport({
@@ -15,15 +15,15 @@ function interpolate(template: string, variables: Record<string, any>): string {
   );
 }
 
-async function loadGeneralSettings(panel_id: number) {
-  const general = await getDocs("general", panel_id, {
+async function loadGeneralSettings(store_id: number) {
+  const general = await getDocs("general", store_id, {
     find: { field: "uid", operator: "===", value: "site" },
   });
   return general;
 }
 
-async function loadAdminEmails(panel_id: number): Promise<string[]> {
-  const docs = await getDocs("admin_emails", panel_id);
+async function loadAdminEmails(store_id: number): Promise<string[]> {
+  const docs = await getDocs("admin_emails", store_id);
   return docs.map((doc: any) => doc.email);
 }
 
@@ -31,9 +31,9 @@ async function buildEmailTemplate(
   type: string,
   data: Record<string, any>,
   logo_url: string,
-  panel_id: number
+  store_id: number
 ): Promise<{ subject: string; html: string }> {
-  const template = await getDocs("email_templates", panel_id, {
+  const template = await getDocs("email_templates", store_id, {
     find: { type },
   });
 
@@ -58,18 +58,18 @@ async function dispatchEmail({
   to,
   subject,
   html,
-  panel_id,
+  store_id,
 }: {
   from: string;
   to: string;
   subject: string;
   html: string;
-  panel_id: number;
+  store_id: number;
 }): Promise<boolean> {
   try {
     const result = await transporter.sendMail({ from, to, subject, html });
 
-    await addPanelDoc(
+    await addStoreDoc(
       "notifications",
       {
         from,
@@ -81,12 +81,12 @@ async function dispatchEmail({
         messageId: result.messageId,
         response: result.response,
       },
-      panel_id
+      store_id
     );
 
     return true;
   } catch (err: any) {
-    await addPanelDoc(
+    await addStoreDoc(
       "notifications",
       {
         from,
@@ -97,36 +97,36 @@ async function dispatchEmail({
         timestamp: new Date(),
         response: err.message,
       },
-      panel_id
+      store_id
     );
     return false;
   }
 }
 
 export async function sendEmail(
-  from = '"Valid Panel" <contact@validpanel.com>',
+  from = '"Valid Store" <contact@validstore.com>',
   type: string,
   data: Record<string, any>,
-  panel_id: number
+  store_id: number
 ): Promise<void> {
   try {
     if (type === "new_order" && data.price <= 0) return;
 
     const [logo, recipients] = await Promise.all([
-      loadGeneralSettings(panel_id).then((g) => g.logo_url),
-      loadAdminEmails(panel_id),
+      loadGeneralSettings(store_id).then((g) => g.logo_url),
+      loadAdminEmails(store_id),
     ]);
 
     const { subject, html } = await buildEmailTemplate(
       type,
       data,
       logo,
-      panel_id
+      store_id
     );
 
     await Promise.all(
       recipients.map((to) =>
-        dispatchEmail({ from, to, subject, html, panel_id })
+        dispatchEmail({ from, to, subject, html, store_id })
       )
     );
   } catch (err: any) {
@@ -135,21 +135,21 @@ export async function sendEmail(
 }
 
 export async function sendUserEmail(
-  from = '"Panel" <contact@validpanel.com>',
+  from = '"Store" <contact@validstore.com>',
   to: string,
   type: string,
   data: Record<string, any>,
-  panel_id: number
+  store_id: number
 ): Promise<void> {
   try {
-    const logo = (await loadGeneralSettings(panel_id)).logo_url;
+    const logo = (await loadGeneralSettings(store_id)).logo_url;
     const { subject, html } = await buildEmailTemplate(
       type,
       data,
       logo,
-      panel_id
+      store_id
     );
-    await dispatchEmail({ from, to, subject, html, panel_id });
+    await dispatchEmail({ from, to, subject, html, store_id });
   } catch (err: any) {
     console.error({ error: err.message });
   }

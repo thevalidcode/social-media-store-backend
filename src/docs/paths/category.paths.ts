@@ -17,7 +17,7 @@ import {
   SuccessResponse,
 } from "../responses/common.response";
 
-// GET /category?panel_id=123
+// GET /category?store_id=123
 registry.registerPath({
   method: "get",
   path: "/category",
@@ -25,10 +25,10 @@ registry.registerPath({
   tags: ["Categories"],
   parameters: [
     {
-      name: "panel_id",
+      name: "store_id",
       in: "query",
       required: true,
-      description: "Panel ID to filter categories",
+      description: "Store ID to filter categories",
       schema: { type: "number" },
     },
   ],
@@ -135,7 +135,7 @@ registry.registerPath({
   },
 });
 
-// GET /category/{category_id}?panel_id=123
+// GET /category/{category_id}?store_id=123
 registry.registerPath({
   method: "get",
   path: "/category/{category_id}",
@@ -149,7 +149,7 @@ registry.registerPath({
       schema: { type: "number" },
     },
     {
-      name: "panel_id",
+      name: "store_id",
       in: "query",
       required: true,
       schema: { type: "number" },

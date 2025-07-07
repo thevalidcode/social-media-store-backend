@@ -82,7 +82,7 @@ export const newOrder = ({
             <p><strong>Service ID:</strong> ${service_id}</p>
             <p><strong>Provider:</strong> ${provider}</p>
           </div>
-          <p>Please process this order through the admin panel.</p>
+          <p>Please process this order through the admin store.</p>
           <p>Thank you!</p>
         </div>
       </div>
@@ -147,7 +147,7 @@ export const newFailedOrder = ({
         </div>
         <div class="content">
           <h1>Dear Admin,</h1>
-          <p>A recent order on your panel didn't go through. Here are the details:</p>
+          <p>A recent order on your store didn't go through. Here are the details:</p>
           <div class="order-details">
             <p><strong>Order ID:</strong> ${id}</p>
             <p><strong>Username:</strong> ${username}</p>
@@ -159,7 +159,7 @@ export const newFailedOrder = ({
             <p><strong>Provider:</strong> ${provider}</p>
             <p><strong>Provider Error:</strong> ${provider_error}</p>
           </div>
-          <p>Please fix this order through the admin or provider's panel.</p>
+          <p>Please fix this order through the admin or provider's store.</p>
           <p>Thank you!</p>
         </div>
       </div>

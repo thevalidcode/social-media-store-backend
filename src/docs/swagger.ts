@@ -15,10 +15,10 @@ const generator = new OpenApiGeneratorV3(registry.definitions);
 const openApiDocument = generator.generateDocument({
   openapi: "3.0.0",
   info: {
-    title: "Valid Panel - Social Media Store API Documentation",
+    title: "Valid Store - Social Media Store API Documentation",
     version: API_VERSION,
     description:
-      "Comprehensive API documentation for the Social Media Store feature of Valid Panel, covering all user and admin endpoints related to service ordering, wallet operations, referrals, authentication, and store management.",
+      "Comprehensive API documentation for the Social Media Store feature of Valid Store. This includes detailed endpoints for user authentication, wallet operations, service ordering, referrals, and store management for both users and admins.\n\nAll API requests must include a valid `Origin` header. Requests without an `Origin`, or with an unregistered one, will result in a CORS error. The `Origin` must match a registered store domain.\nAlready registered and allowed Origins include:\n- http://localhost:3000\n- http://localhost:6060\n- https://validpanel.com\n\nWe recommend using Postman for testing especially if it's a `GET` request. Ensure your requests simulate a browser-like environment by setting a valid `Origin` header to one of the domains listed above.",
     contact: {
       name: "Valid Code",
       url: "https://linkedin.com/in/thevalidcode",
@@ -31,16 +31,16 @@ const openApiDocument = generator.generateDocument({
       description: "Public testing server (use this to test endpoints)",
     },
     {
-      url: "https://auth.validpanel.com/api/auth/panel",
+      url: "https://auth.validpanel.com/api/auth/store",
       description: "Public server (use this for auth endpoints)",
     },
     {
       url: "https://{domain}:6060",
-      description: "Custom panel domain (replace `{domain}` with your own)",
+      description: "Custom store domain (replace `{domain}` with your own)",
       variables: {
         domain: {
           default: "yourdomain.com",
-          description: "Your custom panel domain (e.g. `myreseller.com`)",
+          description: "Your custom store domain (e.g. `myreseller.com`)",
         },
       },
     },

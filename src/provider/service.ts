@@ -1,4 +1,4 @@
-import { getDocs, addPanelDoc, updatePanelDoc } from "../crud";
+import { getDocs, addStoreDoc, updateStoreDoc } from "../crud";
 import axios from "axios";
 import https from "https";
 import { sendEmail } from "../emails";
@@ -17,13 +17,13 @@ const safeInt = (n: any, d = 0): number =>
 
 export const updateExistingServices = async (): Promise<void> => {
   try {
-    const panelIds = (
-      await pool.query(`SELECT DISTINCT panel_id FROM services`)
-    ).rows.map((r: any) => r.panel_id);
+    const storeIds = (
+      await pool.query(`SELECT DISTINCT store_id FROM services`)
+    ).rows.map((r: any) => r.store_id);
 
-    for (const panel_id of panelIds) {
-      const services = await getDocs("services", panel_id);
-      const providers = await getDocs("providers", panel_id);
+    for (const store_id of storeIds) {
+      const services = await getDocs("services", store_id);
+      const providers = await getDocs("providers", store_id);
 
       const provCache: Record<string, any> = {};
 
@@ -59,11 +59,11 @@ export const updateExistingServices = async (): Promise<void> => {
         );
 
         if (!liveSvc) {
-          await updatePanelDoc(
+          await updateStoreDoc(
             "services",
             svc.uid,
             { status: "disabled" },
-            panel_id
+            store_id
           );
           continue;
         }
@@ -73,7 +73,7 @@ export const updateExistingServices = async (): Promise<void> => {
           (safeFloat(liveSvc.rate) * svc.percentage) / 100;
         const priceUSD = safeFloat(calcPrice).toFixed(3);
 
-        await updatePanelDoc(
+        await updateStoreDoc(
           "services",
           svc.uid,
           {
@@ -85,39 +85,39 @@ export const updateExistingServices = async (): Promise<void> => {
             network: liveSvc.network || "None",
             refill: liveSvc.refill,
           },
-          panel_id
+          store_id
         );
 
         if (liveSvc.description) {
-          await updatePanelDoc(
+          await updateStoreDoc(
             "services",
             svc.uid,
             { description: liveSvc.description },
-            panel_id
+            store_id
           );
         }
 
         if (svc.sync_quantity) {
-          await updatePanelDoc(
+          await updateStoreDoc(
             "services",
             svc.uid,
             {
               min: safeInt(liveSvc.min),
               max: safeInt(liveSvc.max),
             },
-            panel_id
+            store_id
           );
         }
 
         if (svc.sync_cat_and_name) {
-          await updatePanelDoc(
+          await updateStoreDoc(
             "services",
             svc.uid,
             {
               name: liveSvc.name,
               category: liveSvc.category,
             },
-            panel_id
+            store_id
           );
         }
       }
@@ -129,17 +129,17 @@ export const updateExistingServices = async (): Promise<void> => {
 
 export const syncServices = async () => {
   try {
-    const panels = await getDocs("panels");
+    const stores = await getDocs("stores");
 
-    for (const p of panels) {
-      const panel_id = p.panel_id;
-      const providers = (await getDocs("providers", panel_id)).filter(
+    for (const p of stores) {
+      const store_id = p.store_id;
+      const providers = (await getDocs("providers", store_id)).filter(
         (pr: any) => pr.sync
       );
       if (!providers.length) continue;
 
-      const services = await getDocs("services", panel_id);
-      const categories = await getDocs("categories", panel_id);
+      const services = await getDocs("services", store_id);
+      const categories = await getDocs("categories", store_id);
 
       let maxId = services.reduce((m: any, s: any) => Math.max(m, s.id), 0);
       let categoryId = categories.length;
@@ -165,14 +165,14 @@ export const syncServices = async () => {
         for (const s of svcList) {
           if (!categories.some((c: any) => c.name === s.category)) {
             categoryId++;
-            await addPanelDoc(
+            await addStoreDoc(
               "categories",
               {
                 name: s.category,
                 status: "active",
                 position: categoryId,
               },
-              panel_id
+              store_id
             );
           }
 
@@ -197,7 +197,7 @@ export const syncServices = async () => {
             provider_id: safeInt(s.service),
             description: s.description || "",
             provider_price: safeFloat(s.rate),
-            panel_id,
+            store_id,
             status: "active",
             sync_quantity: true,
             sync_cat_and_name: true,
@@ -211,7 +211,7 @@ export const syncServices = async () => {
             provider: prov.url,
           };
 
-          await addPanelDoc("services", row, panel_id);
+          await addStoreDoc("services", row, store_id);
 
           try {
             await sendEmail(
@@ -222,10 +222,10 @@ export const syncServices = async () => {
                 provider_currency: row.provider_currency,
                 provider_price: row.provider_price,
               },
-              panel_id
+              store_id
             );
           } catch (err: any) {
-            console.error(`Email error (panel ${panel_id}):`, err.message);
+            console.error(`Email error (store ${store_id}):`, err.message);
           }
         }
       }

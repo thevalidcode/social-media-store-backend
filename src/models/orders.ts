@@ -31,7 +31,7 @@ async function createOrdersTable() {
       user_final_balance NUMERIC(10, 2) NOT NULL DEFAULT 0,
       price NUMERIC(10, 2) NOT NULL DEFAULT 0,
       remains INTEGER NOT NULL DEFAULT 0,
-      panel_id INTEGER NOT NULL REFERENCES panels(panel_id) ON DELETE CASCADE
+      store_id INTEGER NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE
     );
   `);
 
@@ -71,7 +71,7 @@ async function createOrdersTable() {
     user_final_balance: `ALTER TABLE orders ADD COLUMN user_final_balance NUMERIC(10, 2) NOT NULL DEFAULT 0`,
     price: `ALTER TABLE orders ADD COLUMN price NUMERIC(10, 2) NOT NULL DEFAULT 0`,
     remains: `ALTER TABLE orders ADD COLUMN remains INTEGER NOT NULL DEFAULT 0`,
-    panel_id: `ALTER TABLE orders ADD COLUMN panel_id INTEGER NOT NULL REFERENCES panels(panel_id) ON DELETE CASCADE`,
+    store_id: `ALTER TABLE orders ADD COLUMN store_id INTEGER NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE`,
   };
 
   for (const [col, sql] of Object.entries(expected)) {

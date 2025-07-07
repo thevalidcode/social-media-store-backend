@@ -11,7 +11,7 @@ async function createRefillTable() {
       provider TEXT NOT NULL,
       provider_error TEXT,
       url TEXT NOT NULL,
-      panel_id INTEGER NOT NULL REFERENCES panels(panel_id) ON DELETE CASCADE,
+      store_id INTEGER NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE,
       timestamp TIMESTAMP NOT NULL DEFAULT NOW()
     );
   `);
@@ -32,7 +32,7 @@ async function createRefillTable() {
     provider: `ALTER TABLE refills ADD COLUMN provider TEXT NOT NULL`,
     provider_error: `ALTER TABLE refills ADD COLUMN provider_error TEXT`,
     url: `ALTER TABLE refills ADD COLUMN url TEXT NOT NULL`,
-    panel_id: `ALTER TABLE refills ADD COLUMN panel_id INTEGER NOT NULL REFERENCES panels(panel_id) ON DELETE CASCADE`,
+    store_id: `ALTER TABLE refills ADD COLUMN store_id INTEGER NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE`,
     timestamp: `ALTER TABLE refills ADD COLUMN timestamp TIMESTAMP NOT NULL DEFAULT NOW()`,
   };
 

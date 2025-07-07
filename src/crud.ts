@@ -184,16 +184,16 @@ const buildWhereClause = (
 
 const getDocs = async (
   table: string,
-  panel_id: number | null = null,
+  store_id: number | null = null,
   query: QueryOptions = {}
 ): Promise<any> => {
   try {
     let where = "";
     let values: any[] = [];
 
-    if (panel_id !== null) {
-      where = `WHERE panel_id = $1`;
-      values.push(panel_id);
+    if (store_id !== null) {
+      where = `WHERE store_id = $1`;
+      values.push(store_id);
     }
 
     const filterInput = query.find || query.filter;
@@ -354,14 +354,14 @@ const ensureColumnsExist = async (
   }
 };
 
-const addPanelDoc = async (col: string, data: any, panel_id: number) => {
-  data.panel_id = panel_id;
+const addStoreDoc = async (col: string, data: any, store_id: number) => {
+  data.store_id = store_id;
   if (!data.uid) data.uid = uuidv4();
   try {
     if (data.id === undefined || data.id === null) {
       const { rows } = await pool.query(
-        `SELECT MAX(id) AS max_id FROM ${col} WHERE panel_id = $1 AND id IS NOT NULL`,
-        [panel_id]
+        `SELECT MAX(id) AS max_id FROM ${col} WHERE store_id = $1 AND id IS NOT NULL`,
+        [store_id]
       );
       data.id = rows[0].max_id !== null ? Number(rows[0].max_id) + 1 : 1;
     }
@@ -387,36 +387,36 @@ const addPanelDoc = async (col: string, data: any, panel_id: number) => {
   }
 };
 
-const addPanelDocs = async (col: string, docs: any[], panel_id: number) => {
+const addStoreDocs = async (col: string, docs: any[], store_id: number) => {
   for (const doc of docs) {
-    const result = await addPanelDoc(col, doc, panel_id);
+    const result = await addStoreDoc(col, doc, store_id);
     if (result.error) return result;
   }
 };
 
-const deletePanelDoc = async (col: string, uid: string, panel_id: number) => {
-  await pool.query(`DELETE FROM ${col} WHERE uid = $1 AND panel_id = $2`, [
+const deleteStoreDoc = async (col: string, uid: string, store_id: number) => {
+  await pool.query(`DELETE FROM ${col} WHERE uid = $1 AND store_id = $2`, [
     uid,
-    panel_id,
+    store_id,
   ]);
 };
 
-const deletePanelDocs = async (
+const deleteStoreDocs = async (
   col: string,
   uids: string[],
-  panel_id: number
+  store_id: number
 ) => {
-  await pool.query(`DELETE FROM ${col} WHERE uid = ANY($1) AND panel_id = $2`, [
+  await pool.query(`DELETE FROM ${col} WHERE uid = ANY($1) AND store_id = $2`, [
     uids,
-    panel_id,
+    store_id,
   ]);
 };
 
-const updatePanelDoc = async (
+const updateStoreDoc = async (
   col: string,
   uid: string,
   newData: Record<string, any>,
-  panel_id: number
+  store_id: number
 ) => {
   const keys = Object.keys(newData);
   const values = Object.values(newData);
@@ -424,18 +424,18 @@ const updatePanelDoc = async (
   await pool.query(
     `UPDATE ${col} SET ${sets} WHERE uid = $${
       keys.length + 1
-    } AND panel_id = $${keys.length + 2}`,
-    [...values, uid, panel_id]
+    } AND store_id = $${keys.length + 2}`,
+    [...values, uid, store_id]
   );
 };
 
 export {
   getDocs,
-  addPanelDoc,
-  addPanelDocs,
-  deletePanelDoc,
-  deletePanelDocs,
-  updatePanelDoc,
+  addStoreDoc,
+  addStoreDocs,
+  deleteStoreDoc,
+  deleteStoreDocs,
+  updateStoreDoc,
   createTableIfNotExists,
   ensureColumnsExist,
 };

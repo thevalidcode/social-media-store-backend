@@ -1,10 +1,10 @@
 import { z } from "zod";
 import {
   getDocs,
-  addPanelDoc,
-  updatePanelDoc,
-  deletePanelDoc,
-  deletePanelDocs,
+  addStoreDoc,
+  updateStoreDoc,
+  deleteStoreDoc,
+  deleteStoreDocs,
 } from "../crud";
 import type { Request, Response } from "express";
 import { AuthSchema } from "../schemas/user.schema";
@@ -16,12 +16,12 @@ import {
 } from "../schemas/service.schema";
 
 const getServicesSchema = z.object({
-  panel_id: z.coerce.number(),
+  store_id: z.coerce.number(),
 });
 
 const serviceIdSchema = z.object({
   service_id: z.coerce.number(),
-  panel_id: z.coerce.number(),
+  store_id: z.coerce.number(),
 });
 
 export const getServices = async (
@@ -33,10 +33,10 @@ export const getServices = async (
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { panel_id } = parsed.data;
+  const { store_id } = parsed.data;
 
   try {
-    const services = await getDocs("services", panel_id, {
+    const services = await getDocs("services", store_id, {
       filter: { field: "status", operator: "===", value: "active" },
       removeKeys: [
         "sync_quantity",
@@ -44,7 +44,7 @@ export const getServices = async (
         "provider",
         "percentage",
         "status",
-        "panel_id",
+        "store_id",
         "provider_id",
         "uid",
         "provider_price",
@@ -69,7 +69,7 @@ export const getServicesForAdmins = async (
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { panel_id, role } = parsed.data;
+  const { store_id, role } = parsed.data;
 
   if (role === "user") {
     res.status(403).json({ error: "Unauthorised User." });
@@ -77,7 +77,7 @@ export const getServicesForAdmins = async (
   }
 
   try {
-    const services = await getDocs("services", panel_id);
+    const services = await getDocs("services", store_id);
 
     const sortedServices = services.sort(
       (a: any, b: any) => a.position - b.position
@@ -97,10 +97,10 @@ export const getServiceByID = async (
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { panel_id, service_id } = parsed.data;
+  const { store_id, service_id } = parsed.data;
 
   try {
-    const service = await getDocs("services", panel_id, {
+    const service = await getDocs("services", store_id, {
       find: { field: "id", operator: "===", value: service_id },
       removeKeys: [
         "provider_id",
@@ -109,7 +109,7 @@ export const getServiceByID = async (
         "provider",
         "sync_cat_and_name",
         "sync_quantity",
-        "panel_id",
+        "store_id",
         "status",
         "position",
       ],
@@ -135,14 +135,14 @@ export const getServiceByIDFromAdmin = async (
     return;
   }
   const { service_id } = parsed.data;
-  const { panel_id, role } = authParsed.data;
+  const { store_id, role } = authParsed.data;
 
   if (role === "user") {
     res.status(403).json({ error: "Unauthorised User." });
     return;
   }
   try {
-    const service = await getDocs("services", panel_id, {
+    const service = await getDocs("services", store_id, {
       find: { field: "id", operator: "===", value: service_id },
     });
     res.status(200).json({ service });
@@ -166,16 +166,16 @@ export const updateService = async (
     return;
   }
   const reqData = parsed.data;
-  const { panel_id, role } = authParsed.data;
+  const { store_id, role } = authParsed.data;
 
   if (role === "user") {
     res.status(403).json({ error: "Unauthorised User." });
     return;
   }
   try {
-    await updatePanelDoc("services", reqData.uid, reqData, panel_id);
+    await updateStoreDoc("services", reqData.uid, reqData, store_id);
 
-    const service = await getDocs("services", panel_id, {
+    const service = await getDocs("services", store_id, {
       find: { field: "uid", operator: "===", value: reqData.uid },
     });
     res.status(200).json({ success: "Service updated successfully.", service });
@@ -199,7 +199,7 @@ export const deleteService = async (
     return;
   }
   const { uid } = parsed.data;
-  const { role, panel_id } = authParsed.data;
+  const { role, store_id } = authParsed.data;
 
   if (role === "user") {
     res.status(403).json({ error: "Unauthorised User." });
@@ -207,7 +207,7 @@ export const deleteService = async (
   }
 
   try {
-    await deletePanelDoc("services", uid, panel_id);
+    await deleteStoreDoc("services", uid, store_id);
     res.status(200).json({ success: "Service deleted successfully." });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -231,7 +231,7 @@ export const deleteMultipleService = async (
   }
 
   const { uids } = parsed.data;
-  const { role, panel_id } = authParsed.data;
+  const { role, store_id } = authParsed.data;
 
   if (role === "user") {
     res.status(403).json({ error: "Unauthorised User." });
@@ -239,7 +239,7 @@ export const deleteMultipleService = async (
   }
 
   try {
-    await deletePanelDocs("services", uids, panel_id);
+    await deleteStoreDocs("services", uids, store_id);
 
     res.status(200).json({ success: "Services deleted successfully." });
   } catch (error: any) {
@@ -268,14 +268,14 @@ export const getServicesByProviderId = async (
   }
 
   const { provider_id } = parsed.data;
-  const { role, panel_id } = authParsed.data;
+  const { role, store_id } = authParsed.data;
 
   if (role === "user") {
     res.status(403).json({ error: "Unauthorised User." });
     return;
   }
   try {
-    const services = await getDocs("services", panel_id, {
+    const services = await getDocs("services", store_id, {
       filter: { field: "provider_id", operator: "===", value: provider_id },
     });
     res.status(200).json({ services });
@@ -300,25 +300,25 @@ export const addService = async (
     return;
   }
 
-  const { role, panel_id } = authParsed.data;
+  const { role, store_id } = authParsed.data;
   if (role === "user") {
     res.status(403).json({ error: "Unauthorised User." });
     return;
   }
 
   try {
-    const services = await getDocs("services", panel_id);
+    const services = await getDocs("services", store_id);
     const newId =
       services.reduce((max: number, s: any) => Math.max(max, s.id), 0) + 1;
 
     const serviceData = {
       ...parsed.data,
       position: newId,
-      panel_id,
+      store_id,
       status: "active",
     };
 
-    await addPanelDoc("services", serviceData, panel_id);
+    await addStoreDoc("services", serviceData, store_id);
 
     res.status(200).json({
       success: "Service added successfully.",

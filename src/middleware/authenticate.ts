@@ -7,7 +7,7 @@ import { z } from "zod";
 // Zod schema for verifying JWT payload
 const tokenPayloadSchema = z.object({
   email: z.string().email(),
-  panel_id: z.number(),
+  store_id: z.number(),
   api_key: z.string(),
   role: z.enum(["admin", "user"]),
 });
@@ -17,9 +17,9 @@ declare module "express" {
   interface Request {
     auth?: {
       email: string;
-      panel_id: number;
+      store_id: number;
       api_key: string;
-      role: "admin" | "user";
+      role: string;
       uid: string;
       user: any;
     };
@@ -48,10 +48,10 @@ export const authenticate = async (
       return;
     }
 
-    const { email, panel_id, api_key, role } = parsed.data;
+    const { email, store_id, api_key, role } = parsed.data;
 
-    const user = await getDocs("users", panel_id, { find: { email } });
-    const admin = await getDocs("admins", panel_id, { find: { email } });
+    const user = await getDocs("users", store_id, { find: { email } });
+    const admin = await getDocs("admins", store_id, { find: { email } });
 
     const account = admin || user;
 
@@ -62,7 +62,7 @@ export const authenticate = async (
 
     req.auth = {
       email,
-      panel_id,
+      store_id,
       api_key,
       role,
       uid: account.uid?.toString() || "",

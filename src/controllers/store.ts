@@ -2,14 +2,14 @@ import { z } from "zod";
 import { getDocs } from "../crud";
 import type { Request, Response } from "express";
 
-const panelIdQuerySchema = z.object({ domain: z.string().min(1) });
-const panelIdSchema = z.object({ panel_id: z.coerce.number() });
+const storeIdQuerySchema = z.object({ domain: z.string().min(1) });
+const storeIdSchema = z.object({ store_id: z.coerce.number() });
 
-export const getPanelData = async (
+export const getStoreData = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const parsed = panelIdQuerySchema.safeParse(req.query);
+  const parsed = storeIdQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -17,16 +17,16 @@ export const getPanelData = async (
   const { domain } = parsed.data;
 
   try {
-    const panels = await getDocs("panels");
-    const panel = panels.find((p: any) => p.uid === domain);
-    if (!panel) {
-      res.status(404).json({ error: "Panel not found for the given domain" });
+    const stores = await getDocs("stores");
+    const store = stores.find((p: any) => p.uid === domain);
+    if (!store) {
+      res.status(404).json({ error: "Store not found for the given domain" });
       return;
     }
     res.json({
-      panel_id: panel.panel_id,
-      plan: panel.plan,
-      timestamp: panel.timestamp,
+      store_id: store.store_id,
+      plan: store.plan,
+      timestamp: store.timestamp,
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -34,15 +34,15 @@ export const getPanelData = async (
 };
 
 export const getStyles = async (req: Request, res: Response): Promise<void> => {
-  const parsed = panelIdSchema.safeParse(req.query);
+  const parsed = storeIdSchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { panel_id } = parsed.data;
+  const { store_id } = parsed.data;
 
   try {
-    const result = await getDocs("design_styles", panel_id);
+    const result = await getDocs("design_styles", store_id);
     res.json(result[0]);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -53,15 +53,15 @@ export const getSiteData = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const parsed = panelIdSchema.safeParse(req.query);
+  const parsed = storeIdSchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { panel_id } = parsed.data;
+  const { store_id } = parsed.data;
 
   try {
-    const result = await getDocs("general", panel_id, {
+    const result = await getDocs("general", store_id, {
       find: { field: "uid", operator: "===", value: "site" },
     });
     res.json(result);
@@ -87,10 +87,10 @@ export const getCurrentUser = async (
     res.status(401).json({ error: "Unauthorized: auth info missing" });
     return;
   }
-  const { uid, panel_id } = req.auth;
+  const { uid, store_id } = req.auth;
 
   try {
-    const result = await getDocs("users", panel_id, {
+    const result = await getDocs("users", store_id, {
       find: { field: "uid", operator: "===", value: uid },
       removeKeys: ["password"],
     });
@@ -112,7 +112,7 @@ export const getCurrentAdmin = async (
     res.status(401).json({ error: "Unauthorized: auth info missing" });
     return;
   }
-  const { panel_id, uid, role } = req.auth;
+  const { store_id, uid, role } = req.auth;
 
   if (role !== "admin") {
     res.status(403).json({ error: "Access denied. Admins only." });
@@ -120,7 +120,7 @@ export const getCurrentAdmin = async (
   }
 
   try {
-    const result = await getDocs("admins", panel_id, {
+    const result = await getDocs("admins", store_id, {
       find: { field: "uid", operator: "===", value: uid },
       removeKeys: ["password"],
     });

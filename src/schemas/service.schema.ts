@@ -25,7 +25,7 @@ export const ServiceSchema = z
     cancel: z.boolean(),
     position: z.number(),
     status: z.string(),
-    panel_id: z.number(),
+    store_id: z.number(),
   })
   .openapi("Service");
 

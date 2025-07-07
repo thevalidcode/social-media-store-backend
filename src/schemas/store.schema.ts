@@ -3,13 +3,13 @@ import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 
 extendZodWithOpenApi(z);
 
-export const PanelDataSchema = z
+export const StoreDataSchema = z
   .object({
-    panel_id: z.number().describe("Unique identifier for the panel"),
-    plan: z.string().describe("The plan associated with the panel"),
-    timestamp: z.string().describe("Timestamp when the panel was created"),
+    store_id: z.number().describe("Unique identifier for the store"),
+    plan: z.string().describe("The plan associated with the store"),
+    timestamp: z.string().describe("Timestamp when the store was created"),
   })
-  .openapi("PanelData");
+  .openapi("StoreData");
 
 export const SiteDataSchema = z
   .object({

@@ -1,4 +1,4 @@
-import createPanelsTable from "./panels";
+import createStoresTable from "./stores";
 import createProvidersTable from "./providers";
 import createCategoriesTable from "./categories";
 import createUserTable from "./user";
@@ -12,7 +12,7 @@ import createAffiliateSettingsTable from "./affiliate_settings";
 
 (async (): Promise<void> => {
   try {
-    await createPanelsTable();
+    await createStoresTable();
     await createProvidersTable();
     await createCategoriesTable();
     await createUserTable();

@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { getDocs, addPanelDoc, updatePanelDoc, deletePanelDoc } from "../crud";
+import { getDocs, addStoreDoc, updateStoreDoc, deleteStoreDoc } from "../crud";
 import { AuthSchema } from "../schemas/user.schema";
 import {
   placeOrderSchema,
@@ -18,14 +18,14 @@ export const getOrders = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  const { role, panel_id, user } = authParsed.data;
+  const { role, store_id, user } = authParsed.data;
 
   if (role !== "user") {
     res.status(403).json({ error: "Access denied, Users only." });
     return;
   }
   try {
-    const orders = await getDocs("orders", panel_id, {
+    const orders = await getDocs("orders", store_id, {
       filter: { user_uid: user.uid },
     });
     const sorted = orders.sort((a: any, b: any) => b.id - a.id);
@@ -48,7 +48,7 @@ export const getOrdersForAdmins = async (
     return;
   }
 
-  const { role, panel_id } = authParsed.data;
+  const { role, store_id } = authParsed.data;
 
   if (role === "user") {
     res.status(403).json({ error: "Access denied, Admins only." });
@@ -56,7 +56,7 @@ export const getOrdersForAdmins = async (
   }
 
   try {
-    const orders = await getDocs("orders", panel_id);
+    const orders = await getDocs("orders", store_id);
     const sorted = orders.sort((a: any, b: any) => b.id - a.id);
     const parsedOrders = sorted.map((o: any) => OrderSchema.safeParse(o).data);
     res.status(200).json(parsedOrders);
@@ -77,10 +77,10 @@ export const getOrderByID = async (
     return;
   }
 
-  const { role, panel_id, user } = authParsed.data;
+  const { role, store_id, user } = authParsed.data;
 
   try {
-    const order = await getDocs("orders", panel_id, {
+    const order = await getDocs("orders", store_id, {
       find: {
         uid: order_uid,
         user_uid: user.uid,
@@ -117,7 +117,7 @@ export const placeOrder = async (
     return;
   }
 
-  const { panel_id, role } = authParsed.data;
+  const { store_id, role } = authParsed.data;
   if (role !== "user") {
     res.status(403).json({ error: "Access denied, Users only." });
     return;
@@ -125,7 +125,7 @@ export const placeOrder = async (
   const reqData = parsed.data;
 
   try {
-    const newOrder = await addPanelDoc("orders", reqData, panel_id);
+    const newOrder = await addStoreDoc("orders", reqData, store_id);
     res
       .status(200)
       .json({ success: "Order placed successfully", uid: newOrder.uid });
@@ -151,14 +151,14 @@ export const updateOrder = async (
     return;
   }
 
-  const { role, panel_id } = authParsed.data;
+  const { role, store_id } = authParsed.data;
   if (role === "user") {
     res.status(403).json({ error: "Access denied, Admins only." });
     return;
   }
 
   try {
-    await updatePanelDoc("orders", order_uid, parsed.data.update, panel_id);
+    await updateStoreDoc("orders", order_uid, parsed.data.update, store_id);
     res.status(200).json({ success: "Order updated successfully" });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -177,14 +177,14 @@ export const deleteOrder = async (
     return;
   }
 
-  const { role, panel_id } = authParsed.data;
+  const { role, store_id } = authParsed.data;
   if (role === "user") {
     res.status(403).json({ error: "Access denied, Admins only." });
     return;
   }
 
   try {
-    await deletePanelDoc("orders", order_uid, panel_id);
+    await deleteStoreDoc("orders", order_uid, store_id);
     res.status(200).json({ success: "Order deleted successfully" });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -206,13 +206,13 @@ export const getOrdersByStatus = async (
     return;
   }
 
-  const { panel_id, role, user } = authParsed.data;
+  const { store_id, role, user } = authParsed.data;
   const { status } = parsed.data;
 
   try {
     const allOrders = await getDocs(
       "orders",
-      panel_id,
+      store_id,
       role === "user"
         ? {
             filter: { user_uid: user.uid },
@@ -258,7 +258,7 @@ export const bulkCreateOrders = async (
     return;
   }
 
-  const { role, panel_id } = authParsed.data;
+  const { role, store_id } = authParsed.data;
 
   if (role !== "user") {
     res.status(403).json({ error: "Access denied, Users only." });
@@ -267,7 +267,7 @@ export const bulkCreateOrders = async (
 
   try {
     const results = await Promise.all(
-      parsed.data.orders.map((order) => addPanelDoc("orders", order, panel_id))
+      parsed.data.orders.map((order) => addStoreDoc("orders", order, store_id))
     );
     const uids = results.map((r: any) => r.uid);
     res.status(200).json({ success: "Bulk orders created", uids });
@@ -292,7 +292,7 @@ export const bulkUpdateOrderStatus = async (
     return;
   }
 
-  const { role, panel_id } = authParsed.data;
+  const { role, store_id } = authParsed.data;
   if (role === "user") {
     res.status(403).json({ error: "Access denied, Admins only." });
     return;
@@ -301,11 +301,11 @@ export const bulkUpdateOrderStatus = async (
   try {
     await Promise.all(
       parsed.data.updates.map((update) =>
-        updatePanelDoc(
+        updateStoreDoc(
           "orders",
           update.uid,
           { status: update.status },
-          panel_id
+          store_id
         )
       )
     );

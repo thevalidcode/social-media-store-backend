@@ -1,4 +1,4 @@
-import { getDocs, addPanelDoc, updatePanelDoc } from "../crud";
+import { getDocs, addStoreDoc, updateStoreDoc } from "../crud";
 import axios from "axios";
 import https from "https";
 import { sendEmail } from "../emails";
@@ -13,13 +13,13 @@ const safeInt = (n: any, d = 0): number =>
 
 export const sendRefillToMainServer = async (
   order_uid: string,
-  panel_id: number
+  store_id: number
 ): Promise<boolean> => {
   try {
-    const order = await getDocs("orders", panel_id, {
+    const order = await getDocs("orders", store_id, {
       find: { field: "uid", operator: "===", value: order_uid },
     });
-    const prov = await getDocs("providers", panel_id, {
+    const prov = await getDocs("providers", store_id, {
       find: { field: "url", operator: "===", value: order.provider },
     });
     if (!order || !prov) return false;
@@ -44,7 +44,7 @@ export const sendRefillToMainServer = async (
             provider: order.provider,
             error: res.error,
           },
-          panel_id
+          store_id
         );
       } catch (e: any) {
         console.error("Email error (failed refill):", e.message);
@@ -52,7 +52,7 @@ export const sendRefillToMainServer = async (
       return false;
     }
 
-    const refillRow = await addPanelDoc(
+    const refillRow = await addStoreDoc(
       "refills",
       {
         provider_id: safeInt(res.refill),
@@ -60,10 +60,10 @@ export const sendRefillToMainServer = async (
         url: order.url,
         order_id: order.id,
       },
-      panel_id
+      store_id
     );
 
-    await updateRefillStatus(refillRow.uid, panel_id);
+    await updateRefillStatus(refillRow.uid, store_id);
 
     try {
       await sendEmail(
@@ -76,7 +76,7 @@ export const sendRefillToMainServer = async (
           price: order.price,
           provider: order.provider,
         },
-        panel_id
+        store_id
       );
     } catch (e: any) {
       console.error("Email error (new refill):", e.message);
@@ -91,13 +91,13 @@ export const sendRefillToMainServer = async (
 
 export const updateRefillStatus = async (
   refill_uid: string,
-  panel_id: number
+  store_id: number
 ): Promise<boolean> => {
   try {
-    const refill = (await getDocs("refills", panel_id)).find(
+    const refill = (await getDocs("refills", store_id)).find(
       (r: any) => r.uid === refill_uid
     );
-    const provider = (await getDocs("providers", panel_id)).find(
+    const provider = (await getDocs("providers", store_id)).find(
       (p: any) => p.url === refill.provider
     );
     if (!refill || !provider) return false;
@@ -118,20 +118,20 @@ export const updateRefillStatus = async (
     );
 
     if (res.error) {
-      await updatePanelDoc(
+      await updateStoreDoc(
         "refills",
         refill_uid,
         { provider_error: res.error },
-        panel_id
+        store_id
       );
       return false;
     }
 
-    await updatePanelDoc(
+    await updateStoreDoc(
       "refills",
       refill_uid,
       { status: res.status },
-      panel_id
+      store_id
     );
     return true;
   } catch (err: any) {

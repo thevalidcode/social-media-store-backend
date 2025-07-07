@@ -1,21 +1,21 @@
 import { registry } from "../components/registry";
 import {
-  PanelDataResponse,
+  StoreDataResponse,
   DesignStylesResponse,
   SiteDataResponse,
   ExchangeRatesResponse,
   CurrentUserResponse,
   CurrentAdminResponse,
   NotFound,
-} from "../responses/panel.response";
+} from "../responses/store.response";
 import { ServerError, Forbidden } from "../responses/common.response";
 
-// GET /panel/data
+// GET /store/data
 registry.registerPath({
   method: "get",
-  path: "/panel/data",
-  summary: "Get the panel data for a custom domain",
-  tags: ["Panel"],
+  path: "/store/data",
+  summary: "Get the store data for a custom domain",
+  tags: ["Store"],
   parameters: [
     {
       name: "domain",
@@ -25,21 +25,21 @@ registry.registerPath({
     },
   ],
   responses: {
-    200: PanelDataResponse,
+    200: StoreDataResponse,
     404: NotFound,
     500: ServerError,
   },
 });
 
-// GET /panel/styles
+// GET /store/styles
 registry.registerPath({
   method: "get",
-  path: "/panel/styles",
-  summary: "Get design styles for a panel",
-  tags: ["Panel"],
+  path: "/store/styles",
+  summary: "Get design styles for a store",
+  tags: ["Store"],
   parameters: [
     {
-      name: "panel_id",
+      name: "store_id",
       in: "query",
       required: true,
       schema: { type: "string" },
@@ -51,15 +51,15 @@ registry.registerPath({
   },
 });
 
-// GET /panel/site-data
+// GET /store/site-data
 registry.registerPath({
   method: "get",
-  path: "/panel/site-data",
-  summary: "Get general site data for a panel",
-  tags: ["Panel"],
+  path: "/store/site-data",
+  summary: "Get general site data for a store",
+  tags: ["Store"],
   parameters: [
     {
-      name: "panel_id",
+      name: "store_id",
       in: "query",
       required: true,
       schema: { type: "string" },
@@ -71,24 +71,24 @@ registry.registerPath({
   },
 });
 
-// GET /panel/rates
+// GET /store/rates
 registry.registerPath({
   method: "get",
-  path: "/panel/rates",
+  path: "/store/rates",
   summary: "Get latest exchange rates",
-  tags: ["Panel"],
+  tags: ["Store"],
   responses: {
     200: ExchangeRatesResponse,
     500: ServerError,
   },
 });
 
-// GET /panel/current-user
+// GET /store/current-user
 registry.registerPath({
   method: "get",
-  path: "/panel/current-user",
+  path: "/store/current-user",
   summary: "Get the currently authenticated user",
-  tags: ["Panel"],
+  tags: ["Store"],
   security: [{ CookieAuth: [] }],
   responses: {
     200: CurrentUserResponse,
@@ -97,12 +97,12 @@ registry.registerPath({
   },
 });
 
-// GET /panel/current-admin
+// GET /store/current-admin
 registry.registerPath({
   method: "get",
-  path: "/panel/current-admin",
+  path: "/store/current-admin",
   summary: "Get the currently authenticated admin",
-  tags: ["Panel"],
+  tags: ["Store"],
   security: [{ CookieAuth: [] }],
   responses: {
     200: CurrentAdminResponse,

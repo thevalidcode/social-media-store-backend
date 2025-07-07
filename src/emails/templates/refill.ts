@@ -76,7 +76,7 @@ export const newRefill = ({
           <p><strong>Total Price:</strong> $${price}</p>
           <p><strong>Provider:</strong> ${provider}</p>
         </div>
-        <p>Please process this refill through the admin or provider panel.</p>
+        <p>Please process this refill through the admin or provider store.</p>
         <p>Thank you!</p>
       </div>
     </div>
@@ -140,7 +140,7 @@ export const newFailedRefill = ({
       </div>
       <div class="content">
         <h1>Dear Admin,</h1>
-        <p>A recent refill on your panel didn't go through. Here are the details:</p>
+        <p>A recent refill on your store didn't go through. Here are the details:</p>
         <div class="order-details">
           <p><strong>ID:</strong> ${id}</p>
           <p><strong>Order ID:</strong> ${order_id}</p>
@@ -150,7 +150,7 @@ export const newFailedRefill = ({
           <p><strong>Provider:</strong> ${provider}</p>
           <p><strong>Error:</strong> ${error}</p>
         </div>
-        <p>Please fix this refill through the admin or provider panel.</p>
+        <p>Please fix this refill through the admin or provider store.</p>
         <p>Thank you!</p>
       </div>
     </div>

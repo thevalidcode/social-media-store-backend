@@ -7,7 +7,7 @@ async function createAffiliateSettingsTable() {
       uid TEXT PRIMARY KEY,
       percent INTEGER NOT NULL,
       mode TEXT NOT NULL CHECK (mode IN ('fixed', 'percentage')) DEFAULT 'percentage',
-      panel_id INTEGER NOT NULL REFERENCES panels(panel_id) ON DELETE CASCADE
+      store_id INTEGER NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE
     );
   `);
 
@@ -24,8 +24,8 @@ async function createAffiliateSettingsTable() {
     percent:
       "ALTER TABLE affiliate_settings ADD COLUMN percent INTEGER NOT NULL",
     mode: "ALTER TABLE affiliate_settings ADD COLUMN mode TEXT NOT NULL CHECK (mode IN ('fixed', 'percentage')) DEFAULT 'percentage'",
-    panel_id:
-      "ALTER TABLE affiliate_settings ADD COLUMN panel_id INTEGER NOT NULL REFERENCES panels(panel_id) ON DELETE CASCADE",
+    store_id:
+      "ALTER TABLE affiliate_settings ADD COLUMN store_id INTEGER NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE",
   };
 
   for (const [col, sql] of Object.entries(expected)) {

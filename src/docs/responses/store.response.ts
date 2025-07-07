@@ -1,17 +1,17 @@
 import {
-  PanelDataSchema,
+  StoreDataSchema,
   DesignStylesSchema,
   SiteDataSchema,
   ExchangeRatesSchema,
-} from "../../schemas/panel.schema";
+} from "../../schemas/store.schema";
 import { UserPublicSchema, AdminPublicSchema } from "../../schemas/user.schema";
 import { z } from "zod";
 
-export const PanelDataResponse = {
-  description: "Panel Data lookup result",
+export const StoreDataResponse = {
+  description: "Store Data lookup result",
   content: {
     "application/json": {
-      schema: PanelDataSchema,
+      schema: StoreDataSchema,
     },
   },
 };

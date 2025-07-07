@@ -4,18 +4,18 @@ import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import { Request, Response } from "express";
 import {
-  addPanelDoc,
+  addStoreDoc,
   getDocs,
-  updatePanelDoc,
-  deletePanelDoc,
-  deletePanelDocs,
+  updateStoreDoc,
+  deleteStoreDoc,
+  deleteStoreDocs,
 } from "../crud";
 import { sendEmail } from "../emails";
 import { env } from "../config/env";
 import { AuthSchema } from "../schemas/user.schema";
 
 const createUserSchema = z.object({
-  panel_id: z.coerce.number(),
+  store_id: z.coerce.number(),
   email: z.string().email(),
   username: z.string(),
   password: z.string().min(6),
@@ -25,7 +25,7 @@ const createUserSchema = z.object({
 const meQuerySchema = z.object({
   email: z.string().email(),
   password: z.string(),
-  panel_id: z.coerce.number(),
+  store_id: z.coerce.number(),
 });
 
 const deleteUserSchema = z.object({ uid: z.string() });
@@ -45,7 +45,7 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { panel_id, role } = parsed.data;
+  const { store_id, role } = parsed.data;
 
   if (role === "user") {
     res.status(403).json({ error: "Unauthorised User." });
@@ -53,7 +53,7 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    const allUsers = await getDocs("users", panel_id, {
+    const allUsers = await getDocs("users", store_id, {
       removeKeys: ["password"],
     });
     res.status(200).json(allUsers);
@@ -72,10 +72,10 @@ export const createUser = async (
     return;
   }
 
-  const { panel_id, email, username, ref, password } = parsed.data;
+  const { store_id, email, username, ref, password } = parsed.data;
 
   try {
-    const allUsers = await getDocs("users", panel_id);
+    const allUsers = await getDocs("users", store_id);
     const hashedPassword = await bcrypt.hash(password, 10);
     const emailExists = allUsers.some((user: any) => user.email === email);
     const usernameExists = allUsers.some(
@@ -98,19 +98,19 @@ export const createUser = async (
     };
 
     if (ref) {
-      await addPanelDoc(
+      await addStoreDoc(
         "referrals",
         { username, user_id: parseInt(ref as string) },
-        panel_id
+        store_id
       );
     }
 
-    const newUser = await addPanelDoc("users", userData, panel_id);
+    const newUser = await addStoreDoc("users", userData, store_id);
 
     const token = jwt.sign(
       {
         email,
-        panel_id,
+        store_id,
         api_key: newUser.api_key,
         role: "user",
       },
@@ -125,7 +125,7 @@ export const createUser = async (
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    await sendEmail(undefined, "new_user", userData, panel_id);
+    await sendEmail(undefined, "new_user", userData, store_id);
 
     res.status(200).send({
       success: "Created Successfully",
@@ -147,14 +147,14 @@ export const me = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  const { email, password, panel_id } = parsed.data;
+  const { email, password, store_id } = parsed.data;
 
   try {
-    const user = await getDocs("users", panel_id, {
+    const user = await getDocs("users", store_id, {
       find: { field: "email", operator: "===", value: email },
     });
 
-    const admin = await getDocs("admins", panel_id, {
+    const admin = await getDocs("admins", store_id, {
       find: { field: "email", operator: "===", value: email },
     });
 
@@ -179,9 +179,9 @@ export const me = async (req: Request, res: Response): Promise<void> => {
 
     const api_key = account.api_key || uuidv4();
 
-    const role = admin ? admin.role || "admin" : "user";
+    const role = account.role;
 
-    const token = jwt.sign({ email, panel_id, api_key, role }, env.JWT_SECRET, {
+    const token = jwt.sign({ email, store_id, api_key, role }, env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
@@ -218,7 +218,7 @@ export const getUserByUid = async (
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { panel_id, role } = parsed.data;
+  const { store_id, role } = parsed.data;
 
   if (role === "user") {
     res.status(403).json({ error: "Unauthorised User." });
@@ -226,7 +226,7 @@ export const getUserByUid = async (
   }
 
   try {
-    const user = await getDocs("users", panel_id, {
+    const user = await getDocs("users", store_id, {
       find: { uid },
       removeKeys: ["password"],
     });
@@ -246,7 +246,7 @@ export const deleteUser = async (
     res.status(400).json({ error: authParsed.error.flatten() });
     return;
   }
-  const { panel_id, role } = authParsed.data;
+  const { store_id, role } = authParsed.data;
 
   if (role === "user") {
     res.status(403).json({ error: "Access denied, Admins only." });
@@ -259,7 +259,7 @@ export const deleteUser = async (
   }
 
   try {
-    await deletePanelDoc("users", uid, panel_id);
+    await deleteStoreDoc("users", uid, store_id);
     res.status(200).send({ success: "Deleted Successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete user" });
@@ -282,7 +282,7 @@ export const deleteUsers = async (
     res.status(400).json({ error: authParsed.error.flatten() });
     return;
   }
-  const { panel_id, role } = authParsed.data;
+  const { store_id, role } = authParsed.data;
 
   if (role === "user") {
     res.status(403).json({ error: "Access denied, Admins only." });
@@ -290,7 +290,7 @@ export const deleteUsers = async (
   }
 
   try {
-    await deletePanelDocs("users", uids, panel_id);
+    await deleteStoreDocs("users", uids, store_id);
     res.status(200).send({ success: "Deleted Successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete user" });
@@ -306,7 +306,7 @@ export const updateUser = async (
     res.status(400).json({ error: authParsed.error.flatten() });
     return;
   }
-  const { panel_id, role } = authParsed.data;
+  const { store_id, role } = authParsed.data;
 
   if (role === "user") {
     res.status(403).json({ error: "Access denied, Admins only." });
@@ -336,7 +336,7 @@ export const updateUser = async (
   }
 
   try {
-    await updatePanelDoc("users", data.uid, safeUpdate, panel_id);
+    await updateStoreDoc("users", data.uid, safeUpdate, store_id);
     res.status(200).json({ code: "update-success" });
   } catch (err) {
     res.status(500).json({ error: "Failed to update user" });

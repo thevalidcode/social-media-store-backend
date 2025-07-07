@@ -31,7 +31,7 @@ registry.registerPath({
   tags: ["Services"],
   parameters: [
     {
-      name: "panel_id",
+      name: "store_id",
       in: "query",
       required: true,
       schema: { type: "number" },
@@ -94,7 +94,7 @@ registry.registerPath({
       schema: { type: "number" },
     },
     {
-      name: "panel_id",
+      name: "store_id",
       in: "query",
       required: true,
       schema: { type: "number" },

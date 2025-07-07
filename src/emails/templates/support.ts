@@ -73,7 +73,7 @@ const newSupport = ({
           <p><strong>Submitted by:</strong> ${user}</p>
           <p><strong>Message:</strong> ${message}</p>
         </div>
-        <p>Please review and respond to the ticket in the admin panel.</p>
+        <p>Please review and respond to the ticket in the admin store.</p>
         <p>Thank you!</p>
       </div>
     </div>
@@ -139,7 +139,7 @@ const newMessage = ({
           <p><strong>Message:</strong> ${content}</p>
           <p><strong>Received from:</strong> ${user}</p>
         </div>
-        <p>Please log in to the admin panel to review and respond to the message.</p>
+        <p>Please log in to the admin store to review and respond to the message.</p>
         <p>Thank you!</p>
       </div>
     </div>

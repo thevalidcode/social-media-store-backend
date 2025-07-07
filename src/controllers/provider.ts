@@ -4,10 +4,10 @@ import type { Request, Response } from "express";
 
 import {
   getDocs,
-  addPanelDoc,
-  updatePanelDoc,
-  deletePanelDoc,
-  deletePanelDocs,
+  addStoreDoc,
+  updateStoreDoc,
+  deleteStoreDoc,
+  deleteStoreDocs,
 } from "../crud";
 import { decryptKey, encryptKey } from "../utils/encrypt";
 import { AuthSchema } from "../schemas/user.schema";
@@ -32,7 +32,7 @@ export const getProviderServices = async (
     return;
   }
 
-  const { panel_id, role } = authParsed.data;
+  const { store_id, role } = authParsed.data;
   const { provider } = bodyParsed.data;
 
   if (role === "user") {
@@ -40,7 +40,7 @@ export const getProviderServices = async (
     return;
   }
   try {
-    const providerData = await getDocs("providers", panel_id, {
+    const providerData = await getDocs("providers", store_id, {
       find: { url: provider },
     });
 
@@ -82,7 +82,7 @@ export const importServices = async (
     return;
   }
 
-  const { panel_id, role } = authParsed.data;
+  const { store_id, role } = authParsed.data;
   const { provider_services_id, import_percent, category, provider } =
     bodyParsed.data;
 
@@ -93,9 +93,9 @@ export const importServices = async (
 
   try {
     const [services, categories, providers] = await Promise.all([
-      getDocs("services", panel_id),
-      getDocs("categories", panel_id),
-      getDocs("providers", panel_id, { find: { url: provider } }),
+      getDocs("services", store_id),
+      getDocs("categories", store_id),
+      getDocs("providers", store_id, { find: { url: provider } }),
     ]);
 
     const providerData = providers;
@@ -137,14 +137,14 @@ export const importServices = async (
         );
         if (!existingCategory) {
           categoryId++;
-          await addPanelDoc(
+          await addStoreDoc(
             "categories",
             {
               name: service.category,
               status: "active",
               position: categoryId,
             },
-            panel_id
+            store_id
           );
         }
         serviceCategory = service.category;
@@ -155,7 +155,7 @@ export const importServices = async (
       );
       if (alreadyExists) continue;
 
-      await addPanelDoc(
+      await addStoreDoc(
         "services",
         {
           id: maxServiceId,
@@ -167,7 +167,7 @@ export const importServices = async (
           provider_id: parseInt(service.service),
           description: service.description || "",
           provider_price: baseRate,
-          panel_id,
+          store_id,
           status: "active",
           sync_quantity: true,
           sync_cat_and_name: true,
@@ -181,7 +181,7 @@ export const importServices = async (
           provider,
           provider_currency,
         },
-        panel_id
+        store_id
       );
     }
 
@@ -216,7 +216,7 @@ export const addProvider = async (
     return;
   }
 
-  const { panel_id, role } = authParsed.data;
+  const { store_id, role } = authParsed.data;
   const reqData = bodyParsed.data;
 
   if (role === "user") {
@@ -231,7 +231,7 @@ export const addProvider = async (
       ...reqData,
       api_key: encryptedKey,
     };
-    const existingProviders = await getDocs("providers", panel_id, {
+    const existingProviders = await getDocs("providers", store_id, {
       find: { url: newProvider.url },
     });
     if (existingProviders) {
@@ -239,7 +239,7 @@ export const addProvider = async (
       return;
     }
 
-    await addPanelDoc("providers", newProvider, panel_id);
+    await addStoreDoc("providers", newProvider, store_id);
     res.status(200).json({ success: "Added Provider successfully." });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -259,7 +259,7 @@ export const getProviders = async (
     return;
   }
 
-  const { panel_id, role } = authParsed.data;
+  const { store_id, role } = authParsed.data;
 
   if (role === "user") {
     res.status(403).json({ error: "Access denied. Admins only." });
@@ -267,7 +267,7 @@ export const getProviders = async (
   }
 
   try {
-    const providers = await getDocs("providers", panel_id, {
+    const providers = await getDocs("providers", store_id, {
       removeKeys: ["api_key"],
     });
 
@@ -301,7 +301,7 @@ export const updateProvider = async (
     return;
   }
   const reqData = parsed.data;
-  const { panel_id, role } = authParsed.data;
+  const { store_id, role } = authParsed.data;
 
   if (role === "user") {
     res.status(403).json({ error: "Unauthorised User." });
@@ -313,9 +313,9 @@ export const updateProvider = async (
       ...reqData,
       api_key: key,
     };
-    await updatePanelDoc("providers", reqData.uid, newProvider, panel_id);
+    await updateStoreDoc("providers", reqData.uid, newProvider, store_id);
 
-    const service = await getDocs("providers", panel_id, {
+    const service = await getDocs("providers", store_id, {
       find: { uid: reqData.uid },
     });
     res
@@ -347,7 +347,7 @@ export const deleteProvider = async (
     return;
   }
 
-  const { panel_id, role } = authParsed.data;
+  const { store_id, role } = authParsed.data;
   const { uid } = parsed.data;
 
   if (role === "user") {
@@ -356,7 +356,7 @@ export const deleteProvider = async (
   }
 
   try {
-    await deletePanelDoc("providers", uid, panel_id);
+    await deleteStoreDoc("providers", uid, store_id);
     res.status(200).json({ success: "Provider deleted successfully." });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -384,7 +384,7 @@ export const deleteMultipleProviders = async (
     return;
   }
 
-  const { panel_id, role } = authParsed.data;
+  const { store_id, role } = authParsed.data;
   const { uids } = parsed.data;
 
   if (role === "user") {
@@ -393,7 +393,7 @@ export const deleteMultipleProviders = async (
   }
 
   try {
-    await deletePanelDocs("providers", uids, panel_id);
+    await deleteStoreDocs("providers", uids, store_id);
     res.status(200).json({ success: "Providers deleted successfully." });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

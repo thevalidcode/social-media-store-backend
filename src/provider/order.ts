@@ -1,4 +1,4 @@
-import { getDocs, addPanelDoc, updatePanelDoc } from "../crud";
+import { getDocs, addStoreDoc, updateStoreDoc } from "../crud";
 import axios from "axios";
 import https from "https";
 import convertCurrency from "../utils/ConvertCurrency";
@@ -30,7 +30,7 @@ type ProviderOrderResult = {
 
 export const sendOrderToProvider = async (
   order: any,
-  panel_id: number
+  store_id: number
 ): Promise<ProviderOrderResult> => {
   try {
     const orderSchema = placeOrderSchema.extend({ uid: z.string().uuid() });
@@ -41,10 +41,10 @@ export const sendOrderToProvider = async (
 
     const [users, services, providers, affiliate_settings, rates] =
       await Promise.all([
-        getDocs("users", panel_id),
-        getDocs("services", panel_id),
-        getDocs("providers", panel_id),
-        getDocs("affiliate_settings", panel_id),
+        getDocs("users", store_id),
+        getDocs("services", store_id),
+        getDocs("providers", store_id),
+        getDocs("affiliate_settings", store_id),
         currencies(),
       ]);
 
@@ -80,11 +80,11 @@ export const sendOrderToProvider = async (
     const user_initial_balance = userBalance;
     const user_final_balance = userBalance - chargeUSD;
 
-    await updatePanelDoc(
+    await updateStoreDoc(
       "users",
       user.uid,
       { balance: user_final_balance },
-      panel_id
+      store_id
     );
 
     // 🟡 Referral handling
@@ -97,24 +97,24 @@ export const sendOrderToProvider = async (
         const earned = parseFloat(((chargeUSD * percent) / 100).toFixed(2));
         const newRefBalance = safeFloat(refUser.balance) + earned;
 
-        await updatePanelDoc(
+        await updateStoreDoc(
           "users",
           refUser.uid,
           { balance: newRefBalance },
-          panel_id
+          store_id
         );
 
-        await addPanelDoc(
+        await addStoreDoc(
           "referrals_orders",
           {
             price: chargeUSD,
             username: user.username,
             ref_id: user.ref,
           },
-          panel_id
+          store_id
         );
 
-        await addPanelDoc(
+        await addStoreDoc(
           "transactions",
           {
             status: "success",
@@ -123,7 +123,7 @@ export const sendOrderToProvider = async (
             payment_method: "Amount earned from your referral's order.",
             user_id: user.uid,
           },
-          panel_id
+          store_id
         );
       }
     }
@@ -152,21 +152,21 @@ export const sendOrderToProvider = async (
 
     if (res.error) {
       // Rollback balance
-      await updatePanelDoc(
+      await updateStoreDoc(
         "users",
         user.uid,
         { balance: user_initial_balance },
-        panel_id
+        store_id
       );
 
-      await updatePanelDoc(
+      await updateStoreDoc(
         "orders",
         orderData.uid,
         {
           provider_error: res.error,
           status: "Failed",
         },
-        panel_id
+        store_id
       );
 
       try {
@@ -179,7 +179,7 @@ export const sendOrderToProvider = async (
             provider_error: res.error,
             service_id: service.id,
           },
-          panel_id
+          store_id
         );
       } catch (e: any) {
         console.error("Email error (failed order):", e.message);
@@ -188,7 +188,7 @@ export const sendOrderToProvider = async (
       return { error: res.error };
     }
 
-    await updatePanelDoc(
+    await updateStoreDoc(
       "orders",
       orderData.uid,
       {
@@ -196,7 +196,7 @@ export const sendOrderToProvider = async (
         provider: provider.url,
         price: chargeUSD,
       },
-      panel_id
+      store_id
     );
 
     await sendEmail(
@@ -207,7 +207,7 @@ export const sendOrderToProvider = async (
         user_balance: user_final_balance,
         service_id: service.id,
       },
-      panel_id
+      store_id
     );
 
     return { success: "Order sent to provider successfully" };
@@ -219,15 +219,15 @@ export const sendOrderToProvider = async (
 
 const updateOrderStatus = async (
   order_uid: string,
-  panel_id: number
+  store_id: number
 ): Promise<void> => {
   try {
-    const order = (await getDocs("orders", panel_id)).find(
+    const order = (await getDocs("orders", store_id)).find(
       (o: any) => o.uid === order_uid
     );
     if (!order) return;
 
-    const provider = (await getDocs("providers", panel_id)).find(
+    const provider = (await getDocs("providers", store_id)).find(
       (p: any) => p.url === order.provider
     );
     if (!provider) return;
@@ -245,7 +245,7 @@ const updateOrderStatus = async (
     const { data: resp } = await axios.post(url, data, { httpsAgent: agent });
     const rates = await currencies();
 
-    await updatePanelDoc(
+    await updateStoreDoc(
       "orders",
       order.uid,
       {
@@ -261,7 +261,7 @@ const updateOrderStatus = async (
         ),
         synced: true,
       },
-      panel_id
+      store_id
     );
   } catch (err: any) {
     console.error("Error updating order status:", err.message);
@@ -272,11 +272,11 @@ const MAX_RETRIES = 3;
 
 export const sendUnsyncedOrders = async (): Promise<void> => {
   try {
-    const panelIds = (
-      await pool.query(`SELECT DISTINCT panel_id FROM orders`)
-    ).rows.map((r: any) => r.panel_id);
+    const storeIds = (
+      await pool.query(`SELECT DISTINCT store_id FROM orders`)
+    ).rows.map((r: any) => r.store_id);
 
-    for (const panel_id of panelIds) {
+    for (const store_id of storeIds) {
       const filter: Record<string, any> = {
         synced: false,
         sync_order: true,
@@ -284,21 +284,21 @@ export const sendUnsyncedOrders = async (): Promise<void> => {
         retry_count: { $lt: MAX_RETRIES },
       };
 
-      const unsynced = await getDocs("orders", panel_id, { filter });
+      const unsynced = await getDocs("orders", store_id, { filter });
 
       for (const order of unsynced) {
-        const result = await sendOrderToProvider(order, panel_id);
+        const result = await sendOrderToProvider(order, store_id);
 
         if (result.success) {
-          await updatePanelDoc("orders", order.uid, { synced: true }, panel_id);
+          await updateStoreDoc("orders", order.uid, { synced: true }, store_id);
         }
-        await updatePanelDoc(
+        await updateStoreDoc(
           "orders",
           order.uid,
           {
             retry_count: (order.retry_count || 0) + 1,
           },
-          panel_id
+          store_id
         );
       }
     }
@@ -309,14 +309,14 @@ export const sendUnsyncedOrders = async (): Promise<void> => {
 
 export const syncOrderDetails = async (
   orderData: any,
-  panel_id: number
+  store_id: number
 ): Promise<boolean> => {
   try {
-    const users = await getDocs("users", panel_id);
+    const users = await getDocs("users", store_id);
     const user = users.find((u: any) => u.uid === orderData.user_uid);
     if (!user) return false;
 
-    const providers = await getDocs("providers", panel_id);
+    const providers = await getDocs("providers", store_id);
     const provider = providers.find((p: any) => p.url === orderData.provider);
     if (!provider) return false;
 
@@ -334,7 +334,7 @@ export const syncOrderDetails = async (
 
     let services: any[];
     const getService = async () => {
-      if (!services) services = await getDocs("services", panel_id);
+      if (!services) services = await getDocs("services", store_id);
       return services.find((svc) => svc.id === orderData.service_id);
     };
 
@@ -342,17 +342,17 @@ export const syncOrderDetails = async (
 
     if (resp.status === "Canceled" && orderData.status !== "Canceled") {
       const newBalance = safeFloat(user.balance) + safeFloat(orderData.price);
-      await updatePanelDoc(
+      await updateStoreDoc(
         "users",
         user.uid,
         { balance: newBalance },
-        panel_id
+        store_id
       );
-      await updatePanelDoc(
+      await updateStoreDoc(
         "orders",
         orderData.uid,
         { status: "Canceled", price: 0 },
-        panel_id
+        store_id
       );
     }
 
@@ -372,13 +372,13 @@ export const syncOrderDetails = async (
       const orderPrice = ((refunded / 1000) * pricePer1000).toFixed(2);
       const newBalance = safeFloat(user.balance) + safeFloat(totalPrice);
 
-      await updatePanelDoc(
+      await updateStoreDoc(
         "users",
         user.uid,
         { balance: newBalance },
-        panel_id
+        store_id
       );
-      await updatePanelDoc(
+      await updateStoreDoc(
         "orders",
         orderData.uid,
         {
@@ -386,7 +386,7 @@ export const syncOrderDetails = async (
           price: safeFloat(orderPrice),
           remains: safeInt(resp.remains),
         },
-        panel_id
+        store_id
       );
     }
 
@@ -406,13 +406,13 @@ export const syncOrderDetails = async (
           2
         );
         const newBalance = safeFloat(user.balance) - safeFloat(totalPrice);
-        await updatePanelDoc(
+        await updateStoreDoc(
           "users",
           user.uid,
           { balance: newBalance },
-          panel_id
+          store_id
         );
-        await updatePanelDoc(
+        await updateStoreDoc(
           "orders",
           orderData.uid,
           {
@@ -420,7 +420,7 @@ export const syncOrderDetails = async (
             remains: 0,
             price: safeFloat(totalPrice),
           },
-          panel_id
+          store_id
         );
       } else if (orderData.status === "Partial") {
         const originalPrice = (
@@ -429,13 +429,13 @@ export const syncOrderDetails = async (
         ).toFixed(2);
         const refundPrice = ((resp.remains / 1000) * pricePer1000).toFixed(2);
         const newBalance = safeFloat(user.balance) - safeFloat(refundPrice);
-        await updatePanelDoc(
+        await updateStoreDoc(
           "users",
           user.uid,
           { balance: newBalance },
-          panel_id
+          store_id
         );
-        await updatePanelDoc(
+        await updateStoreDoc(
           "orders",
           orderData.uid,
           {
@@ -443,19 +443,19 @@ export const syncOrderDetails = async (
             remains: 0,
             price: safeFloat(originalPrice),
           },
-          panel_id
+          store_id
         );
       } else {
-        await updatePanelDoc(
+        await updateStoreDoc(
           "orders",
           orderData.uid,
           { status: "Completed", remains: 0 },
-          panel_id
+          store_id
         );
       }
     }
 
-    await updatePanelDoc(
+    await updateStoreDoc(
       "orders",
       orderData.uid,
       {
@@ -472,7 +472,7 @@ export const syncOrderDetails = async (
         ),
         provider_currency: resp.currency.toUpperCase(),
       },
-      panel_id
+      store_id
     );
 
     return true;
@@ -482,20 +482,20 @@ export const syncOrderDetails = async (
   }
 };
 
-export const syncAllPanelsOrderDetails = async () => {
+export const syncAllStoresOrderDetails = async () => {
   try {
-    const panelIdsResult = await pool.query(
-      `SELECT DISTINCT panel_id FROM orders`
+    const storeIdsResult = await pool.query(
+      `SELECT DISTINCT store_id FROM orders`
     );
-    const panelIds = panelIdsResult.rows.map((row) => row.panel_id);
+    const storeIds = storeIdsResult.rows.map((row) => row.store_id);
 
-    for (const panel_id of panelIds) {
-      const syncedOrders = await getDocs("orders", panel_id, {
+    for (const store_id of storeIds) {
+      const syncedOrders = await getDocs("orders", store_id, {
         filter: { synced: true, sync_order: true },
       });
 
       for (const order of syncedOrders) {
-        await syncOrderDetails(order, panel_id);
+        await syncOrderDetails(order, store_id);
       }
     }
   } catch (error) {
@@ -505,13 +505,13 @@ export const syncAllPanelsOrderDetails = async () => {
 
 export const processDripFeedOrders = async (): Promise<void> => {
   try {
-    const panelIdsResult = await pool.query(
-      `SELECT DISTINCT panel_id FROM orders`
+    const storeIdsResult = await pool.query(
+      `SELECT DISTINCT store_id FROM orders`
     );
-    const panelIds = panelIdsResult.rows.map((row) => row.panel_id);
+    const storeIds = storeIdsResult.rows.map((row) => row.store_id);
 
-    for (const panel_id of panelIds) {
-      const dripFeedOrders = (await getDocs("orders", panel_id, {
+    for (const store_id of storeIds) {
+      const dripFeedOrders = (await getDocs("orders", store_id, {
         filter: { status: "Completed", drip_feed: true },
       })) as any[];
 
@@ -528,19 +528,19 @@ export const processDripFeedOrders = async (): Promise<void> => {
         if (Date.now() < nextRunTime) continue;
 
         try {
-          await updatePanelDoc(
+          await updateStoreDoc(
             "orders",
             order.uid,
             {
               processed_runs: processedRuns + 1,
               last_run_time: new Date().toISOString(),
             },
-            panel_id
+            store_id
           );
 
-          const users = await getDocs("users", panel_id);
+          const users = await getDocs("users", store_id);
           const user = users.find((u: any) => u.uid === order.user_uid);
-          const services = await getDocs("services", panel_id);
+          const services = await getDocs("services", store_id);
           const service = services.find((s: any) => s.id === order.service_id);
           if (!user || !service) continue;
 
@@ -548,7 +548,7 @@ export const processDripFeedOrders = async (): Promise<void> => {
           if (user.ref) {
             const affiliate_settings = await getDocs(
               "affiliate_settings",
-              panel_id
+              store_id
             );
             const affiliate = affiliate_settings[0];
             const percentage = affiliate?.percent || 0;
@@ -557,24 +557,24 @@ export const processDripFeedOrders = async (): Promise<void> => {
               const earned = (order.price * percentage) / 100;
               const newBalance = safeFloat(refUser.balance) + earned;
 
-              await addPanelDoc(
+              await addStoreDoc(
                 "referrals_orders",
                 {
                   price: order.price,
                   username: user.username,
                   ref_id: user.ref,
                 },
-                panel_id
+                store_id
               );
 
-              await updatePanelDoc(
+              await updateStoreDoc(
                 "users",
                 refUser.uid,
                 { balance: newBalance },
-                panel_id
+                store_id
               );
 
-              await addPanelDoc(
+              await addStoreDoc(
                 "transactions",
                 {
                   status: "success",
@@ -583,7 +583,7 @@ export const processDripFeedOrders = async (): Promise<void> => {
                   payment_method: "Amount earned from your referral's order.",
                   user_id: user.uid,
                 },
-                panel_id
+                store_id
               );
             }
           }
@@ -607,12 +607,12 @@ export const processDripFeedOrders = async (): Promise<void> => {
           delete new_order.drip_feed;
           delete new_order.last_run_time;
 
-          const added = await addPanelDoc("orders", new_order, panel_id);
+          const added = await addStoreDoc("orders", new_order, store_id);
           new_order.uid = added.uid;
 
-          const result = await sendOrderToProvider(new_order, panel_id);
+          const result = await sendOrderToProvider(new_order, store_id);
           if (result.success) {
-            await updateOrderStatus(new_order.uid, panel_id);
+            await updateOrderStatus(new_order.uid, store_id);
           }
         } catch (err: any) {
           console.error(

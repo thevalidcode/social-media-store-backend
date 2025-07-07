@@ -11,7 +11,7 @@ import path from "path";
 // Routes
 import userRouter from "./routes/user";
 import oauthRoutes from "./routes/oauth";
-import panelRoutes from "./routes/panel";
+import storeRoutes from "./routes/store";
 import serviceRoutes from "./routes/service";
 import providerRoutes from "./routes/provider";
 import adminRoutes from "./routes/admin";
@@ -27,11 +27,11 @@ const app = express();
 let allowedOrigins: string[] = [];
 
 async function updateAllowedOrigins(): Promise<void> {
-  const panels = await getDocs("panels", null, {
+  const stores = await getDocs("stores", null, {
     filter: { field: "ssl", operator: "===", value: true },
   });
 
-  const domains = panels.map((panel: any) => panel.uid);
+  const domains = stores.map((store: any) => store.uid);
   allowedOrigins = [
     "http://localhost:3000",
     "http://localhost:6060",
@@ -97,8 +97,8 @@ app.use(
 
 // --- Public Routes ---
 app.use("/user", cors(dynamicCors), userRouter);
-app.use("/api/auth/panel", cors(dynamicCors), oauthRoutes);
-app.use("/panel", cors(dynamicCors), panelRoutes);
+app.use("/api/auth/store", cors(dynamicCors), oauthRoutes);
+app.use("/store", cors(dynamicCors), storeRoutes);
 app.use("/service", cors(dynamicCors), serviceRoutes);
 app.use("/provider", cors(dynamicCors), providerRoutes);
 app.use("/category", cors(dynamicCors), categoryRoutes);

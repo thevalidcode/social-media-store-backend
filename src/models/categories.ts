@@ -10,7 +10,7 @@ async function createCategoriesTable() {
       description TEXT NOT NULL DEFAULT '',
       position INTEGER NOT NULL,
       uid TEXT PRIMARY KEY,
-      panel_id INTEGER NOT NULL REFERENCES panels(panel_id) ON DELETE CASCADE
+      store_id INTEGER NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE
     );
   `);
 
@@ -29,7 +29,7 @@ async function createCategoriesTable() {
     description: `ALTER TABLE categories ADD COLUMN description TEXT NOT NULL DEFAULT ''`,
     position: `ALTER TABLE categories ADD COLUMN position INTEGER NOT NULL`,
     uid: `ALTER TABLE categories ADD COLUMN uid TEXT PRIMARY KEY`,
-    panel_id: `ALTER TABLE categories ADD COLUMN panel_id INTEGER NOT NULL REFERENCES panels(panel_id) ON DELETE CASCADE`,
+    store_id: `ALTER TABLE categories ADD COLUMN store_id INTEGER NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE`,
   };
 
   for (const [col, sql] of Object.entries(expected)) {

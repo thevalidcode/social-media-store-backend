@@ -11,7 +11,7 @@ async function createProvidersTable() {
       sync BOOLEAN NOT NULL DEFAULT FALSE,
       percentage REAL NOT NULL DEFAULT 0,
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      panel_id INTEGER REFERENCES panels(panel_id) ON DELETE CASCADE NOT NULL
+      store_id INTEGER REFERENCES stores(store_id) ON DELETE CASCADE NOT NULL
     );
   `);
 
@@ -31,7 +31,7 @@ async function createProvidersTable() {
     created_at: `ALTER TABLE providers ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT NOW()`,
     sync: `ALTER TABLE providers ADD COLUMN sync BOOLEAN NOT NULL DEFAULT FALSE`,
     percentage: `ALTER TABLE providers ADD COLUMN percentage REAL  DEFAULT 0`,
-    panel_id: `ALTER TABLE providers ADD COLUMN panel_id INTEGER NOT NULL REFERENCES panels(panel_id) ON DELETE CASCADE`,
+    store_id: `ALTER TABLE providers ADD COLUMN store_id INTEGER NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE`,
   };
 
   for (const [col, sql] of Object.entries(expected)) {
