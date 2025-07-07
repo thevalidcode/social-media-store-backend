@@ -1,8 +1,7 @@
-fake_panels_db
-fake_validpanel_db
-/greenlock.d/config.json
 .env
 .vscode
 nodemon.json
 
 node_modules
+
+dist

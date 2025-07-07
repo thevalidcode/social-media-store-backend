@@ -9,17 +9,32 @@ jobs:
   web-deploy:
     name: Deploy project
     runs-on: ubuntu-latest
+
     steps:
       - name: 🚚 Get latest code
         uses: actions/checkout@v4
 
-      - name: 🗂 Copy public folder to dist
-        run: cp -r src/public dist/public
+      - name: 🧼 Clean previous builds
+        run: rm -rf dist
 
-      - name: 📦 Copy package.json to dist
-        run: cp package.json dist/package.json
+      - name: 🛠️ Install dependencies and build
+        run: |
+          npm ci
+          npm run build
 
-      - name: 📂 Sync backend files
+      - name: 🗂 Ensure dist/public exists and copy public assets
+        run: |
+          mkdir -p dist/public
+          if [ -d "src/public" ]; then
+            cp -r src/public/* dist/public/
+          else
+            echo "No public folder found, skipping static asset copy"
+          fi
+
+      - name: 📦 Copy package.json to build output
+        run: cp package.json dist/
+
+      - name: 📂 Sync to production via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
