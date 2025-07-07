@@ -34,10 +34,15 @@ jobs:
       - name: 📦 Copy package.json to build output
         run: cp package.json dist/
 
-      - name: 📂 Sync to production via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: 🔍 Check dist output before deploy
+        run: ls -la dist
+
+      - name: 📂 Deploy to server via SCP
+        uses: appleboy/scp-action@v0.1.7
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: "./dist/"
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          source: "dist/*"
+          target: "."
