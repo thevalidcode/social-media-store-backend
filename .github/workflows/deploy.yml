@@ -42,7 +42,6 @@ jobs:
           target: "social-media-store/backend"
           strip_components: 1
           overwrite: true
-          rm: true
 
       - name: 🧠 Run post-deploy commands
         uses: appleboy/ssh-action@v1.0.3
