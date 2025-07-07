@@ -26,8 +26,10 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 2022
-          source: "./dist/**"
+          source: "dist/*"
           target: "social-media-store/backend"
+          overwrite: true
+          rm: true
 
       - name: 🧠 Run post-deploy commands
         uses: appleboy/ssh-action@v1.0.3
@@ -43,3 +45,4 @@ jobs:
               && pm2 restart social-media-store \
               || pm2 start index.js --name social-media-store
             pm2 save
+            npm run migrate
