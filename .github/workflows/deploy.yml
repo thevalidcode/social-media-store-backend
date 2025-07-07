@@ -19,6 +19,18 @@ jobs:
           npm ci
           npm run build
 
+      - name: 🗂 Ensure dist/public exists and copy public assets
+        run: |
+          mkdir -p dist/public
+          if [ -d "src/public" ]; then
+            cp -r src/public/* dist/public/
+          else
+            echo "No public folder found, skipping static asset copy"
+          fi
+
+      - name: 📦 Copy package.json to build output
+        run: cp package.json dist/
+
       - name: 📤 Upload build to server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -27,8 +39,8 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 2022
           source: "dist/**"
-          strip_components: 1
           target: "social-media-store/backend"
+          strip_components: 1
           overwrite: true
           rm: true
 
