@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.4.1](https://github.com/thevalidcode/social-media-store-backend/compare/v1.4.0...v1.4.1) (2025-07-08)
+
+
+### Bug Fixes
+
+* Fixed some email issue and added new models to to handle new tables. ([66db2ce](https://github.com/thevalidcode/social-media-store-backend/commit/66db2ceddf47281991dfcf8c3b4f908b7ea57396))
+
 ## [1.4.0](https://github.com/thevalidcode/social-media-store-backend/compare/v1.3.4...v1.4.0) (2025-07-07)
 
 
