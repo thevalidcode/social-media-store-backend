@@ -1,5 +1,4 @@
 import { v4 as uuidv4 } from "uuid";
-import { Pool } from "pg";
 import { pool } from "./config/db";
 
 type Operator = "===" | "!==" | "in" | "contains" | "range";
@@ -280,80 +279,6 @@ const inferType = (val: any): string => {
   return "TEXT";
 };
 
-const createTableIfNotExists = async (
-  pool: Pool,
-  col: string,
-  data: Record<string, any>
-) => {
-  const keys = Object.keys(data);
-  if (!keys.length) throw new Error("Data object must not be empty");
-
-  const columns = keys
-    .map((key) => {
-      const lowerKey = key.toLowerCase();
-      const type = ["timestamp", "created_at", "last_seen"].includes(lowerKey)
-        ? "TIMESTAMP"
-        : inferType(data[key]);
-
-      if (lowerKey === "id") return `${key} INTEGER`;
-      if (!["pages", "design", "general"].includes(col) && lowerKey === "uid") {
-        return `${key} TEXT PRIMARY KEY`;
-      }
-      return `${key} ${type}`;
-    })
-    .join(", ");
-
-  const sql = `CREATE TABLE IF NOT EXISTS ${col} (${columns})`;
-  await pool.query(sql);
-};
-
-export const columnExists = async (
-  table: string,
-  column: string
-): Promise<boolean> => {
-  if (typeof table !== "string" || typeof column !== "string") return false;
-  if (!table.trim() || !column.trim()) return false;
-
-  const query = `
-    SELECT column_name
-    FROM information_schema.columns
-    WHERE table_name = $1 AND column_name = $2
-  `;
-
-  const res = await pool.query<{ column_name: string }>(query, [table, column]);
-
-  return (res.rowCount ?? 0) > 0;
-};
-
-const ensureColumnsExist = async (
-  pool: Pool,
-  table: string,
-  records: any[]
-) => {
-  if (!records.length) return;
-
-  const { rows } = await pool.query(
-    `SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1`,
-    [table]
-  );
-  const existing = new Set(rows.map((r) => r.column_name.toLowerCase()));
-
-  const fieldMap = new Map<string, any>();
-  for (const rec of records) {
-    Object.entries(rec).forEach(([k, v]) => {
-      if (!fieldMap.has(k)) fieldMap.set(k, v);
-    });
-  }
-
-  for (const [field, sample] of fieldMap) {
-    if (existing.has(field.toLowerCase())) continue;
-    const type = inferType(sample);
-    const sql = `ALTER TABLE public."${table}" ADD COLUMN "${field}" ${type}`;
-    await pool.query(sql);
-    existing.add(field.toLowerCase());
-  }
-};
-
 const addStoreDoc = async (col: string, data: any, store_id: number) => {
   data.store_id = store_id;
   if (!data.uid) data.uid = uuidv4();
@@ -365,9 +290,6 @@ const addStoreDoc = async (col: string, data: any, store_id: number) => {
       );
       data.id = rows[0].max_id !== null ? Number(rows[0].max_id) + 1 : 1;
     }
-
-    await createTableIfNotExists(pool, col, data);
-    await ensureColumnsExist(pool, col, [data]);
 
     const keys = Object.keys(data);
     const values = Object.values(data).map((v) =>
@@ -436,6 +358,4 @@ export {
   deleteStoreDoc,
   deleteStoreDocs,
   updateStoreDoc,
-  createTableIfNotExists,
-  ensureColumnsExist,
 };

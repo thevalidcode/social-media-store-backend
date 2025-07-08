@@ -16,7 +16,8 @@ import createAffiliateSettingsTable from "./affiliate_settings";
 
 (async (): Promise<void> => {
   try {
-    await createStoresTable();
+    // This should be commented so an permission denied error wont be returned. 
+    // await createStoresTable();
     await createProvidersTable();
     await createCategoriesTable();
     await createUserTable();
