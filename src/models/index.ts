@@ -5,9 +5,13 @@ import createUserTable from "./user";
 import createServiceTable from "./service";
 import createDesignStylesTable from "./design_styles";
 import createCurrenciesTable from "./currencies";
+import createEmailTemplatesTable from "./email_templates";
 import createOrdersTable from "./orders";
 import createAdminTable from "./admin";
 import createRefillTable from "./refill";
+import createAdminEmailsTable from "./admins_emails";
+import createEmailLogsTable from "./email_logs";
+import createGeneralTable from "./general";
 import createAffiliateSettingsTable from "./affiliate_settings";
 
 (async (): Promise<void> => {
@@ -17,11 +21,15 @@ import createAffiliateSettingsTable from "./affiliate_settings";
     await createCategoriesTable();
     await createUserTable();
     await createAffiliateSettingsTable();
+    await createGeneralTable();
+    await createEmailLogsTable();
+    await createAdminEmailsTable();
     await createRefillTable();
     await createAdminTable();
     await createServiceTable();
     await createDesignStylesTable();
     await createOrdersTable();
+    await createEmailTemplatesTable();
     await createCurrenciesTable();
 
     console.log("Tables created successfully.");

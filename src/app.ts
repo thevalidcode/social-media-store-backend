@@ -97,13 +97,13 @@ app.use(
 
 // --- Public Routes ---
 app.use("/user", cors(dynamicCors), userRouter);
-app.use("/api/auth/store", cors(dynamicCors), oauthRoutes);
 app.use("/store", cors(dynamicCors), storeRoutes);
 app.use("/service", cors(dynamicCors), serviceRoutes);
 app.use("/provider", cors(dynamicCors), providerRoutes);
 app.use("/category", cors(dynamicCors), categoryRoutes);
 app.use("/order", cors(dynamicCors), orderRoutes);
 app.use("/admin", adminRoutes);
+app.use("/api/auth/store", oauthRoutes);
 
 // --- Version Info ---
 app.use("/version", cors(dynamicCors), versionRouter);

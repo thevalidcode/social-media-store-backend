@@ -61,10 +61,8 @@ export const getSiteData = async (
   const { store_id } = parsed.data;
 
   try {
-    const result = await getDocs("general", store_id, {
-      find: { field: "uid", operator: "===", value: "site" },
-    });
-    res.json(result);
+    const result = await getDocs("general", store_id);
+    res.json(result[0]);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

@@ -16,15 +16,13 @@ function interpolate(template: string, variables: Record<string, any>): string {
 }
 
 async function loadGeneralSettings(store_id: number) {
-  const general = await getDocs("general", store_id, {
-    find: { field: "uid", operator: "===", value: "site" },
-  });
-  return general;
+  const general = await getDocs("general", store_id);
+  return general[0];
 }
 
 async function loadAdminEmails(store_id: number): Promise<string[]> {
   const docs = await getDocs("admin_emails", store_id);
-  return docs.map((doc: any) => doc.email);
+  return docs.map((doc: any) => doc.emails);
 }
 
 async function buildEmailTemplate(
@@ -37,7 +35,7 @@ async function buildEmailTemplate(
     find: { type },
   });
 
-  const variables = { logo: logo_url, ...data };
+  const variables = { logo: logo_url || "", ...data };
   const htmlFromDb = interpolate(template?.content || "", variables);
   const fallbackHtml = getTemplate(type as any, variables);
 
@@ -70,15 +68,15 @@ async function dispatchEmail({
     const result = await transporter.sendMail({ from, to, subject, html });
 
     await addStoreDoc(
-      "notifications",
+      "email_logs",
       {
-        from,
-        to,
+        sender: from,
+        receiver: to,
         subject,
         html,
         status: "success",
         timestamp: new Date(),
-        messageId: result.messageId,
+        message_id: result.messageId,
         response: result.response,
       },
       store_id
@@ -87,10 +85,10 @@ async function dispatchEmail({
     return true;
   } catch (err: any) {
     await addStoreDoc(
-      "notifications",
+      "email_logs",
       {
-        from,
-        to,
+        sender: from,
+        receiver: to,
         subject,
         html,
         status: "error",
@@ -104,7 +102,7 @@ async function dispatchEmail({
 }
 
 export async function sendEmail(
-  from = '"Valid Store" <contact@validstore.com>',
+  from = '"Valid Panel" <contact@validpanel.com>',
   type: string,
   data: Record<string, any>,
   store_id: number
@@ -135,7 +133,7 @@ export async function sendEmail(
 }
 
 export async function sendUserEmail(
-  from = '"Store" <contact@validstore.com>',
+  from = '"Store" <notifications@validpanel.com>',
   to: string,
   type: string,
   data: Record<string, any>,

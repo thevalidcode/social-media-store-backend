@@ -1,6 +1,7 @@
 import express from "express";
 import axios from "axios";
 import bcrypt from "bcrypt";
+import cors from "cors";
 import jwt from "jsonwebtoken";
 import { verifyGoogleIdToken } from "../helpers/googleverify";
 import { getDocs, addStoreDoc } from "../crud";
@@ -20,33 +21,41 @@ const isValidStoreDomain = async (url: string): Promise<boolean> => {
   return !!store;
 };
 
-router.get("/google", async (req: Request, res: Response): Promise<void> => {
-  const { redirect, store_id } = req.query;
+// Allow all origins per route
+const openCors = cors({ origin: true, credentials: true });
 
-  if (!redirect || !store_id) {
-    res.status(400).send("Missing redirect or store_id");
-    return;
+router.get(
+  "/google",
+  openCors,
+  async (req: Request, res: Response): Promise<void> => {
+    const { redirect, store_id } = req.query;
+
+    if (!redirect || !store_id) {
+      res.status(400).send("Missing redirect or store_id");
+      return;
+    }
+
+    const state = encodeURIComponent(
+      JSON.stringify({ redirect, store_id: Number(store_id) })
+    );
+
+    const authUrl =
+      `https://accounts.google.com/o/oauth2/v2/auth?` +
+      `client_id=${env.GOOGLE_CLIENT_ID}` +
+      `&response_type=code` +
+      `&scope=openid%20email%20profile` +
+      `&redirect_uri=${encodeURIComponent(
+        "https://auth.validpanel.com/api/auth/store/callback/google"
+      )}` +
+      `&state=${state}`;
+
+    res.redirect(authUrl);
   }
-
-  const state = encodeURIComponent(
-    JSON.stringify({ redirect, store_id: Number(store_id) })
-  );
-
-  const authUrl =
-    `https://accounts.google.com/o/oauth2/v2/auth?` +
-    `client_id=${env.GOOGLE_CLIENT_ID}` +
-    `&response_type=code` +
-    `&scope=openid%20email%20profile` +
-    `&redirect_uri=${encodeURIComponent(
-      "https://auth.validstore.com/api/auth/store/callback/google"
-    )}` +
-    `&state=${state}`;
-
-  res.redirect(authUrl);
-});
+);
 
 router.get(
   "/callback/google",
+  openCors,
   async (req: Request, res: Response): Promise<void> => {
     const { code, state } = req.query;
 
@@ -77,7 +86,7 @@ router.get(
         client_id: env.GOOGLE_CLIENT_ID,
         client_secret: env.GOOGLE_CLIENT_SECRET,
         redirect_uri:
-          "https://auth.validstore.com/api/auth/store/callback/google",
+          "https://auth.validpanel.com/api/auth/store/callback/google",
         grant_type: "authorization_code",
       });
 
@@ -96,7 +105,7 @@ router.get(
           api_key: uuidv4(),
           timestamp: new Date(),
           uid: uuidv4(),
-          role: "user"
+          role: "user",
         };
         await addStoreDoc("users", user, store_id);
       }
