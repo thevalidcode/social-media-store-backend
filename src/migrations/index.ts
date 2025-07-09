@@ -12,6 +12,8 @@ import createRefillTable from "./refill";
 import createAdminEmailsTable from "./admins_emails";
 import createEmailLogsTable from "./email_logs";
 import createGeneralTable from "./general";
+import createBlogsTable from "./blogs";
+import createFAQsTable from "./faqs";
 import createAffiliateSettingsTable from "./affiliate_settings";
 
 (async (): Promise<void> => {
@@ -31,6 +33,8 @@ import createAffiliateSettingsTable from "./affiliate_settings";
     await createOrdersTable();
     await createEmailTemplatesTable();
     await createCurrenciesTable();
+    await createFAQsTable();
+    await createBlogsTable();
 
     console.log("Tables created successfully.");
     process.exit(0);

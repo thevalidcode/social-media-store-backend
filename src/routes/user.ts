@@ -6,7 +6,7 @@ import { authenticate } from "../middleware/authenticate";
 router.get("/", authenticate, users.getUsers);
 router.post("/me", users.me);
 router.post("/", users.createUser);
-router.get("/:uid", users.getUserByUid);
+router.get("/:uid",authenticate, users.getUserByUid);
 router.patch("/", authenticate, users.updateUser);
 router.delete("/", authenticate, users.deleteUser);
 router.delete("/multiple", authenticate, users.deleteUsers);

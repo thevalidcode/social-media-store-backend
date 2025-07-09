@@ -12,6 +12,8 @@ import path from "path";
 import userRouter from "./routes/user";
 import oauthRoutes from "./routes/oauth";
 import storeRoutes from "./routes/store";
+import blogRoutes from "./routes/blog";
+import faqRoutes from "./routes/faq";
 import serviceRoutes from "./routes/service";
 import providerRoutes from "./routes/provider";
 import adminRoutes from "./routes/admin";
@@ -98,6 +100,8 @@ app.use(
 // --- Public Routes ---
 app.use("/user", cors(dynamicCors), userRouter);
 app.use("/store", cors(dynamicCors), storeRoutes);
+app.use("/blog", cors(dynamicCors), blogRoutes);
+app.use("/faq", cors(dynamicCors), faqRoutes);
 app.use("/service", cors(dynamicCors), serviceRoutes);
 app.use("/provider", cors(dynamicCors), providerRoutes);
 app.use("/category", cors(dynamicCors), categoryRoutes);

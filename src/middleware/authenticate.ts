@@ -32,7 +32,7 @@ export const authenticate = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const token = req.cookies?.auth_token;
+  const token = req.cookies.auth_token;
 
   if (!token) {
     res.status(401).json({ error: "Not authenticated" });

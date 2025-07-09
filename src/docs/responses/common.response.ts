@@ -16,8 +16,8 @@ export const SuccessWithData = {
   content: {
     "application/json": {
       schema: z.object({
-        success: z.literal("Provider updated successfully."),
-        service: z.any(),
+        success: z.string().describe("Success message"),
+        data: z.any().describe("Payload returned from operation"),
       }),
     },
   },
@@ -46,7 +46,7 @@ export const Forbidden = {
   content: {
     "application/json": {
       schema: z.object({
-        error: z.literal("Access denied. Admins only."),
+        error: z.string().describe("Error message for forbidden access"),
       }),
     },
   },

@@ -8,5 +8,7 @@ import "./category.paths";
 import "./store.paths";
 import "./auth.paths";
 import "./order.paths";
+import "./blog.paths";
+import "./faq.paths";
 
 export { registry };

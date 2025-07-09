@@ -7,6 +7,7 @@ async function createStoresTable() {
       uid TEXT UNIQUE NOT NULL,
       ssl BOOLEAN NOT NULL DEFAULT false,
       plan TEXT NOT NULL DEFAULT 'starter',
+      status TEXT NOT NULL DEFAULT 'active',
       timestamp TIMESTAMP NOT NULL DEFAULT NOW()
     );
   `);
@@ -23,6 +24,7 @@ async function createStoresTable() {
     uid: `ALTER TABLE stores ADD COLUMN uid TEXT UNIQUE NOT NULL`,
     ssl: `ALTER TABLE stores ADD COLUMN ssl BOOLEAN NOT NULL DEFAULT false`,
     plan: `ALTER TABLE stores ADD COLUMN plan TEXT NOT NULL DEFAULT 'starter'`,
+    status: `ALTER TABLE stores ADD COLUMN status TEXT NOT NULL DEFAULT 'active'`,
     timestamp: `ALTER TABLE stores ADD COLUMN timestamp TIMESTAMP NOT NULL DEFAULT NOW()`,
   };
 

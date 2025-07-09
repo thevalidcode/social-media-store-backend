@@ -7,6 +7,7 @@ export const StoreDataSchema = z
   .object({
     store_id: z.number().describe("Unique identifier for the store"),
     plan: z.string().describe("The plan associated with the store"),
+    status: z.enum(["active", "disabled"]).describe("The status of the store"),
     timestamp: z.string().describe("Timestamp when the store was created"),
   })
   .openapi("StoreData");
