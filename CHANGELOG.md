@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.5.0](https://github.com/thevalidcode/social-media-store-backend/compare/v1.4.1...v1.5.0) (2025-07-09)
+
+
+### Features
+
+* Added blogs and faqs and updated the migrations table. ([0fea309](https://github.com/thevalidcode/social-media-store-backend/commit/0fea3095bc518d115ea7887035d9596876a99e61))
+
+
+### Bug Fixes
+
+* Added debuging ([3a7b715](https://github.com/thevalidcode/social-media-store-backend/commit/3a7b71512591cfa8a684effde60b49ae3e260346))
+* Fixed permissin issue ([0a65658](https://github.com/thevalidcode/social-media-store-backend/commit/0a656583cd4f56edb6e7722ef400caa7213e8764))
+* The table creation for the general ([d2e53e6](https://github.com/thevalidcode/social-media-store-backend/commit/d2e53e64b7cc90c3ecb000008e2e72313b2c65e1))
+* uncommented store ([ef774b9](https://github.com/thevalidcode/social-media-store-backend/commit/ef774b9e36bdb40cd0afce0b742272cc8d188f94))
+
 ### [1.4.1](https://github.com/thevalidcode/social-media-store-backend/compare/v1.4.0...v1.4.1) (2025-07-08)
 
 
