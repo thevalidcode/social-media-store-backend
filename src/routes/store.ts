@@ -4,6 +4,7 @@ import * as stores from "../controllers/store";
 import { authenticate } from "../middleware/authenticate";
 
 router.get("/data", stores.getStoreData);
+router.get("/csrf-token", stores.getStoreCSRFToken);
 router.get("/styles", stores.getStyles);
 router.get("/site-data", stores.getSiteData);
 router.get("/rates", stores.getRates);

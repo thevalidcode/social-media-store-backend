@@ -7,6 +7,7 @@ import { pool } from "./config/db";
 import { env } from "./config/env";
 import cookieParser from "cookie-parser";
 import path from "path";
+import csurf from "csurf";
 
 // Routes
 import userRouter from "./routes/user";
@@ -71,6 +72,16 @@ const dynamicCors = function (
   return callback(new Error("Not allowed by CORS"), { origin: false });
 };
 
+// CSRF protection using cookies
+const csrfProtection = csurf({
+  cookie: {
+    httpOnly: true,
+    sameSite: "none",
+    secure: env.NODE_ENV === "production",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  },
+});
+
 // --- Middleware ---
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -98,19 +109,19 @@ app.use(
 );
 
 // --- Public Routes ---
-app.use("/user", cors(dynamicCors), userRouter);
-app.use("/store", cors(dynamicCors), storeRoutes);
-app.use("/blog", cors(dynamicCors), blogRoutes);
-app.use("/faq", cors(dynamicCors), faqRoutes);
-app.use("/service", cors(dynamicCors), serviceRoutes);
-app.use("/provider", cors(dynamicCors), providerRoutes);
-app.use("/category", cors(dynamicCors), categoryRoutes);
-app.use("/order", cors(dynamicCors), orderRoutes);
+app.use("/user", cors(dynamicCors), csrfProtection, userRouter);
+app.use("/store", cors(dynamicCors), csrfProtection, storeRoutes);
+app.use("/blog", cors(dynamicCors), csrfProtection, blogRoutes);
+app.use("/faq", cors(dynamicCors), csrfProtection, faqRoutes);
+app.use("/service", cors(dynamicCors), csrfProtection, serviceRoutes);
+app.use("/provider", cors(dynamicCors), csrfProtection, providerRoutes);
+app.use("/category", cors(dynamicCors), csrfProtection, categoryRoutes);
+app.use("/order", cors(dynamicCors), csrfProtection, orderRoutes);
+app.use("/version", cors(dynamicCors), csrfProtection, versionRouter);
+
+// Internal Routes
 app.use("/admin", adminRoutes);
 app.use("/api/auth/store", oauthRoutes);
-
-// --- Version Info ---
-app.use("/version", cors(dynamicCors), versionRouter);
 
 app.use(swaggerRouter);
 

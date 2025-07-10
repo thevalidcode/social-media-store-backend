@@ -6,6 +6,7 @@ import {
   ExchangeRatesResponse,
   CurrentUserResponse,
   CurrentAdminResponse,
+  CSrfTokenResponse,
   NotFound,
 } from "../responses/store.response";
 import { ServerError, Forbidden } from "../responses/common.response";
@@ -26,6 +27,29 @@ registry.registerPath({
   ],
   responses: {
     200: StoreDataResponse,
+    404: NotFound,
+    500: ServerError,
+  },
+});
+
+// GET /store/csrf-token
+registry.registerPath({
+  method: "get",
+  path: "/store/csrf-token",
+  description:
+    "Retrieve a CSRF token which must be included in all subsequent requests that mutate data (e.g., POST, PATCH, DELETE). The frontend must extract the token from this response and send it in the 'X-CSRF-Token' header for every protected request. This ensures protection against Cross-Site Request Forgery (CSRF) attacks.",
+  summary: "Get the csrf token for a custom domain",
+  tags: ["Store"],
+  parameters: [
+    {
+      name: "domain",
+      in: "query",
+      required: true,
+      schema: { type: "string" },
+    },
+  ],
+  responses: {
+    200: CSrfTokenResponse,
     404: NotFound,
     500: ServerError,
   },

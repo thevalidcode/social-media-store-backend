@@ -33,6 +33,30 @@ export const getStoreData = async (
   }
 };
 
+export const getStoreCSRFToken = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const parsed = storeIdQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+  const { domain } = parsed.data;
+
+  try {
+    const stores = await getDocs("stores");
+    const store = stores.find((p: any) => p.uid === domain);
+    if (!store) {
+      res.status(404).json({ error: "Store not found for the given domain" });
+      return;
+    }
+    res.json({ csrfToken: req.csrfToken() });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 export const getStyles = async (req: Request, res: Response): Promise<void> => {
   const parsed = storeIdSchema.safeParse(req.query);
   if (!parsed.success) {
