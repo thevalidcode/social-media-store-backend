@@ -114,7 +114,7 @@ export const getCurrentUser = async (
   try {
     const result = await getDocs("users", store_id, {
       find: { field: "uid", operator: "===", value: uid },
-      removeKeys: ["password"],
+      removeKeys: ["password", "api_key"],
     });
     if (!result) {
       res.status(404).json({ error: "User not found" });
@@ -144,7 +144,7 @@ export const getCurrentAdmin = async (
   try {
     const result = await getDocs("admins", store_id, {
       find: { field: "uid", operator: "===", value: uid },
-      removeKeys: ["password"],
+      removeKeys: ["password", "api_key"],
     });
     if (!result) {
       res.status(404).json({ error: "Admin not found" });
