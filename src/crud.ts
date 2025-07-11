@@ -221,7 +221,20 @@ const getDocs = async (
 
     // Handle find return type
     if (query.find && !Array.isArray(query.find)) {
-      if (docs.length === 1) return docs[0];
+      if (docs.length === 1) {
+        let doc = docs[0];
+        if (query.removeKeys) {
+          query.removeKeys.forEach((key) => delete doc[key]);
+        }
+        if (query.leaveKeys) {
+          const cleaned: Record<string, any> = {};
+          query.leaveKeys.forEach((key) => {
+            if (key in doc) cleaned[key] = doc[key];
+          });
+          doc = cleaned;
+        }
+        return doc;
+      }
       if (docs.length > 1)
         throw new Error("Multiple documents found for 'find'");
       return null;
@@ -266,17 +279,6 @@ const getDocs = async (
   } catch (err: any) {
     return { error: err.message };
   }
-};
-
-const inferType = (val: any): string => {
-  if (val === null) return "TEXT";
-  if (typeof val === "string") return "TEXT";
-  if (typeof val === "number")
-    return Number.isInteger(val) ? "INTEGER" : "REAL";
-  if (typeof val === "boolean") return "BOOLEAN";
-  if (val instanceof Date) return "TIMESTAMP";
-  if (typeof val === "object") return "JSONB";
-  return "TEXT";
 };
 
 const addStoreDoc = async (col: string, data: any, store_id: number) => {
