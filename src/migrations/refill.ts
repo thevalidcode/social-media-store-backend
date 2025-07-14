@@ -1,18 +1,18 @@
 import { pool } from "../config/db";
 
-async function createRefillTable() {
+async function createRefillsTable() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS refills (
       id INTEGER NOT NULL,
+      timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
       uid TEXT PRIMARY KEY,
-      status TEXT NOT NULL DEFAULT 'Pending',
+      user_uid TEXT NOT NULL,
       provider_id INTEGER NOT NULL,
-      order_id INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'Pending',
+      provider_order_id INTEGER NOT NULL,
       provider TEXT NOT NULL,
       provider_error TEXT,
-      url TEXT NOT NULL,
-      store_id INTEGER NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE,
-      timestamp TIMESTAMP NOT NULL DEFAULT NOW()
+      store_id INTEGER NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE
     );
   `);
 
@@ -24,16 +24,16 @@ async function createRefillTable() {
   const existingCols = res.rows.map((row) => row.column_name);
 
   const expected: Record<string, string> = {
-    id: `ALTER TABLE refills ADD COLUMN id SERIAL NOT NULL`,
+    id: `ALTER TABLE refills ADD COLUMN id INTEGER NOT NULL`,
+    timestamp: `ALTER TABLE refills ADD COLUMN timestamp TIMESTAMP NOT NULL DEFAULT NOW()`,
     uid: `ALTER TABLE refills ADD COLUMN uid TEXT PRIMARY KEY`,
-    status: `ALTER TABLE refills ADD COLUMN status TEXT NOT NULL DEFAULT 'Pending'`,
+    user_uid: `ALTER TABLE refills ADD COLUMN user_uid TEXT NOT NULL`,
     provider_id: `ALTER TABLE refills ADD COLUMN provider_id INTEGER NOT NULL`,
-    order_id: `ALTER TABLE refills ADD COLUMN order_id INTEGER NOT NULL`,
+    status: `ALTER TABLE refills ADD COLUMN status TEXT NOT NULL DEFAULT 'Pending'`,
+    provider_order_id: `ALTER TABLE refills ADD COLUMN provider_order_id INTEGER NOT NULL`,
     provider: `ALTER TABLE refills ADD COLUMN provider TEXT NOT NULL`,
     provider_error: `ALTER TABLE refills ADD COLUMN provider_error TEXT`,
-    url: `ALTER TABLE refills ADD COLUMN url TEXT NOT NULL`,
     store_id: `ALTER TABLE refills ADD COLUMN store_id INTEGER NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE`,
-    timestamp: `ALTER TABLE refills ADD COLUMN timestamp TIMESTAMP NOT NULL DEFAULT NOW()`,
   };
 
   for (const [col, sql] of Object.entries(expected)) {
@@ -43,4 +43,4 @@ async function createRefillTable() {
   }
 }
 
-export default createRefillTable;
+export default createRefillsTable;

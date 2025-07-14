@@ -10,5 +10,6 @@ import "./auth.paths";
 import "./order.paths";
 import "./blog.paths";
 import "./faq.paths";
+import "./refill.paths";
 
 export { registry };

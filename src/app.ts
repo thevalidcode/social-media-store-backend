@@ -20,6 +20,7 @@ import providerRoutes from "./routes/provider";
 import adminRoutes from "./routes/admin";
 import categoryRoutes from "./routes/category";
 import orderRoutes from "./routes/order";
+import refillRoutes from "./routes/refill";
 import versionRouter from "./routes/version";
 import { getDocs } from "./crud";
 import swaggerRouter from "./docs/swagger";
@@ -117,6 +118,7 @@ app.use("/service", cors(dynamicCors), csrfProtection, serviceRoutes);
 app.use("/provider", cors(dynamicCors), csrfProtection, providerRoutes);
 app.use("/category", cors(dynamicCors), csrfProtection, categoryRoutes);
 app.use("/order", cors(dynamicCors), csrfProtection, orderRoutes);
+app.use("/refill", cors(dynamicCors), csrfProtection, refillRoutes);
 app.use("/version", cors(dynamicCors), csrfProtection, versionRouter);
 
 // Internal Routes
