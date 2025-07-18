@@ -1,14 +1,21 @@
 import express from "express";
 import * as faq from "../controllers/faq";
 import { authenticate } from "../middleware/authenticate";
+import { limitFAQPublic, limitFAQMutations } from "../middleware/ratelimit/faq";
 
 const router = express.Router();
 
-router.get("/", faq.getFAQs);
+router.get("/", limitFAQPublic, faq.getFAQs);
 router.get("/:faq_id", faq.getFAQByID);
-router.post("/", authenticate, faq.addFAQ);
-router.patch("/", authenticate, faq.updateFAQ);
-router.delete("/", authenticate, faq.deleteFAQ);
-router.delete("/multiple", authenticate, faq.deleteMultipleFAQs);
+
+router.post("/", authenticate, limitFAQMutations, faq.addFAQ);
+router.patch("/", authenticate, limitFAQMutations, faq.updateFAQ);
+router.delete("/", authenticate, limitFAQMutations, faq.deleteFAQ);
+router.delete(
+  "/multiple",
+  authenticate,
+  limitFAQMutations,
+  faq.deleteMultipleFAQs
+);
 
 export default router;

@@ -1,8 +1,8 @@
 import {
   StoreDataSchema,
   DesignStylesSchema,
-  SiteDataSchema,
   ExchangeRatesSchema,
+  StoreGeneralDataResponseSchema,
 } from "../../schemas/store.schema";
 import { UserPublicSchema, AdminPublicSchema } from "../../schemas/user.schema";
 import { z } from "zod";
@@ -12,6 +12,15 @@ export const StoreDataResponse = {
   content: {
     "application/json": {
       schema: StoreDataSchema,
+    },
+  },
+};
+
+export const GeneralDataResponse = {
+  description: "General Data lookup result",
+  content: {
+    "application/json": {
+      schema: StoreGeneralDataResponseSchema,
     },
   },
 };
@@ -30,15 +39,6 @@ export const DesignStylesResponse = {
   content: {
     "application/json": {
       schema: DesignStylesSchema,
-    },
-  },
-};
-
-export const SiteDataResponse = {
-  description: "General site data",
-  content: {
-    "application/json": {
-      schema: SiteDataSchema,
     },
   },
 };

@@ -2,13 +2,38 @@ import express from "express";
 const router = express.Router();
 import * as providers from "../controllers/provider";
 import { authenticate } from "../middleware/authenticate";
+import {
+  limitProviderImport,
+  limitProviderActions,
+} from "../middleware/ratelimit/provider";
 
-router.post("/services/import", authenticate, providers.importServices);
-router.post("/services", authenticate, providers.getProviderServices);
-router.post("/", authenticate, providers.addProvider);
+router.post(
+  "/services/import",
+  authenticate,
+  limitProviderImport,
+  providers.importServices
+);
+router.post(
+  "/services",
+  authenticate,
+  limitProviderActions,
+  providers.getProviderServices
+);
+
+router.post("/", authenticate, limitProviderActions, providers.addProvider);
 router.get("/", authenticate, providers.getProviders);
-router.patch("/", authenticate, providers.updateProvider);
-router.delete("/", authenticate, providers.deleteProvider);
-router.delete("/multiple", authenticate, providers.deleteMultipleProviders);
+router.patch("/", authenticate, limitProviderActions, providers.updateProvider);
+router.delete(
+  "/",
+  authenticate,
+  limitProviderActions,
+  providers.deleteProvider
+);
+router.delete(
+  "/multiple",
+  authenticate,
+  limitProviderActions,
+  providers.deleteMultipleProviders
+);
 
 export default router;

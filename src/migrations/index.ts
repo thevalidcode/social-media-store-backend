@@ -13,6 +13,7 @@ import createAdminEmailsTable from "./admins_emails";
 import createEmailLogsTable from "./email_logs";
 import createGeneralTable from "./general";
 import createBlogsTable from "./blogs";
+import createUploadLogsTable from "./upload_logs";
 import createFAQsTable from "./faqs";
 import createAffiliateSettingsTable from "./affiliate_settings";
 
@@ -35,6 +36,7 @@ import createAffiliateSettingsTable from "./affiliate_settings";
     await createCurrenciesTable();
     await createFAQsTable();
     await createBlogsTable();
+    await createUploadLogsTable();
 
     console.log("Tables created successfully.");
     process.exit(0);

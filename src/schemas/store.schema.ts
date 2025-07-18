@@ -12,13 +12,27 @@ export const StoreDataSchema = z
   })
   .openapi("StoreData");
 
-export const SiteDataSchema = z
+export const StoreGeneralDataRequestSchema = z.object({
+  store_id: z.coerce.number().describe("Unique identifier for the store"),
+});
+
+export const StoreGeneralDataResponseSchema = z
   .object({
-    logo_url: z.string().url().describe("Logo URL for the site"),
-    title: z.string().describe("Site title"),
-    description: z.string().describe("Site description"),
+    store_id: z.coerce.number(),
+    logo_url: z.string().url(),
+    favicon_url: z.string().url(),
+    title: z.string(),
+    default_client_currency: z.string().length(3).toUpperCase(),
   })
-  .openapi("SiteData");
+  .strict()
+  .openapi("General");
+
+export const UpdateGeneralDataRequestSchema = z.object({
+  logo_url: z.string().url().optional(),
+  favicon_url: z.string().url().optional(),
+  title: z.string().optional(),
+  default_client_currency: z.string().length(3).toUpperCase().optional(),
+});
 
 export const ExchangeRatesSchema = z
   .record(z.number())
@@ -36,3 +50,14 @@ export const DesignStylesSchema = z
     }),
   })
   .openapi("DesignStyles");
+
+export const UpdateStylesRequestSchema = z
+  .object({
+    title: z.string().describe("Design title"),
+    hex: z.string().describe("Color hex"),
+    schema: z.object({
+      [":root"]: z.record(z.string()).describe("Light mode variables"),
+      [".dark"]: z.record(z.string()).describe("Dark mode variables"),
+    }),
+  })
+  .strict();

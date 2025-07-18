@@ -11,5 +11,6 @@ import "./order.paths";
 import "./blog.paths";
 import "./faq.paths";
 import "./refill.paths";
+import "./files.paths";
 
 export { registry };

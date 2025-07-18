@@ -204,7 +204,7 @@ registry.registerPath({
 // Admin: Create new service
 registry.registerPath({
   method: "post",
-  path: "/service/create",
+  path: "/service",
   summary: "Create a new service",
   tags: ["Services"],
   security: [{ CookieAuth: [] }],

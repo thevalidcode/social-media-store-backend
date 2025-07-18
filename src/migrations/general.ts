@@ -7,6 +7,7 @@ async function createDesignStylesTable() {
     uid TEXT PRIMARY KEY,
     store_id INTEGER NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE,
     title TEXT NOT NULL DEFAULT 'Store',
+    description TEXT,
     logo_url TEXT DEFAULT 'https://validpanel.com/assets/ValidPanel-CLfY079M.png',
     favicon_url TEXT DEFAULT 'https://validpanel.com/assets/ValidPanel-CLfY079M.png',
     default_client_currency TEXT
@@ -26,6 +27,7 @@ async function createDesignStylesTable() {
     store_id:
       "ALTER TABLE general ADD COLUMN store_id INTEGER NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE",
     title: `ALTER TABLE general ADD COLUMN title TEXT NOT NULL DEFAULT 'Store'`,
+    description: `ALTER TABLE general ADD COLUMN description TEXT`,
     logo_url: `ALTER TABLE general ADD COLUMN logo_url TEXT DEFAULT 'https://validpanel.com/assets/ValidPanel-CLfY079M.png'`,
     favicon_url: `ALTER TABLE general ADD COLUMN favicon_url TEXT DEFAULT 'https://validpanel.com/assets/ValidPanel-CLfY079M.png'`,
     default_client_currency:

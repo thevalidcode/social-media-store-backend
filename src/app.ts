@@ -8,6 +8,7 @@ import { env } from "./config/env";
 import cookieParser from "cookie-parser";
 import path from "path";
 import csurf from "csurf";
+import { apiLimiter } from "./middleware/ratelimit";
 
 // Routes
 import userRouter from "./routes/user";
@@ -22,6 +23,7 @@ import categoryRoutes from "./routes/category";
 import orderRoutes from "./routes/order";
 import refillRoutes from "./routes/refill";
 import versionRouter from "./routes/version";
+import filesRouter from "./routes/files";
 import { getDocs } from "./crud";
 import swaggerRouter from "./docs/swagger";
 
@@ -86,6 +88,7 @@ const csrfProtection = csurf({
 // --- Middleware ---
 app.use(bodyParser.json());
 app.use(cookieParser());
+app.use(apiLimiter);
 app.use(express.urlencoded({ extended: true }));
 app.use("/assets", express.static(path.join(__dirname, "public", "assets")));
 
@@ -120,6 +123,7 @@ app.use("/category", cors(dynamicCors), csrfProtection, categoryRoutes);
 app.use("/order", cors(dynamicCors), csrfProtection, orderRoutes);
 app.use("/refill", cors(dynamicCors), csrfProtection, refillRoutes);
 app.use("/version", cors(dynamicCors), csrfProtection, versionRouter);
+app.use("/files", cors(dynamicCors), csrfProtection, filesRouter);
 
 // Internal Routes
 app.use("/admin", adminRoutes);

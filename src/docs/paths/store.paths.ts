@@ -2,14 +2,22 @@ import { registry } from "../components/registry";
 import {
   StoreDataResponse,
   DesignStylesResponse,
-  SiteDataResponse,
   ExchangeRatesResponse,
   CurrentUserResponse,
   CurrentAdminResponse,
   CSrfTokenResponse,
   NotFound,
+  GeneralDataResponse,
 } from "../responses/store.response";
-import { ServerError, Forbidden } from "../responses/common.response";
+import {
+  ServerError,
+  Forbidden,
+  SuccessResponse,
+} from "../responses/common.response";
+import {
+  UpdateGeneralDataRequestSchema,
+  UpdateStylesRequestSchema,
+} from "../../schemas/store.schema";
 
 // GET /store/data
 registry.registerPath({
@@ -27,6 +35,50 @@ registry.registerPath({
   ],
   responses: {
     200: StoreDataResponse,
+    404: NotFound,
+    500: ServerError,
+  },
+});
+
+// GET /store/{store_id}/general-data
+registry.registerPath({
+  method: "get",
+  path: "/store/{store_id}/general-data",
+  summary: "Get the general data for a store",
+  tags: ["Store"],
+  parameters: [
+    {
+      name: "store_id",
+      in: "path",
+      required: true,
+      schema: { type: "number" },
+    },
+  ],
+  responses: {
+    200: GeneralDataResponse,
+    404: NotFound,
+    500: ServerError,
+  },
+});
+
+// PATCH /store/general-data
+registry.registerPath({
+  method: "patch",
+  path: "/store/general-data",
+  summary: "Update the general data for a store",
+  tags: ["Store"],
+  security: [{ CookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: UpdateGeneralDataRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: SuccessResponse,
     404: NotFound,
     500: ServerError,
   },
@@ -55,18 +107,18 @@ registry.registerPath({
   },
 });
 
-// GET /store/styles
+// GET /store/{store_id}/styles
 registry.registerPath({
   method: "get",
-  path: "/store/styles",
+  path: "/store/{store_id}/styles",
   summary: "Get design styles for a store",
   tags: ["Store"],
   parameters: [
     {
       name: "store_id",
-      in: "query",
+      in: "path",
       required: true,
-      schema: { type: "string" },
+      schema: { type: "number" },
     },
   ],
   responses: {
@@ -75,22 +127,25 @@ registry.registerPath({
   },
 });
 
-// GET /store/site-data
+// PATCH /store/styles
 registry.registerPath({
-  method: "get",
-  path: "/store/site-data",
-  summary: "Get general site data for a store",
+  method: "patch",
+  path: "/store/styles",
+  summary: "Update the styles for a store",
   tags: ["Store"],
-  parameters: [
-    {
-      name: "store_id",
-      in: "query",
-      required: true,
-      schema: { type: "string" },
+  security: [{ CookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: UpdateStylesRequestSchema,
+        },
+      },
     },
-  ],
+  },
   responses: {
-    200: SiteDataResponse,
+    200: SuccessResponse,
+    404: NotFound,
     500: ServerError,
   },
 });
