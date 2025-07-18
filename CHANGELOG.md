@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.6.0](https://github.com/thevalidcode/social-media-store-backend/compare/v1.5.1...v1.6.0) (2025-07-18)
+
+
+### Features
+
+* Add file upload functionality with S3 integration ([156098f](https://github.com/thevalidcode/social-media-store-backend/commit/156098f59883d88d6b226151487d3a2061cb1856))
+* Added refills ([8ef5f2b](https://github.com/thevalidcode/social-media-store-backend/commit/8ef5f2b91cbd79b6ce41572746082c9631460f91))
+
+
+### Bug Fixes
+
+* fixed crud.js to not retrun object on single objects ([f7a69fe](https://github.com/thevalidcode/social-media-store-backend/commit/f7a69fe52beff0295e777ec7e3653ecfcd40ad82))
+* Removed the api_key for getting the user ([0acc329](https://github.com/thevalidcode/social-media-store-backend/commit/0acc329d0e02f178ae4e9746427f67a6312a18ff))
+
 ### [1.5.1](https://github.com/thevalidcode/social-media-store-backend/compare/v1.5.0...v1.5.1) (2025-07-10)
 
 
