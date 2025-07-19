@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.6.1](https://github.com/thevalidcode/social-media-store-backend/compare/v1.6.0...v1.6.1) (2025-07-19)
+
+
+### Bug Fixes
+
+* renamed components, added cheecking of duplicates for blogs and faqs and also added a route for verifying a user's session. ([9226356](https://github.com/thevalidcode/social-media-store-backend/commit/92263564c2506192677920f423ee863f0d84df8f))
+
 ## [1.6.0](https://github.com/thevalidcode/social-media-store-backend/compare/v1.5.1...v1.6.0) (2025-07-18)
 
 
