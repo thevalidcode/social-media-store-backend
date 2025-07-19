@@ -1,11 +1,12 @@
 import express from "express";
 const router = express.Router();
-import * as categories from "../controllers/category";
+import * as categories from "../controllers/category.controllers"
+;
 import { authenticate } from "../middleware/authenticate";
 import {
   limitPublicGet,
   limitCategoryMutations,
-} from "../middleware/ratelimit/category";
+} from "../middleware/ratelimit/category.ratelimit";
 
 router.get("/", limitPublicGet, categories.getCategories);
 router.get("/:category_id", categories.getCategoryByID);

@@ -1,6 +1,7 @@
 import express from "express";
 const router = express.Router();
-import * as blogs from "../controllers/blog";
+import * as blogs from "../controllers/blog.controllers"
+;
 import { authenticate } from "../middleware/authenticate";
 import {
   getBlogsLimiter,
@@ -9,7 +10,7 @@ import {
   updateBlogLimiter,
   deleteBlogLimiter,
   deleteMultipleBlogsLimiter,
-} from "../middleware/ratelimit/blog";
+} from "../middleware/ratelimit/blog.ratelimit";
 
 // Public routes
 router.get("/", getBlogsLimiter, blogs.getBlogs);

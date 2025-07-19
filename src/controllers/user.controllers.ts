@@ -236,6 +236,24 @@ export const getUserByUid = async (
   }
 };
 
+export const verifySession = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authParsed = AuthSchema.safeParse(req.auth);
+  if (!authParsed.success) {
+    res.status(400).json({ error: authParsed.error.flatten() });
+    return;
+  }
+  const { role } = authParsed.data;
+
+  try {
+    res.status(200).send({ role });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to verify user session" });
+  }
+};
+
 export const deleteUser = async (
   req: Request,
   res: Response

@@ -1,11 +1,12 @@
 import express from "express";
 const router = express.Router();
-import * as services from "../controllers/service";
+import * as services from "../controllers/service.controllers"
+;
 import { authenticate } from "../middleware/authenticate";
 import {
   limitServiceAdd,
   limitServiceDelete,
-} from "../middleware/ratelimit/service";
+} from "../middleware/ratelimit/service.ratelimit";
 
 router.get("/", services.getServices);
 router.post("/", limitServiceAdd, services.addService);

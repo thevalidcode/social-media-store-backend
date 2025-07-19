@@ -1,11 +1,12 @@
 import express from "express";
 const router = express.Router();
-import * as refils from "../controllers/refill";
+import * as refils from "../controllers/refill.controllers"
+;
 import { authenticate } from "../middleware/authenticate";
 import {
   limitRefillPlace,
   limitRefillBulk,
-} from "../middleware/ratelimit/refill";
+} from "../middleware/ratelimit/refill.ratelimit";
 
 router.get("/", authenticate, refils.getRefills);
 router.get("/admin", authenticate, refils.getRefillsForAdmins);

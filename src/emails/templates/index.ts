@@ -1,8 +1,8 @@
-import { newFailedOrder, newOrder } from "./order";
-import { newFailedRefill, newRefill } from "./refill";
-import { newService } from "./service";
-import { newMessage, newSupport } from "./support";
-import { fundsAdded, newUser, verificationCode } from "./user";
+import { newFailedOrder, newOrder } from "./order.templates";
+import { newFailedRefill, newRefill } from "./refill.templates";
+import { newService } from "./service.templates";
+import { newMessage, newSupport } from "./support.templates";
+import { fundsAdded, newUser, verificationCode } from "./user.templates";
 
 interface EmailTemplates {
   [key: string]: ((v: any) => string) | undefined;

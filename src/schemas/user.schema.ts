@@ -75,3 +75,16 @@ export const GoogleAuthRequestSchema = z
     store_id: z.number().describe("Store identifier to fetch/store user"),
   })
   .openapi("GoogleAuthResponse");
+
+export const VerifySessionResponseSchema = z.object({
+  role: z.enum(["user", "admin"]),
+});
+
+export const CreateUserSchema = z.object({
+  success: z.string(),
+  user: z.object({
+    id: z.coerce.number().describe("User id"),
+    email: z.string().email().describe("User email"),
+    username: z.string().describe("User username"),
+  })
+});

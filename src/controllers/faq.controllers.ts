@@ -78,12 +78,25 @@ export const addFAQ = async (req: Request, res: Response): Promise<void> => {
   }
   try {
     const faqs = await getDocs("faqs", store_id);
+
+    const faqExists = faqs.some(
+      (faq: any) =>
+        faq.question.toLowerCase() === parsed.data.question.toLowerCase()
+    );
+
+    if (faqExists) {
+      res
+        .status(400)
+        .json({ error: "FAQ already exist, try creating a new one." });
+      return;
+    }
+
     const newId =
       faqs.reduce((max: number, f: any) => Math.max(max, f.id), 0) + 1;
     const faqData = {
       question: parsed.data.question,
       answer: parsed.data.answer,
-      status: "Active",
+      status: "active",
       position: newId,
     };
     await addStoreDoc("faqs", faqData, store_id);

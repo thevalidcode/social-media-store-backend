@@ -11,19 +11,19 @@ import csurf from "csurf";
 import { apiLimiter } from "./middleware/ratelimit";
 
 // Routes
-import userRouter from "./routes/user";
-import oauthRoutes from "./routes/oauth";
-import storeRoutes from "./routes/store";
-import blogRoutes from "./routes/blog";
-import faqRoutes from "./routes/faq";
-import serviceRoutes from "./routes/service";
-import providerRoutes from "./routes/provider";
-import adminRoutes from "./routes/admin";
-import categoryRoutes from "./routes/category";
-import orderRoutes from "./routes/order";
-import refillRoutes from "./routes/refill";
-import versionRouter from "./routes/version";
-import filesRouter from "./routes/files";
+import userRouter from "./routes/user.routes";
+import oauthRoutes from "./routes/oauth.routes";
+import storeRoutes from "./routes/store.routes";
+import blogRoutes from "./routes/blog.routes";
+import faqRoutes from "./routes/faq.routes";
+import serviceRoutes from "./routes/service.routes";
+import providerRoutes from "./routes/provider.routes";
+import adminRoutes from "./routes/admin.routes";
+import categoryRoutes from "./routes/category.routes";
+import orderRoutes from "./routes/order.routes";
+import refillRoutes from "./routes/refill.routes";
+import versionRouter from "./routes/version.routes";
+import filesRouter from "./routes/files.routes";
 import { getDocs } from "./crud";
 import swaggerRouter from "./docs/swagger";
 

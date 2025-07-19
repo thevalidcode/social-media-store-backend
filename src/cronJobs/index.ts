@@ -4,8 +4,10 @@ import {
   processDripFeedOrders,
   sendUnsyncedOrders,
   syncAllStoresOrderDetails,
-} from "../provider/order";
-import { syncServices, updateExistingServices } from "../provider/service";
+} from "../provider/order.provider"
+;
+import { syncServices, updateExistingServices } from "../provider/service.provider"
+;
 
 function startCronJobs() {
   cron.schedule("*/5 * * * *", () => {

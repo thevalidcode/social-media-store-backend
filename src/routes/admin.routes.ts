@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
-import * as admins from "../controllers/admin";
+import * as admins from "../controllers/admin.controllers"
+;
 import rateLimit from "express-rate-limit";
 const router = express.Router();
 

@@ -2,9 +2,10 @@ import express from "express";
 import multer from "multer";
 const router = express.Router();
 
-import * as uploads from "../controllers/files";
+import * as uploads from "../controllers/files.controllers"
+;
 import { authenticate } from "../middleware/authenticate";
-import { limitUploads } from "../middleware/ratelimit/files";
+import { limitUploads } from "../middleware/ratelimit/files.ratelimit";
 
 // Using memory storage for direct S3 uploads
 const upload = multer({

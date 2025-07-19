@@ -1,11 +1,12 @@
 import express from "express";
 const router = express.Router();
-import * as orders from "../controllers/order";
+import * as orders from "../controllers/order.controllers"
+;
 import { authenticate } from "../middleware/authenticate";
 import {
   limitOrderActions,
   limitBulkOrders,
-} from "../middleware/ratelimit/order";
+} from "../middleware/ratelimit/order.ratelimit";
 
 router.get("/", authenticate, orders.getOrders);
 router.get("/admin", authenticate, orders.getOrdersForAdmins);

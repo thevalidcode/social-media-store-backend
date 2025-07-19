@@ -82,6 +82,19 @@ export const addBlog = async (req: Request, res: Response): Promise<void> => {
 
   try {
     const blogs = await getDocs("blogs", store_id);
+
+    const blogExists = blogs.some(
+      (blog: any) =>
+        blog.title.toLowerCase() === parsed.data.title.toLowerCase()
+    );
+
+    if (blogExists) {
+      res
+        .status(400)
+        .json({ error: "Blog already exist, try creating a new one." });
+      return;
+    }
+
     const newId =
       blogs.reduce((max: number, b: any) => Math.max(max, b.id), 0) + 1;
 
@@ -89,7 +102,7 @@ export const addBlog = async (req: Request, res: Response): Promise<void> => {
       title: parsed.data.title,
       content: parsed.data.content,
       description: parsed.data.description || "",
-      status: "Active",
+      status: "active",
       position: newId,
     };
 

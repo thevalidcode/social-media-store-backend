@@ -1,17 +1,19 @@
 import { registry } from "../components/registry";
 import { z } from "zod";
 import {
-  AuthenticateUserResponseSchema,
   AuthenticateUserSchema,
   CreateUserInputSchema,
   UserUpdateRequestSchema,
-  UserPublicSchema,
 } from "../../schemas/user.schema";
 
 import {
   UpdateSuccess,
   InvalidData,
   UsersListResponse,
+  AuthenticateUserResponse,
+  VerifySessionResponse,
+  GetUserByUidResponse,
+  CreateUserResponse,
 } from "../responses/user.response";
 
 import {
@@ -37,14 +39,20 @@ registry.registerPath({
     },
   },
   responses: {
-    200: {
-      description: "Authenticated user session object",
-      content: {
-        "application/json": {
-          schema: AuthenticateUserResponseSchema,
-        },
-      },
-    },
+    200: AuthenticateUserResponse,
+    400: BadRequest,
+    500: ServerError,
+  },
+});
+
+// Verify User's Session
+registry.registerPath({
+  method: "post",
+  path: "/user/verify-session",
+  summary: "Verify the session of an authenticated user",
+  tags: ["Users"],
+  responses: {
+    200: VerifySessionResponse,
     400: BadRequest,
     500: ServerError,
   },
@@ -80,14 +88,7 @@ registry.registerPath({
     },
   ],
   responses: {
-    200: {
-      description: "Public-facing user profile",
-      content: {
-        "application/json": {
-          schema: UserPublicSchema,
-        },
-      },
-    },
+    200: GetUserByUidResponse,
     403: Forbidden,
     500: ServerError,
   },
@@ -109,22 +110,7 @@ registry.registerPath({
     },
   },
   responses: {
-    204: {
-      description: "User created successfully",
-      content: {
-        "application/json": {
-          schema: z.object({
-            success: z.string(),
-            token: z.string().jwt(),
-            user: z.object({
-              id: z.coerce.number().describe("User id"),
-              email: z.string().email().describe("User email"),
-              username: z.string().describe("User username"),
-            }),
-          }),
-        },
-      },
-    },
+    200: CreateUserResponse,
     400: BadRequest,
     500: ServerError,
   },

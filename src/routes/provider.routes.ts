@@ -1,11 +1,12 @@
 import express from "express";
 const router = express.Router();
-import * as providers from "../controllers/provider";
+import * as providers from "../controllers/provider.controllers"
+;
 import { authenticate } from "../middleware/authenticate";
 import {
   limitProviderImport,
   limitProviderActions,
-} from "../middleware/ratelimit/provider";
+} from "../middleware/ratelimit/provider.ratelimit";
 
 router.post(
   "/services/import",

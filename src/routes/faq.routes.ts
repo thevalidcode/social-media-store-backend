@@ -1,7 +1,10 @@
 import express from "express";
-import * as faq from "../controllers/faq";
+import * as faq from "../controllers/faq.controllers";
 import { authenticate } from "../middleware/authenticate";
-import { limitFAQPublic, limitFAQMutations } from "../middleware/ratelimit/faq";
+import {
+  limitFAQPublic,
+  limitFAQMutations,
+} from "../middleware/ratelimit/faq.ratelimit";
 
 const router = express.Router();
 

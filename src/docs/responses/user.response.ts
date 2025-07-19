@@ -1,5 +1,47 @@
 import { z } from "zod";
-import { UserSchema, UserPublicSchema } from "../../schemas/user.schema";
+import {
+  UserSchema,
+  UserPublicSchema,
+  AuthenticateUserResponseSchema,
+  VerifySessionResponseSchema,
+  CreateUserSchema,
+} from "../../schemas/user.schema";
+
+export const AuthenticateUserResponse = {
+  description: "Authenticated user session object",
+  content: {
+    "application/json": {
+      schema: AuthenticateUserResponseSchema,
+    },
+  },
+};
+
+export const GetUserByUidResponse = {
+  description: "Public-facing user profile",
+  content: {
+    "application/json": {
+      schema: UserPublicSchema,
+    },
+  },
+};
+
+export const CreateUserResponse = {
+  description: "User created successfully",
+  content: {
+    "application/json": {
+      schema: CreateUserSchema,
+    },
+  },
+};
+
+export const VerifySessionResponse = {
+  description: "Authenticated user session object",
+  content: {
+    "application/json": {
+      schema: VerifySessionResponseSchema,
+    },
+  },
+};
 
 export const UpdateSuccess = {
   description: "User updated successfully",

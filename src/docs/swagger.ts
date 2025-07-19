@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import swaggerUi from "swagger-ui-express";
 import { OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi";
-import { registry } from "./paths/index.paths";
+import { registry } from "./paths";
 import { API_VERSION } from "../version";
 
 const swaggerRouter = Router();

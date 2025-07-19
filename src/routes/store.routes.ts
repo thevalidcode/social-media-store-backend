@@ -1,6 +1,7 @@
 import express from "express";
 const router = express.Router();
-import * as stores from "../controllers/store";
+import * as stores from "../controllers/store.controllers"
+;
 import { authenticate } from "../middleware/authenticate";
 
 router.get("/data", stores.getStoreData);
