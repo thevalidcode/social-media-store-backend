@@ -101,6 +101,7 @@ export const addBlog = async (req: Request, res: Response): Promise<void> => {
     const blogData = {
       title: parsed.data.title,
       content: parsed.data.content,
+      cover_image: parsed.data.cover_image,
       description: parsed.data.description || "",
       status: "active",
       position: newId,

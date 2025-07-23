@@ -5,6 +5,7 @@ async function createBlogsTable() {
     CREATE TABLE IF NOT EXISTS blogs (
       id INTEGER NOT NULL,
       title TEXT NOT NULL,
+      cover_image TEXT NOT NULL,
       content TEXT NOT NULL,
       description TEXT NOT NULL DEFAULT '',
       status TEXT NOT NULL DEFAULT 'active',
@@ -26,6 +27,7 @@ async function createBlogsTable() {
     id: `ALTER TABLE blogs ADD COLUMN id INTEGER NOT NULL`,
     title: `ALTER TABLE blogs ADD COLUMN title TEXT NOT NULL`,
     content: `ALTER TABLE blogs ADD COLUMN content TEXT NOT NULL`,
+    cover_image: `ALTER TABLE blogs ADD COLUMN cover_image TEXT NOT NULL`,
     description: `ALTER TABLE blogs ADD COLUMN description TEXT NOT NULL DEFAULT ''`,
     status: `ALTER TABLE blogs ADD COLUMN status TEXT NOT NULL DEFAULT 'active'`,
     position: `ALTER TABLE blogs ADD COLUMN position INTEGER NOT NULL`,
