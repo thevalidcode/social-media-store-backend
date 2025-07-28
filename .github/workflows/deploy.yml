@@ -14,47 +14,34 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 🛠️ Install deps & build
-        run: |
-          npm ci
-          npm run build
+      # - name: 🛠️ Install deps & build
+      #   run: |
+      #     npm ci
+      #     npm run build
 
-      - name: 🗂 Ensure dist/public exists and copy public assets
-        run: |
-          mkdir -p dist/public
-          if [ -d "src/public" ]; then
-            cp -r src/public/* dist/public/
-          else
-            echo "No public folder found, skipping static asset copy"
-          fi
+      # - name: 📤 Upload project (excluding src/)
+      #   uses: appleboy/scp-action@v0.1.7
+      #   with:
+      #     host: ${{ secrets.SERVER_IP }}
+      #     username: ${{ secrets.SERVER_USER }}
+      #     key: ${{ secrets.SERVER_SSH_KEY }}
+      #     port: 2022
+      #     source: "app,public,scripts,prisma,package.json"
+      #     target: "social-media-store/backend"
+      #     overwrite: true
 
-      - name: 📦 Copy package.json to build output
-        run: cp package.json dist/
-
-      - name: 📤 Upload build to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: 2022
-          source: "dist/**"
-          target: "social-media-store/backend"
-          strip_components: 1
-          overwrite: true
-
-      - name: 🧠 Run post-deploy commands
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: 2022
-          script: |
-            cd social-media-store/backend
-            npm install --omit=dev
-            pm2 describe social-media-store > /dev/null \
-              && pm2 restart social-media-store \
-              || pm2 start index.js --name social-media-store
-            pm2 save
-            npm run migrate
+      # - name: 🧠 Run post-deploy commands
+      #   uses: appleboy/ssh-action@v1.0.3
+      #   with:
+      #     host: ${{ secrets.SERVER_IP }}
+      #     username: ${{ secrets.SERVER_USER }}
+      #     key: ${{ secrets.SERVER_SSH_KEY }}
+      #     port: 2022
+      #     script: |
+      #       cd social-media-store/backend
+      #       npm i --omit=dev
+      #       pm2 describe social-media-store > /dev/null \
+      #         && pm2 restart social-media-store \
+      #         || pm2 start app/index.js --name social-media-store
+      #       pm2 save
+      #       npm run migrate

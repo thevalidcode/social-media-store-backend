@@ -5,3 +5,4 @@ nodemon.json
 node_modules
 
 dist
+/prisma/generated/

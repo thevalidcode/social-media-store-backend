@@ -27,7 +27,7 @@ const openApiDocument = generator.generateDocument({
   },
   servers: [
     {
-      url: "https://validpanel.com:6060",
+      url: "https://validpanel.com:6060/api/v1",
       description: "Public testing server (use this to test endpoints)",
     },
     {
@@ -35,7 +35,7 @@ const openApiDocument = generator.generateDocument({
       description: "Public server (use this for auth endpoints)",
     },
     {
-      url: "https://{domain}:6060",
+      url: "https://{domain}:6060/api/v1",
       description: "Custom store domain (replace `{domain}` with your own)",
       variables: {
         domain: {
@@ -45,7 +45,7 @@ const openApiDocument = generator.generateDocument({
       },
     },
     {
-      url: "http://localhost:6060",
+      url: "http://localhost:6060/api/v1",
       description: "Local development server",
     },
   ],

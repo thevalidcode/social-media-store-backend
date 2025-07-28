@@ -1,0 +1,15 @@
+model Blog {
+  id          Int      @map("id")
+  title       String
+  content     String
+  description String   @default("")
+  status      String   @default("active")
+  position    Int
+  slug        String
+  uid         String   @id
+  storeId      Int      @map("store_id")
+  store        Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  timestamp   DateTime @default(now())
+
+  @@map("blogs")
+}

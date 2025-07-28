@@ -1,0 +1,11 @@
+model EmailTemplate {
+  id        Int      @map("id")
+  uid       String   @id
+  type      String
+  content   String
+  storeId    Int      @map("store_id")
+  store      Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  timestamp DateTime @default(now())
+
+  @@map("email_templates")
+}

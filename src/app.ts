@@ -7,7 +7,6 @@ import { pool } from "./config/db";
 import { env } from "./config/env";
 import cookieParser from "cookie-parser";
 import path from "path";
-import csurf from "csurf";
 import { apiLimiter } from "./middleware/ratelimit";
 
 // Routes
@@ -75,22 +74,15 @@ const dynamicCors = function (
   return callback(new Error("Not allowed by CORS"), { origin: false });
 };
 
-// CSRF protection using cookies
-const csrfProtection = csurf({
-  cookie: {
-    httpOnly: true,
-    sameSite: "none",
-    secure: env.NODE_ENV === "production",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  },
-});
-
 // --- Middleware ---
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(apiLimiter);
 app.use(express.urlencoded({ extended: true }));
-app.use("/assets", express.static(path.join(__dirname, "public", "assets")));
+app.use(
+  "/assets",
+  express.static(path.join(__dirname, "..", "public", "assets"))
+);
 
 // --- Session ---
 const pgSess = pgSession(session);
@@ -113,17 +105,17 @@ app.use(
 );
 
 // --- Public Routes ---
-app.use("/user", cors(dynamicCors), csrfProtection, userRouter);
-app.use("/store", cors(dynamicCors), csrfProtection, storeRoutes);
-app.use("/blog", cors(dynamicCors), csrfProtection, blogRoutes);
-app.use("/faq", cors(dynamicCors), csrfProtection, faqRoutes);
-app.use("/service", cors(dynamicCors), csrfProtection, serviceRoutes);
-app.use("/provider", cors(dynamicCors), csrfProtection, providerRoutes);
-app.use("/category", cors(dynamicCors), csrfProtection, categoryRoutes);
-app.use("/order", cors(dynamicCors), csrfProtection, orderRoutes);
-app.use("/refill", cors(dynamicCors), csrfProtection, refillRoutes);
-app.use("/version", cors(dynamicCors), csrfProtection, versionRouter);
-app.use("/files", cors(dynamicCors), csrfProtection, filesRouter);
+app.use("/api/v1/user", cors(dynamicCors), userRouter);
+app.use("/api/v1/store", cors(dynamicCors), storeRoutes);
+app.use("/api/v1/blog", cors(dynamicCors), blogRoutes);
+app.use("/api/v1/faq", cors(dynamicCors), faqRoutes);
+app.use("/api/v1/service", cors(dynamicCors), serviceRoutes);
+app.use("/api/v1/provider", cors(dynamicCors), providerRoutes);
+app.use("/api/v1/category", cors(dynamicCors), categoryRoutes);
+app.use("/api/v1/order", cors(dynamicCors), orderRoutes);
+app.use("/api/v1/refill", cors(dynamicCors), refillRoutes);
+app.use("/api/v1/version", cors(dynamicCors), versionRouter);
+app.use("/api/v1/files", cors(dynamicCors), filesRouter);
 
 // Internal Routes
 app.use("/admin", adminRoutes);

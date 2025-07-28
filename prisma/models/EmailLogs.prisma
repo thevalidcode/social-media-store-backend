@@ -1,0 +1,16 @@
+model EmailLog {
+  id        Int      @map("id")
+  uid       String   @id
+  sender    String
+  receiver  String
+  subject   String
+  html      String
+  status    String
+  messageId String?  @map("message_id")
+  response  String?
+  storeId    Int      @map("store_id")
+  store      Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  timestamp DateTime @default(now())
+
+  @@map("email_logs")
+}

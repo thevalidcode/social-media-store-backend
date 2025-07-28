@@ -1,0 +1,14 @@
+model Faq {
+  id        Int      @map("id")
+  question  String
+  answer    String
+  status    String   @default("active")
+  position  Int
+  slug      String
+  uid       String   @id
+  storeId    Int      @map("store_id")
+  store      Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  timestamp DateTime @default(now())
+
+  @@map("faqs")
+}

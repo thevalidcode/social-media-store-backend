@@ -1,0 +1,18 @@
+model Category {
+  id          Int      @map("id")
+  uid         String   @id
+  name        String
+  slug        String
+  description String   @default("")
+  imageUrl    String?  @map("image_url")
+  bannerUrl   String?  @map("banner_url")
+  iconUrl     String?  @map("icon_url")
+  status      String   @default("active")
+  position    Int      @default(1)
+  parentUid   String?  @map("parent_uid")
+  storeId      Int      @map("store_id")
+  store        Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  timestamp   DateTime @default(now())
+
+  @@map("categories")
+}

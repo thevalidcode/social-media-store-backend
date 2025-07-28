@@ -1,0 +1,32 @@
+model Product {
+  id             Int       @map("id")
+  uid            String    @id
+  name           String
+  description    String?
+  category       String
+  type           String
+  min            Int       @default(1)
+  max            Int       @default(1)
+  position       Int       @default(1)
+  status         String    @default("active")
+  stock          Int       @default(0)
+  sku            String?
+  imageUrl       String?   @map("image_url")
+  galleryUrls    String[]  @map("gallery_urls")
+  tags           String[]
+  isFeatured     Boolean   @default(false) @map("is_featured")
+  brand          String?
+  weight         Decimal?  
+  dimensions     String?
+  price          Decimal   @default(0.00)
+  comparePrice   Decimal?  @map("compare_price")
+  discountType   String?   @map("discount_type")
+  discountValue  Decimal?  @map("discount_value")
+  slug           String
+  storeId         Int       @map("store_id")
+  timestamp      DateTime  @default(now())
+
+  store           Store      @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  @@map("products")
+}
