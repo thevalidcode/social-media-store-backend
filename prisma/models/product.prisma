@@ -16,12 +16,12 @@ model Product {
   tags          String[]
   isFeatured    Boolean   @default(false) @map("is_featured")
   brand         String?
-  weight        Decimal?
+  weight        Decimal?  @db.Decimal(65, 30)
   dimensions    String?
-  price         Decimal   @default(0.00)
-  comparePrice  Decimal?  @map("compare_price")
+  price         Decimal   @default(0.00) @db.Decimal(65, 30)
+  comparePrice  Decimal?  @map("compare_price") @db.Decimal(65, 30)
   discountType  String?   @map("discount_type")
-  discountValue Decimal?  @map("discount_value")
+  discountValue Decimal?  @map("discount_value") @db.Decimal(65, 30)
   slug          String
   storeId       Int       @map("store_id")
   timestamp     DateTime  @default(now())

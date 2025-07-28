@@ -3,7 +3,7 @@ model Order {
   uid               String    @id
   userUid           String    @map("user_uid")
   productId         Int       @map("product_id")
-  price             Decimal   @default(0)
+  price             Decimal   @default(0) @db.Decimal(65, 30)
   quantity          Int
   currency          String    @default("USD")
   status            String    @default("Pending")
