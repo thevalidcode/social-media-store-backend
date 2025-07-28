@@ -1,0 +1,14 @@
+model General {
+  id                    Int     @map("id")
+  uid                   String  @id
+  storeId               Int     @map("store_id")
+  title                 String  @default("Store")
+  logoUrl               String? @map("logo_url")
+  faviconUrl            String? @map("favicon_url")
+  defaultClientCurrency String? @map("default_client_currency")
+
+  // Relations
+  store Store @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  @@map("general")
+}

@@ -6,9 +6,11 @@ model Faq {
   position  Int
   slug      String
   uid       String   @id
-  storeId    Int      @map("store_id")
-  store      Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  storeId   Int      @map("store_id")
   timestamp DateTime @default(now())
+
+  // Relations
+  store Store @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@map("faqs")
 }

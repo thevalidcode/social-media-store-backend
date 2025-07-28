@@ -3,8 +3,10 @@ model AffiliateSetting {
   uid     String @id
   percent Int
   mode    String @default("percentage")
-  storeId  Int    @map("store_id")
-  store    Store   @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  storeId Int    @map("store_id")
+
+  // Relations
+  store Store @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@map("affiliate_settings")
 }

@@ -1,0 +1,26 @@
+model Store {
+  storeId   Int      @id @map("store_id")
+  uid       String   @unique
+  ssl       Boolean  @default(false)
+  plan      String   @default("starter")
+  status    String   @default("active")
+  timestamp DateTime @default(now())
+
+  // Relations
+  users             User[]
+  admins            Admin[]
+  products          Product[]
+  orders            Order[]
+  adminEmails       AdminEmail[]
+  affiliateSettings AffiliateSetting[]
+  blogs             Blog[]
+  categories        Category[]
+  designStyles      DesignStyle[]
+  emailLogs         EmailLog[]
+  emailTemplates    EmailTemplate[]
+  faqs              Faq[]
+  generals          General[]
+  sessionCodes      SessionCode[]
+
+  @@map("stores")
+}

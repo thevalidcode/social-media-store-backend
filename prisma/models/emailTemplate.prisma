@@ -3,9 +3,11 @@ model EmailTemplate {
   uid       String   @id
   type      String
   content   String
-  storeId    Int      @map("store_id")
-  store      Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  storeId   Int      @map("store_id")
   timestamp DateTime @default(now())
+
+  // Relations
+  store Store @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@map("email_templates")
 }

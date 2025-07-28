@@ -1,0 +1,23 @@
+model Order {
+  id                Int       @map("id")
+  uid               String    @id
+  userUid           String    @map("user_uid")
+  productId         Int       @map("product_id")
+  price             Decimal   @default(0)
+  quantity          Int
+  currency          String    @default("USD")
+  status            String    @default("Pending")
+  shippingAddress   String    @map("shipping_address")
+  billingAddress    String    @map("billing_address")
+  paymentMethod     String    @map("payment_method")
+  trackingNumber    String?   @map("tracking_number")
+  estimatedDelivery DateTime? @map("estimated_delivery")
+  deliveredAt       DateTime? @map("delivered_at")
+  timestamp         DateTime  @default(now())
+  storeId           Int       @map("store_id")
+
+  // Relations
+  store Store @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  @@map("orders")
+}

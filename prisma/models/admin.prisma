@@ -8,10 +8,12 @@ model Admin {
   apiKey    String   @unique @map("api_key")
   role      String   @default("admin")
   status    String   @default("active")
-  storeId    Int      @map("store_id")
-  store      Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  storeId   Int      @map("store_id")
   timestamp DateTime @default(now())
   lastSeen  DateTime @default(now()) @map("last_seen")
+
+  // Relations
+  store Store @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@map("admins")
 }
