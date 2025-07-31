@@ -10,8 +10,8 @@ export const OrderPublicSchema = z
     quantity: z.coerce.number(),
     start: z.coerce.number(),
     remains: z.coerce.number(),
-    user_initial_balance: z.coerce.number(),
-    user_final_balance: z.coerce.number(),
+    userInitialBalance: z.coerce.number(),
+    userFinalBalance: z.coerce.number(),
     currency: z.string(),
     status: z.enum([
       "Pending",
@@ -23,11 +23,11 @@ export const OrderPublicSchema = z
     ]),
     url: z.string(),
     uid: z.string(),
-    service_id: z.coerce.number(),
+    serviceUid: z.string(),
     comments: z.string().optional(),
-    drip_feed: z.boolean().optional(),
+    dripFeed: z.boolean().optional(),
     interval: z.coerce.number().optional(),
-    user_uid: z.string(),
+    userUid: z.string(),
     timestamp: z.string().datetime(),
   })
   .strict()
@@ -40,8 +40,8 @@ export const OrderSchema = z
     quantity: z.coerce.number(),
     start: z.coerce.number(),
     remains: z.coerce.number(),
-    user_initial_balance: z.coerce.number(),
-    user_final_balance: z.coerce.number(),
+    userInitialBalance: z.coerce.number(),
+    userFinalBalance: z.coerce.number(),
     currency: z.string(),
     status: z.enum([
       "Pending",
@@ -53,18 +53,18 @@ export const OrderSchema = z
     ]),
     url: z.string(),
     uid: z.string(),
-    service_id: z.coerce.number(),
-    provider_service_id: z.coerce.number().optional(),
-    provider_order_id: z.coerce.number().optional(),
-    provider_currency: z.string().optional(),
-    provider_error: z.string().optional(),
+    serviceUid: z.string(),
+    providerServiceId: z.coerce.number().optional(),
+    providerOrderId: z.coerce.number().optional(),
+    providerCurrency: z.string().optional(),
+    providerError: z.string().optional(),
     provider: z.string().optional(),
     comments: z.string().optional(),
-    drip_feed: z.boolean().optional(),
-    sync_order: z.boolean().optional(),
+    dripFeed: z.boolean().optional(),
+    syncOrder: z.boolean().optional(),
     synced: z.boolean().optional(),
     interval: z.coerce.number().optional(),
-    user_uid: z.string(),
+    userUid: z.string(),
     timestamp: z.string().datetime(),
   })
   .openapi("Order");
@@ -72,12 +72,12 @@ export const OrderSchema = z
 export const placeOrderSchema = z.object({
   quantity: z.coerce.number(),
   url: z.string(),
-  service_id: z.coerce.number(),
+  serviceUid: z.string(),
   comments: z.string().optional(),
-  drip_feed: z.boolean().optional(),
+  dripFeed: z.boolean().optional(),
   interval: z.coerce.number().optional(),
   runs: z.coerce.number().optional(),
-  user_uid: z.string(),
+  userUid: z.string(),
 });
 
 export const updateOrderSchema = z.object({
@@ -93,7 +93,7 @@ export const updateOrderSchema = z.object({
     url: z.string(),
     remains: z.coerce.number(),
     comments: z.string().optional(),
-    sync_order: z.boolean().optional(),
+    syncOrder: z.boolean().optional(),
     start: z.coerce.number().optional(),
   }),
 });
@@ -115,11 +115,11 @@ export const bulkCreateSchema = z.object({
     z.object({
       quantity: z.coerce.number(),
       url: z.string(),
-      service_id: z.coerce.number(),
+      serviceUid: z.string(),
       comments: z.string().optional(),
-      drip_feed: z.boolean().optional(),
+      dripFeed: z.boolean().optional(),
       interval: z.coerce.number().optional(),
-      user_uid: z.string(),
+      userUid: z.string(),
     })
   ),
 });

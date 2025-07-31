@@ -17,7 +17,7 @@ export const ProviderCreateRequestSchema = z.object({
   name: z.string(),
   url: z.string().url(),
   percentage: z.number(),
-  api_key: z.string(),
+  apiKey: z.string(),
   sync: z.boolean(),
 });
 
@@ -26,15 +26,15 @@ export const ProviderUpdateRequestSchema = z.object({
   name: z.string().optional(),
   url: z.string().url().optional(),
   percentage: z.number().optional(),
-  api_key: z.string(),
+  apiKey: z.string(),
   sync: z.boolean().optional(),
 });
 
 export const ImportProviderServicesRequestSchema = z.object({
-  provider_services_id: z
+  providerServicesId: z
     .array(z.number())
     .describe("List of service IDs from the provider that should be imported"),
-  import_percent: z
+  importPercent: z
     .number()
     .describe(
       "Percentage markup to apply on imported services (e.g., 15 for +15%)"
@@ -81,7 +81,7 @@ export const ProviderServiceSchema = z
     category: z.string(),
     description: z.string().optional(),
     network: z.string().optional(),
-    drip_feed: z.boolean().optional(),
+    dripFeed: z.boolean().optional(),
     cancel: z.boolean().optional(),
   })
   .openapi("ProviderService");

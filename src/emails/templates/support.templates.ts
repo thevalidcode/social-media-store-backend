@@ -7,7 +7,7 @@ interface NewSupportVars {
 }
 
 interface NewMessageVars {
-  ticket_id: string | number;
+  ticketId: string | number;
   user: string;
   content: string;
   logo: string;
@@ -82,7 +82,7 @@ const newSupport = ({
 `;
 
 const newMessage = ({
-  ticket_id,
+  ticketId,
   user,
   content,
   logo,
@@ -135,7 +135,7 @@ const newMessage = ({
         <h1>Dear Admin,</h1>
         <p>A new message has been received on a support ticket. Here are the details:</p>
         <div class="message-details">
-          <p><strong>Ticket ID:</strong> ${ticket_id}</p>
+          <p><strong>Ticket ID:</strong> ${ticketId}</p>
           <p><strong>Message:</strong> ${content}</p>
           <p><strong>Received from:</strong> ${user}</p>
         </div>

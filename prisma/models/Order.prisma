@@ -1,21 +1,36 @@
 model Order {
-  id                 Int      @map("id")
-  uid                String   @id
-  userUid            String   @map("user_uid")
-  productId          Int      @map("product_id")
-  price              Decimal  @default(0)
-  quantity           Int
-  currency           String   @default("USD")
-  status             String   @default("Pending")
-  shippingAddress    String   @map("shipping_address")
-  billingAddress     String   @map("billing_address")
-  paymentMethod      String   @map("payment_method")
-  trackingNumber     String?  @map("tracking_number")
-  estimatedDelivery  DateTime? @map("estimated_delivery")
-  deliveredAt        DateTime? @map("delivered_at")
-  timestamp          DateTime @default(now())
-  storeId             Int      @map("store_id")
+  id             Int     @id @default(autoincrement())
+  storeScopedId   Int     @map("store_scoped_id")
+  uid                 String    @unique
+  timestamp           DateTime  @default(now())
+  userUid             String    @map("user_uid")
+  serviceUid          String    @map("service_uid")
+  currency            String    @default("USD")
+  status              String    @default("Pending")
+  syncOrder           Boolean   @default(true) @map("sync_order")
+  synced              Boolean   @default(false)
+  providerCurrency    String?   @map("provider_currency")
+  providerPrice       Decimal?  @map("provider_price") @db.Decimal(10, 2)
+  providerOrderId     Int?      @map("provider_order_id")
+  provider            String?
+  providerError       String?   @map("provider_error")
+  quantity            Int
+  retryCount          Int?      @map("retry_count")
+  url                 String
+  lastRunTime         DateTime? @map("last_run_time")
+  comments            String    @default("")
+  dripFeed            Boolean   @default(false) @map("drip_feed")
+  interval            Int?      @default(0)
+  runs                Int?      @default(0)
+  processedRuns       Int?      @map("processed_runs") @default(0)
+  start               Int       @default(0)
+  userInitialBalance  Decimal   @default(0.00) @map("user_initial_balance") @db.Decimal(10, 2)
+  userFinalBalance    Decimal   @default(0.00) @map("user_final_balance") @db.Decimal(10, 2)
+  price               Decimal   @default(0.00) @db.Decimal(10, 2)
+  remains             Int       @default(0)
+  storeId             Int       @map("store_id")
   store               Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
+  @@unique([storeId, storeScopedId])
   @@map("orders")
 }

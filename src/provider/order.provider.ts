@@ -1,27 +1,28 @@
-import { getDocs, addStoreDoc, updateStoreDoc } from "../crud";
 import axios from "axios";
 import https from "https";
-import convertCurrency from "../utils/ConvertCurrency";
+import convertCurrency from "../utils/convertCurrency";
 import { sendEmail } from "../emails";
-import { pool } from "../config/db";
+import { prisma } from "../config/db";
 import { placeOrderSchema } from "../schemas/order.schema";
 import { z } from "zod";
 import { decryptKey } from "../utils/encrypt";
+import { v4 as uuidv4 } from "uuid";
+
 const agent = new https.Agent({
   keepAlive: true,
   rejectUnauthorized: false,
 });
-
-const currencies = async (): Promise<Record<string, number>> => {
-  const data = await getDocs("currencies", 1);
-  return data[0]?.quotes || { USD: 1 };
-};
 
 const safeFloat = (n: any, d = 0): number =>
   Number.isFinite(+n) ? parseFloat(n) : d;
 
 const safeInt = (n: any, d = 0): number =>
   Number.isFinite(+n) ? parseInt(n, 10) : d;
+
+const currencies = async (): Promise<Record<string, number>> => {
+  const currency = await prisma.currency.findFirst();
+  return (currency?.quotes as Record<string, number>) || { USD: 1 };
+};
 
 type ProviderOrderResult = {
   success?: string;
@@ -30,7 +31,7 @@ type ProviderOrderResult = {
 
 export const sendOrderToProvider = async (
   order: any,
-  store_id: number
+  storeId: number
 ): Promise<ProviderOrderResult> => {
   try {
     const orderSchema = placeOrderSchema.extend({ uid: z.string().uuid() });
@@ -39,25 +40,20 @@ export const sendOrderToProvider = async (
 
     const orderData = parsed.data;
 
-    const [users, services, providers, affiliate_settings, rates] =
-      await Promise.all([
-        getDocs("users", store_id),
-        getDocs("services", store_id),
-        getDocs("providers", store_id),
-        getDocs("affiliate_settings", store_id),
-        currencies(),
-      ]);
-
-    const user = users.find((u: any) => u.uid === orderData.user_uid);
-    const service = services.find((s: any) => s.uid === orderData.service_id);
-    const provider = providers.find((p: any) => p.url === service.provider);
+    const [user, service, provider, affiliate, rates] = await Promise.all([
+      prisma.user.findUnique({ where: { storeId, uid: orderData.userUid } }),
+      prisma.service.findUnique({ where: { uid: orderData.serviceUid } }),
+      prisma.provider.findFirst({ where: { storeId, url: order.provider } }),
+      prisma.affiliateSetting.findFirst({ where: { storeId } }),
+      currencies(),
+    ]);
 
     if (!user || !service || !provider)
       return { error: "There's either no user, service or provider." };
 
     const pricePer1000 = convertCurrency(
       safeFloat(service.price),
-      service.provider_currency,
+      service.providerCurrency || "USD",
       "USD",
       rates
     );
@@ -77,67 +73,20 @@ export const sendOrderToProvider = async (
       return { error: "User has insufficient balance" };
     }
 
-    const user_initial_balance = userBalance;
-    const user_final_balance = userBalance - chargeUSD;
+    const userInitialBalance = userBalance;
+    const userFinalBalance = userBalance - chargeUSD;
 
-    await updateStoreDoc(
-      "users",
-      user.uid,
-      { balance: user_final_balance },
-      store_id
-    );
+    const apiKeyData = provider.apiKey as {
+      encrypted_key: string;
+      iv: string;
+    };
 
-    // 🟡 Referral handling
-    if (user.ref) {
-      const affiliate = affiliate_settings[0];
-      const refUser = users.find((u: any) => u.id === user.ref);
-      const percent = affiliate.percent || 0;
-
-      if (refUser) {
-        const earned = parseFloat(((chargeUSD * percent) / 100).toFixed(2));
-        const newRefBalance = safeFloat(refUser.balance) + earned;
-
-        await updateStoreDoc(
-          "users",
-          refUser.uid,
-          { balance: newRefBalance },
-          store_id
-        );
-
-        await addStoreDoc(
-          "referrals_orders",
-          {
-            price: chargeUSD,
-            username: user.username,
-            ref_id: user.ref,
-          },
-          store_id
-        );
-
-        await addStoreDoc(
-          "transactions",
-          {
-            status: "success",
-            amount: earned,
-            currency: "USD",
-            payment_method: "Amount earned from your referral's order.",
-            user_id: user.uid,
-          },
-          store_id
-        );
-      }
-    }
-
-    // 🔒 Send to provider
-    const decryptedKey = decryptKey(
-      provider.key.encrypted_key,
-      provider.key.iv
-    );
+    const decryptedKey = decryptKey(apiKeyData.encrypted_key, apiKeyData.iv);
 
     const payload: any = {
       key: decryptedKey,
       action: "add",
-      service: safeInt(service.provider_id),
+      service: safeInt(service.providerId),
       link: orderData.url,
       quantity: orderData.quantity,
     };
@@ -151,35 +100,30 @@ export const sendOrderToProvider = async (
     const { data: res } = await axios.post(url, payload, { httpsAgent: agent });
 
     if (res.error) {
-      // Rollback balance
-      await updateStoreDoc(
-        "users",
-        user.uid,
-        { balance: user_initial_balance },
-        store_id
-      );
+      await prisma.user.update({
+        where: { uid: user.uid },
+        data: { balance: userInitialBalance },
+      });
 
-      await updateStoreDoc(
-        "orders",
-        orderData.uid,
-        {
-          provider_error: res.error,
+      await prisma.order.update({
+        where: { uid: orderData.uid },
+        data: {
+          providerError: res.error,
           status: "Failed",
         },
-        store_id
-      );
+      });
 
       try {
         await sendEmail(
           undefined,
-          "new_failed_order",
+          "newFailedOrder",
           {
             ...orderData,
-            user_balance: user_final_balance,
-            provider_error: res.error,
-            service_id: service.id,
+            userBalance: userFinalBalance,
+            providerError: res.error,
+            serviceId: service.id,
           },
-          store_id
+          storeId
         );
       } catch (e: any) {
         console.error("Email error (failed order):", e.message);
@@ -188,26 +132,80 @@ export const sendOrderToProvider = async (
       return { error: res.error };
     }
 
-    await updateStoreDoc(
-      "orders",
-      orderData.uid,
-      {
-        provider_order_id: safeInt(res.order),
-        provider: provider.url,
-        price: chargeUSD,
-      },
-      store_id
-    );
+    await prisma.$transaction(async (tx) => {
+      const counter = await tx.storeCounter.update({
+        where: { storeId },
+        data: {
+          orderCounter: { increment: 1 },
+          referralOrderCounter: { increment: 1 },
+          transactionCounter: { increment: 1 },
+        },
+      });
+
+      await tx.user.update({
+        where: { uid: user.uid },
+        data: { balance: userFinalBalance },
+      });
+
+      await tx.order.update({
+        where: { uid: orderData.uid },
+        data: {
+          providerOrderId: safeInt(res.order),
+          provider: provider.url,
+          price: chargeUSD,
+          storeScopedId: counter.orderCounter,
+        },
+      });
+
+      if (user.ref && affiliate) {
+        const refUser = await tx.user.findUnique({ where: { id: user.ref } });
+        const percent = affiliate.percent || 0;
+
+        if (refUser) {
+          const earned = parseFloat(((chargeUSD * percent) / 100).toFixed(2));
+          const newRefBalance = safeFloat(refUser.balance) + earned;
+
+          await tx.user.update({
+            where: { uid: refUser.uid },
+            data: { balance: newRefBalance },
+          });
+
+          await tx.referralOrder.create({
+            data: {
+              price: chargeUSD,
+              username: user.username,
+              refId: user.ref,
+              uid: uuidv4(),
+              storeScopedId: counter.referralOrderCounter,
+              storeId,
+            },
+          });
+
+          await tx.transaction.create({
+            data: {
+              status: "success",
+              amount: earned,
+              currency: "USD",
+              paymentMethod: "Amount earned from your referral's order.",
+              storeScopedId: counter.transactionCounter,
+              uid: uuidv4(),
+              userUid: user.uid,
+              storeId,
+            },
+          });
+        }
+      }
+    });
 
     await sendEmail(
       undefined,
-      "new_order",
+      "newOrder",
       {
         ...orderData,
-        user_balance: user_final_balance,
-        service_id: service.id,
+        userBalance: userFinalBalance,
+        serviceId: service.id,
       },
-      store_id
+      storeId
     );
 
     return { success: "Order sent to provider successfully" };
@@ -217,41 +215,41 @@ export const sendOrderToProvider = async (
   }
 };
 
-const updateOrderStatus = async (
-  order_uid: string,
-  store_id: number
+export const updateOrderStatus = async (
+  orderUid: string,
+  storeId: number
 ): Promise<void> => {
   try {
-    const order = (await getDocs("orders", store_id)).find(
-      (o: any) => o.uid === order_uid
-    );
-    if (!order) return;
+    const order = await prisma.order.findUnique({ where: { uid: orderUid } });
+    if (!order || !order.provider) return;
 
-    const provider = (await getDocs("providers", store_id)).find(
-      (p: any) => p.url === order.provider
-    );
+    const provider = await prisma.provider.findFirst({
+      where: { url: order.provider },
+    });
     if (!provider) return;
 
     const url = `${order.provider}`;
-    const decryptedKey = decryptKey(
-      provider.key.encrypted_key,
-      provider.key.iv
-    );
+
+    const apiKeyData = provider.apiKey as {
+      encrypted_key: string;
+      iv: string;
+    };
+
+    const decryptedKey = decryptKey(apiKeyData.encrypted_key, apiKeyData.iv);
     const data = {
       key: decryptedKey,
       action: "status",
-      order: order.provider_order_id,
+      order: order.providerOrderId,
     };
     const { data: resp } = await axios.post(url, data, { httpsAgent: agent });
     const rates = await currencies();
 
-    await updateStoreDoc(
-      "orders",
-      order.uid,
-      {
+    await prisma.order.update({
+      where: { uid: order.uid },
+      data: {
         status: resp.status,
-        provider_currency: resp.currency?.toUpperCase(),
-        provider_price: safeFloat(
+        providerCurrency: resp.currency?.toUpperCase(),
+        providerPrice: safeFloat(
           convertCurrency(
             safeFloat(resp.charge),
             resp.currency?.toUpperCase(),
@@ -261,45 +259,41 @@ const updateOrderStatus = async (
         ),
         synced: true,
       },
-      store_id
-    );
+    });
   } catch (err: any) {
     console.error("Error updating order status:", err.message);
   }
 };
-
-const MAX_RETRIES = 3;
+const MAXRETRIES = 3;
 
 export const sendUnsyncedOrders = async (): Promise<void> => {
   try {
-    const storeIds = (
-      await pool.query(`SELECT DISTINCT store_id FROM orders`)
-    ).rows.map((r: any) => r.store_id);
+    const storeIds = await prisma.order.findMany({
+      distinct: ["storeId"],
+      select: { storeId: true },
+    });
 
-    for (const store_id of storeIds) {
-      const filter: Record<string, any> = {
-        synced: false,
-        sync_order: true,
-        drip_feed: false,
-        retry_count: { $lt: MAX_RETRIES },
-      };
-
-      const unsynced = await getDocs("orders", store_id, { filter });
+    for (const { storeId } of storeIds) {
+      const unsynced = await prisma.order.findMany({
+        where: {
+          storeId,
+          synced: false,
+          syncOrder: true,
+          dripFeed: false,
+          retryCount: { lt: MAXRETRIES },
+        },
+      });
 
       for (const order of unsynced) {
-        const result = await sendOrderToProvider(order, store_id);
+        const result = await sendOrderToProvider(order, storeId);
 
-        if (result.success) {
-          await updateStoreDoc("orders", order.uid, { synced: true }, store_id);
-        }
-        await updateStoreDoc(
-          "orders",
-          order.uid,
-          {
-            retry_count: (order.retry_count || 0) + 1,
+        await prisma.order.update({
+          where: { uid: order.uid },
+          data: {
+            synced: result.success ? true : order.synced,
+            retryCount: (order.retryCount || 0) + 1,
           },
-          store_id
-        );
+        });
       }
     }
   } catch (err: any) {
@@ -309,94 +303,87 @@ export const sendUnsyncedOrders = async (): Promise<void> => {
 
 export const syncOrderDetails = async (
   orderData: any,
-  store_id: number
+  storeId: number
 ): Promise<boolean> => {
   try {
-    const users = await getDocs("users", store_id);
-    const user = users.find((u: any) => u.uid === orderData.user_uid);
+    const user = await prisma.user.findUnique({
+      where: { uid: orderData.userUid },
+    });
     if (!user) return false;
 
-    const providers = await getDocs("providers", store_id);
-    const provider = providers.find((p: any) => p.url === orderData.provider);
+    const provider = await prisma.provider.findFirst({
+      where: { url: orderData.provider },
+    });
     if (!provider) return false;
 
     const url = `${orderData.provider}`;
-    const decryptedKey = decryptKey(
-      provider.key.encrypted_key,
-      provider.key.iv
-    );
+
+    const apiKeyData = provider.apiKey as {
+      encrypted_key: string;
+      iv: string;
+    };
+
+    const decryptedKey = decryptKey(apiKeyData.encrypted_key, apiKeyData.iv);
     const data = {
       key: decryptedKey,
       action: "status",
-      order: orderData.provider_order_id,
+      order: orderData.providerOrderId,
     };
     const { data: resp } = await axios.post(url, data, { httpsAgent: agent });
 
-    let services: any[];
-    const getService = async () => {
-      if (!services) services = await getDocs("services", store_id);
-      return services.find((svc) => svc.id === orderData.service_id);
-    };
-
+    const service = await prisma.service.findUnique({
+      where: { id: orderData.serviceId },
+    });
     const rates = await currencies();
 
     if (resp.status === "Canceled" && orderData.status !== "Canceled") {
       const newBalance = safeFloat(user.balance) + safeFloat(orderData.price);
-      await updateStoreDoc(
-        "users",
-        user.uid,
-        { balance: newBalance },
-        store_id
-      );
-      await updateStoreDoc(
-        "orders",
-        orderData.uid,
-        { status: "Canceled", price: 0 },
-        store_id
-      );
+      await prisma.user.update({
+        where: { uid: user.uid },
+        data: { balance: newBalance },
+      });
+      await prisma.order.update({
+        where: { uid: orderData.uid },
+        data: { status: "Canceled", price: 0 },
+      });
     }
 
     if (resp.status === "Partial" && orderData.status !== "Partial") {
-      const service = await getService();
       if (!service) return false;
 
-      const pricePer1000: number =
+      const pricePer1000 =
         convertCurrency(
           service.price,
-          service.provider_currency,
+          service.providerCurrency || "USD",
           "USD",
           rates
         ) || 0;
+
       const refunded = safeFloat(orderData.number) - safeFloat(resp.remains);
       const totalPrice = ((resp.remains / 1000) * pricePer1000).toFixed(2);
       const orderPrice = ((refunded / 1000) * pricePer1000).toFixed(2);
       const newBalance = safeFloat(user.balance) + safeFloat(totalPrice);
 
-      await updateStoreDoc(
-        "users",
-        user.uid,
-        { balance: newBalance },
-        store_id
-      );
-      await updateStoreDoc(
-        "orders",
-        orderData.uid,
-        {
+      await prisma.user.update({
+        where: { uid: user.uid },
+        data: { balance: newBalance },
+      });
+      await prisma.order.update({
+        where: { uid: orderData.uid },
+        data: {
           status: "Partial",
           price: safeFloat(orderPrice),
           remains: safeInt(resp.remains),
         },
-        store_id
-      );
+      });
     }
 
     if (resp.status === "Completed" && orderData.status !== "Completed") {
-      const service = await getService();
       if (!service) return false;
 
       const pricePer1000 = convertCurrency(
         service.price,
-        service.provider_currency,
+        service.providerCurrency || "USD",
         "USD",
         rates
       );
@@ -406,22 +393,19 @@ export const syncOrderDetails = async (
           2
         );
         const newBalance = safeFloat(user.balance) - safeFloat(totalPrice);
-        await updateStoreDoc(
-          "users",
-          user.uid,
-          { balance: newBalance },
-          store_id
-        );
-        await updateStoreDoc(
-          "orders",
-          orderData.uid,
-          {
+
+        await prisma.user.update({
+          where: { uid: user.uid },
+          data: { balance: newBalance },
+        });
+        await prisma.order.update({
+          where: { uid: orderData.uid },
+          data: {
             status: "Completed",
             remains: 0,
             price: safeFloat(totalPrice),
           },
-          store_id
-        );
+        });
       } else if (orderData.status === "Partial") {
         const originalPrice = (
           (orderData.number / 1000) *
@@ -429,40 +413,34 @@ export const syncOrderDetails = async (
         ).toFixed(2);
         const refundPrice = ((resp.remains / 1000) * pricePer1000).toFixed(2);
         const newBalance = safeFloat(user.balance) - safeFloat(refundPrice);
-        await updateStoreDoc(
-          "users",
-          user.uid,
-          { balance: newBalance },
-          store_id
-        );
-        await updateStoreDoc(
-          "orders",
-          orderData.uid,
-          {
+
+        await prisma.user.update({
+          where: { uid: user.uid },
+          data: { balance: newBalance },
+        });
+        await prisma.order.update({
+          where: { uid: orderData.uid },
+          data: {
             status: "Completed",
             remains: 0,
             price: safeFloat(originalPrice),
           },
-          store_id
-        );
+        });
       } else {
-        await updateStoreDoc(
-          "orders",
-          orderData.uid,
-          { status: "Completed", remains: 0 },
-          store_id
-        );
+        await prisma.order.update({
+          where: { uid: orderData.uid },
+          data: { status: "Completed", remains: 0 },
+        });
       }
     }
 
-    await updateStoreDoc(
-      "orders",
-      orderData.uid,
-      {
+    await prisma.order.update({
+      where: { uid: orderData.uid },
+      data: {
         status: resp.status,
         remains: safeInt(resp.remains),
-        start: safeInt(resp.start_count),
-        provider_price: safeFloat(
+        start: safeInt(resp.startCount),
+        providerPrice: safeFloat(
           convertCurrency(
             safeFloat(resp.charge),
             resp.currency.toUpperCase(),
@@ -470,149 +448,170 @@ export const syncOrderDetails = async (
             rates
           )
         ),
-        provider_currency: resp.currency.toUpperCase(),
+        providerCurrency: resp.currency.toUpperCase(),
       },
-      store_id
-    );
+    });
 
     return true;
   } catch (err: any) {
-    console.error("Error updatind order from provider:", err.message);
+    console.error("Error updating order from provider:", err.message);
     return false;
   }
 };
 
 export const syncAllStoresOrderDetails = async () => {
   try {
-    const storeIdsResult = await pool.query(
-      `SELECT DISTINCT store_id FROM orders`
-    );
-    const storeIds = storeIdsResult.rows.map((row) => row.store_id);
+    const storeIds = await prisma.order.findMany({
+      distinct: ["storeId"],
+      select: { storeId: true },
+    });
 
-    for (const store_id of storeIds) {
-      const syncedOrders = await getDocs("orders", store_id, {
-        filter: { synced: true, sync_order: true },
+    for (const { storeId } of storeIds) {
+      const syncedOrders = await prisma.order.findMany({
+        where: {
+          storeId,
+          synced: true,
+          syncOrder: true,
+        },
       });
 
       for (const order of syncedOrders) {
-        await syncOrderDetails(order, store_id);
+        await syncOrderDetails(order, storeId);
       }
     }
   } catch (error) {
     console.error("Error syncing order details", error);
   }
 };
-
 export const processDripFeedOrders = async (): Promise<void> => {
   try {
-    const storeIdsResult = await pool.query(
-      `SELECT DISTINCT store_id FROM orders`
-    );
-    const storeIds = storeIdsResult.rows.map((row) => row.store_id);
+    const storeIds = await prisma.order.findMany({
+      distinct: ["storeId"],
+      select: { storeId: true },
+    });
 
-    for (const store_id of storeIds) {
-      const dripFeedOrders = (await getDocs("orders", store_id, {
-        filter: { status: "Completed", drip_feed: true },
-      })) as any[];
+    for (const { storeId } of storeIds) {
+      const dripFeedOrders = await prisma.order.findMany({
+        where: {
+          storeId,
+          status: "Completed",
+          dripFeed: true,
+        },
+      });
 
       for (const order of dripFeedOrders) {
-        const processedRuns = order.processed_runs || 0;
+        const processedRuns = order.processedRuns || 0;
         const totalRuns = order.runs;
         const intervalMinutes = order.interval;
+
+        if (!totalRuns || !intervalMinutes) continue;
 
         if (processedRuns >= totalRuns) continue;
 
         const nextRunTime =
-          new Date(order.last_run_time || 0).getTime() +
-          intervalMinutes * 60000;
+          new Date(order.lastRunTime || 0).getTime() + intervalMinutes * 60000;
         if (Date.now() < nextRunTime) continue;
 
         try {
-          await updateStoreDoc(
-            "orders",
-            order.uid,
-            {
-              processed_runs: processedRuns + 1,
-              last_run_time: new Date().toISOString(),
-            },
-            store_id
-          );
-
-          const users = await getDocs("users", store_id);
-          const user = users.find((u: any) => u.uid === order.user_uid);
-          const services = await getDocs("services", store_id);
-          const service = services.find((s: any) => s.id === order.service_id);
+          const user = await prisma.user.findUnique({
+            where: { uid: order.userUid },
+          });
+          const service = await prisma.service.findUnique({
+            where: { uid: order.serviceUid },
+          });
           if (!user || !service) continue;
 
-          // Affiliate reward logic
+          await prisma.order.update({
+            where: { uid: order.uid },
+            data: {
+              processedRuns: processedRuns + 1,
+              lastRunTime: new Date().toISOString(),
+            },
+          });
+
+          // 🟡 Affiliate reward logic
           if (user.ref) {
-            const affiliate_settings = await getDocs(
-              "affiliate_settings",
-              store_id
-            );
-            const affiliate = affiliate_settings[0];
+            const affiliate = await prisma.affiliateSetting.findFirst({
+              where: { storeId },
+            });
             const percentage = affiliate?.percent || 0;
-            const refUser = users.find((u: any) => u.id === user.ref);
+
+            const refUser = await prisma.user.findUnique({
+              where: { id: user.ref },
+            });
+
             if (refUser) {
-              const earned = (order.price * percentage) / 100;
-              const newBalance = safeFloat(refUser.balance) + earned;
+              const earned = order.price.mul(percentage).div(100);
+              const newBalance = refUser.balance.add(earned);
 
-              await addStoreDoc(
-                "referrals_orders",
-                {
-                  price: order.price,
-                  username: user.username,
-                  ref_id: user.ref,
-                },
-                store_id
-              );
+              await prisma.$transaction(async (tx) => {
+                const counter = await tx.storeCounter.update({
+                  where: { storeId },
+                  data: {
+                    referralOrderCounter: { increment: 1 },
+                    transactionCounter: { increment: 1 },
+                  },
+                });
+                await tx.referralOrder.create({
+                  data: {
+                    price: order.price,
+                    username: user.username,
+                    refId: user.ref!,
+                    uid: uuidv4(),
+                    storeScopedId: counter.referralOrderCounter,
+                    storeId,
+                  },
+                });
 
-              await updateStoreDoc(
-                "users",
-                refUser.uid,
-                { balance: newBalance },
-                store_id
-              );
+                await tx.user.update({
+                  where: { uid: refUser.uid },
+                  data: { balance: newBalance },
+                });
 
-              await addStoreDoc(
-                "transactions",
-                {
-                  status: "success",
-                  amount: earned,
-                  currency: "USD",
-                  payment_method: "Amount earned from your referral's order.",
-                  user_id: user.uid,
-                },
-                store_id
-              );
+                await tx.transaction.create({
+                  data: {
+                    status: "success",
+                    amount: earned,
+                    currency: "USD",
+                    paymentMethod: "Amount earned from your referral's order.",
+                    userUid: user.uid,
+                    uid: uuidv4(),
+                    storeScopedId: counter.transactionCounter,
+                    storeId,
+                  },
+                });
+              });
             }
           }
 
-          // Create new order from drip feed
+          // 🆕 Create new order from drip feed
           const price = (
-            (order.number / 1000) *
+            (order.quantity / 1000) *
             safeFloat(service.price)
           ).toFixed(2);
-          const new_order = {
+
+          const newOrderData = {
             ...order,
             provider: service.provider,
-            sync_order: true,
-            provider_service_id: service.provider_id,
-            price,
+            syncOrder: true,
+            providerServiceId: service.providerId,
+            price: parseFloat(price),
+            storeId,
+            uid: uuidv4(),
+            dripFeed: undefined,
+            runs: undefined,
+            interval: undefined,
+            processedRuns: undefined,
+            lastRunTime: undefined,
           };
 
-          delete new_order.runs;
-          delete new_order.interval;
-          delete new_order.processed_runs;
-          delete new_order.drip_feed;
-          delete new_order.last_run_time;
+          const newOrder = await prisma.order.create({
+            data: newOrderData,
+          });
 
-          const added = await addStoreDoc("orders", new_order, store_id);
-          new_order.uid = added.uid;
-
-          const result = await sendOrderToProvider(new_order, store_id);
+          const result = await sendOrderToProvider(newOrder, storeId);
           if (result.success) {
-            await updateOrderStatus(new_order.uid, store_id);
+            await updateOrderStatus(newOrder.uid, storeId);
           }
         } catch (err: any) {
           console.error(

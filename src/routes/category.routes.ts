@@ -1,33 +1,34 @@
 import express from "express";
 const router = express.Router();
 import * as categories from "../controllers/category.controllers"
-;
+  ;
 import { authenticate } from "../middleware/authenticate";
 import {
   limitPublicGet,
   limitCategoryMutations,
 } from "../middleware/ratelimit/category.ratelimit";
+import { isAdmin } from "../middleware/authorize";
 
 router.get("/", limitPublicGet, categories.getCategories);
-router.get("/:category_id", categories.getCategoryByID);
+router.get("/:categoryId", categories.getCategoryByID);
 
-router.post("/", authenticate, limitCategoryMutations, categories.addCategory);
+router.post("/", authenticate, limitCategoryMutations, isAdmin, categories.addCategory);
 router.patch(
   "/",
   authenticate,
-  limitCategoryMutations,
+  limitCategoryMutations, isAdmin,
   categories.updateCategory
 );
 router.delete(
   "/",
   authenticate,
-  limitCategoryMutations,
+  limitCategoryMutations, isAdmin,
   categories.deleteCategory
 );
 router.delete(
   "/multiple",
   authenticate,
-  limitCategoryMutations,
+  limitCategoryMutations, isAdmin,
   categories.deleteMultipleCategory
 );
 

@@ -47,16 +47,16 @@ registry.registerPath({
   },
 });
 
-// GET /order/:order_uid
+// GET /order/:orderUid
 registry.registerPath({
   method: "get",
-  path: "/order/{order_uid}",
+  path: "/order/{orderUid}",
   summary: "Get a order for admins or user orders by uid",
   tags: ["Orders"],
   security: [{ CookieAuth: [] }],
   parameters: [
     {
-      name: "order_uid",
+      name: "orderUid",
       in: "path",
       required: true,
       schema: { type: "string" },
@@ -93,16 +93,16 @@ registry.registerPath({
   },
 });
 
-// PATCH /order/{order_uid} (Admin)
+// PATCH /order/{orderUid} (Admin)
 registry.registerPath({
   method: "patch",
-  path: "/order/{order_uid}",
+  path: "/order/{orderUid}",
   summary: "Update a order",
   tags: ["Orders"],
   security: [{ CookieAuth: [] }],
   parameters: [
     {
-      name: "order_uid",
+      name: "orderUid",
       in: "path",
       required: true,
       schema: { type: "string" },
@@ -125,7 +125,7 @@ registry.registerPath({
   },
 });
 
-// DELETE /order/:order_uid (Admin)
+// DELETE /order/:orderUid (Admin)
 registry.registerPath({
   method: "delete",
   path: "/order",
@@ -134,7 +134,7 @@ registry.registerPath({
   security: [{ CookieAuth: [] }],
   parameters: [
     {
-      name: "order_uid",
+      name: "orderUid",
       in: "path",
       required: true,
       schema: { type: "string" },

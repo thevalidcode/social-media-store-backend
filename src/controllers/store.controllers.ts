@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { addStoreDoc, getDocs, updateStoreDoc } from "../crud";
 import type { Request, Response } from "express";
+import { prisma } from "../config/db";
 import {
   StoreGeneralDataRequestSchema,
   StoreGeneralDataResponseSchema,
@@ -8,155 +8,152 @@ import {
   UpdateStylesRequestSchema,
 } from "../schemas/store.schema";
 import { AuthSchema } from "../schemas/user.schema";
+import { v4 as uuidv4 } from "uuid";
 
 const storeIdQuerySchema = z.object({ domain: z.string().min(1) });
-const storeIdSchema = z.object({ store_id: z.coerce.number() });
+const storeIdSchema = z.object({ storeId: z.coerce.number() });
 
-export const getStoreData = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+// ✅ Get store data by domain
+export const getStoreData = async (req: Request, res: Response): Promise<void> => {
   const parsed = storeIdQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
+
   const { domain } = parsed.data;
 
   try {
-    const stores = await getDocs("stores");
-    const store = stores.find((p: any) => p.uid === domain);
+    const store = await prisma.store.findUnique({
+      where: { uid: domain },
+      select: { storeId: true, plan: true, timestamp: true },
+    });
+
     if (!store) {
       res.status(404).json({ error: "Store not found for the given domain" });
       return;
     }
-    res.json({
-      store_id: store.store_id,
-      plan: store.plan,
-      timestamp: store.timestamp,
-    });
+
+    res.json(store);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error("Error fetching store data:", err);
+    res.status(500).json({ error: "Failed to fetch store data." });
   }
 };
 
-export const getStoreGeneralData = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+// ✅ Get general store data
+export const getStoreGeneralData = async (req: Request, res: Response): Promise<void> => {
   const parsed = StoreGeneralDataRequestSchema.safeParse(req.params);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { store_id } = parsed.data;
+
+  const { storeId } = parsed.data;
 
   try {
-    const generalDataArray = await getDocs("general", store_id);
-    const generalData = generalDataArray[0];
+    const generalData = await prisma.general.findFirst({
+      where: { storeId },
+    });
 
     if (!generalData) {
-      res
-        .status(404)
-        .json({ error: "General Data not found for the given store" });
+      res.status(404).json({ error: "General Data not found for the given store" });
       return;
     }
+
     const parsedData = StoreGeneralDataResponseSchema.safeParse({
-      logo_url: generalData.logo_url,
-      store_id: generalData.store_id,
-      favicon_url: generalData.favicon_url,
+      logoUrl: generalData.logoUrl,
+      storeId: generalData.storeId,
+      faviconUrl: generalData.faviconUrl,
       title: generalData.title,
-      default_client_currency: generalData.default_client_currency,
+      defaultClientCurrency: generalData.defaultClientCurrency,
     });
+
     res.json(parsedData.data);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error("Error fetching store general data:", err);
+    res.status(500).json({ error: "Failed to fetch store general data." });
   }
 };
 
-export const updateStoreGeneralData = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+// ✅ Update general store data
+export const updateStoreGeneralData = async (req: Request, res: Response): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const bodyParsed = UpdateGeneralDataRequestSchema.safeParse(req.body);
+
   if (!authParsed.success) {
     res.status(400).json({ error: authParsed.error.flatten() });
     return;
   }
-  const { role, store_id } = authParsed.data;
+  if (!bodyParsed.success) {
+    res.status(400).json({ error: bodyParsed.error.flatten() });
+    return;
+  }
+
+  const { storeId, role } = authParsed.data;
   const bodyData = bodyParsed.data;
 
   if (role !== "admin") {
     res.status(403).json({ error: "Access denied. Admins only." });
     return;
   }
+
   try {
-    const general = await getDocs("general", store_id);
-    if (!general) {
-      await addStoreDoc("general", { ...bodyData }, store_id);
-      res.json({ success: "Successfully updated the data." });
-      return;
+    const existing = await prisma.general.findFirst({ where: { storeId } });
+
+    if (!existing) {
+      await prisma.general.create({
+        data: { ...bodyData, storeId, uid: uuidv4(), storeScopedId: 1 },
+      });
+    } else {
+      await prisma.general.update({
+        where: { id: existing.id },
+        data: bodyData,
+      });
     }
-    await updateStoreDoc("general", general[0].uid, { ...bodyData }, store_id);
 
     res.json({ success: "Successfully updated the data." });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error("Error updating store general data:", err);
+    res.status(500).json({ error: "Failed to update store general data." });
   }
 };
 
-export const getStoreCSRFToken = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  const parsed = storeIdQuerySchema.safeParse(req.query);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
-    return;
-  }
-  const { domain } = parsed.data;
-
-  try {
-    const stores = await getDocs("stores");
-    const store = stores.find((p: any) => p.uid === domain);
-    if (!store) {
-      res.status(404).json({ error: "Store not found for the given domain" });
-      return;
-    }
-    res.json({ csrfToken: req.csrfToken() });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
+// ✅ Get store design styles
 export const getStyles = async (req: Request, res: Response): Promise<void> => {
   const parsed = storeIdSchema.safeParse(req.params);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { store_id } = parsed.data;
+
+  const { storeId } = parsed.data;
 
   try {
-    const result = await getDocs("design_styles", store_id);
-    res.json(result[0]);
+    const style = await prisma.designStyle.findFirst({ where: { storeId } });
+
+    res.json(style || {});
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error("Error fetching store styles:", err);
+    res.status(500).json({ error: "Failed to fetch store styles." });
   }
 };
 
-export const updateStoreStyles = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+// ✅ Update store design styles
+export const updateStoreStyles = async (req: Request, res: Response): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const bodyParsed = UpdateStylesRequestSchema.safeParse(req.body);
+
   if (!authParsed.success) {
     res.status(400).json({ error: authParsed.error.flatten() });
     return;
   }
-  const { role, store_id } = authParsed.data;
+  if (!bodyParsed.success) {
+    res.status(400).json({ error: bodyParsed.error.flatten() });
+    return;
+  }
+
+  const { storeId, role } = authParsed.data;
   const bodyData = bodyParsed.data;
 
   if (role !== "admin") {
@@ -165,87 +162,89 @@ export const updateStoreStyles = async (
   }
 
   try {
-    const design_styles = await getDocs("design_styles", store_id);
-    if (!design_styles) {
-      await addStoreDoc("design_styles", { ...bodyData }, store_id);
-      res.json({ success: "Successfully updated the data." });
-      return;
-    }
-    await updateStoreDoc(
-      "design_styles",
-      design_styles[0].uid,
-      { ...bodyData },
-      store_id
-    );
+    const existing = await prisma.designStyle.findFirst({ where: { storeId } });
 
-    res.json({ success: "Updated styles successfully," });
+    if (!existing) {
+      await prisma.designStyle.create({ data: { ...bodyData, storeId, storeScopedId: 1, uid: uuidv4() } });
+    } else {
+      await prisma.designStyle.update({
+        where: { id: existing.id },
+        data: bodyData,
+      });
+    }
+
+    res.json({ success: "Updated styles successfully." });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error("Error updating store styles:", err);
+    res.status(500).json({ error: "Failed to update store styles." });
   }
 };
 
-export const getSiteData = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+// ✅ Get site data
+export const getSiteData = async (req: Request, res: Response): Promise<void> => {
   const parsed = storeIdSchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { store_id } = parsed.data;
+
+  const { storeId } = parsed.data;
 
   try {
-    const result = await getDocs("general", store_id);
-    res.json(result[0]);
+    const general = await prisma.general.findFirst({ where: { storeId } });
+    res.json(general || {});
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error("Error fetching site data:", err);
+    res.status(500).json({ error: "Failed to fetch site data." });
   }
 };
 
+// ✅ Get currency rates
 export const getRates = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const result = await getDocs("currencies", 1);
-    res.json(result[0].quotes);
+    const currency = await prisma.currency.findFirst();
+    res.json(currency?.quotes || {});
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error("Error fetching rates:", err);
+    res.status(500).json({ error: "Failed to fetch rates." });
   }
 };
 
-export const getCurrentUser = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+// ✅ Get current logged-in user
+export const getCurrentUser = async (req: Request, res: Response): Promise<void> => {
   if (!req.auth) {
     res.status(401).json({ error: "Unauthorized: auth info missing" });
     return;
   }
-  const { uid, store_id } = req.auth;
+
+  const { uid, storeId } = req.auth;
 
   try {
-    const result = await getDocs("users", store_id, {
-      find: { field: "uid", operator: "===", value: uid },
-      removeKeys: ["password", "api_key"],
+    const user = await prisma.user.findFirst({
+      where: { storeId, uid },
+      select: { password: false, apiKey: false },
     });
-    if (!result) {
+
+    if (!user) {
       res.status(404).json({ error: "User not found" });
       return;
     }
-    res.json(result);
+
+    res.json(user);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error("Error fetching current user:", err);
+    res.status(500).json({ error: "Failed to fetch current user." });
   }
 };
 
-export const getCurrentAdmin = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+// ✅ Get current logged-in admin
+export const getCurrentAdmin = async (req: Request, res: Response): Promise<void> => {
   if (!req.auth) {
     res.status(401).json({ error: "Unauthorized: auth info missing" });
     return;
   }
-  const { store_id, uid, role } = req.auth;
+
+  const { uid, storeId, role } = req.auth;
 
   if (role !== "admin") {
     res.status(403).json({ error: "Access denied. Admins only." });
@@ -253,16 +252,19 @@ export const getCurrentAdmin = async (
   }
 
   try {
-    const result = await getDocs("admins", store_id, {
-      find: { field: "uid", operator: "===", value: uid },
-      removeKeys: ["password", "api_key"],
+    const admin = await prisma.admin.findFirst({
+      where: { storeId, uid },
+      select: { password: false, apiKey: false },
     });
-    if (!result) {
+
+    if (!admin) {
       res.status(404).json({ error: "Admin not found" });
       return;
     }
-    res.json(result);
+
+    res.json(admin);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error("Error fetching current admin:", err);
+    res.status(500).json({ error: "Failed to fetch current admin." });
   }
 };

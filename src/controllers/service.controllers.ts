@@ -1,12 +1,7 @@
 import { z } from "zod";
-import {
-  getDocs,
-  addStoreDoc,
-  updateStoreDoc,
-  deleteStoreDoc,
-  deleteStoreDocs,
-} from "../crud";
 import type { Request, Response } from "express";
+import { prisma } from "../config/db";
+import { v4 as uuidv4 } from "uuid";
 import { AuthSchema } from "../schemas/user.schema";
 import {
   DeleteServiceInputSchema,
@@ -16,116 +11,120 @@ import {
 } from "../schemas/service.schema";
 
 const getServicesSchema = z.object({
-  store_id: z.coerce.number(),
+  storeId: z.coerce.number(),
 });
 
 const serviceIdSchema = z.object({
-  service_id: z.coerce.number(),
-  store_id: z.coerce.number(),
+  serviceId: z.coerce.number(),
+  storeId: z.coerce.number(),
 });
 
-export const getServices = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+// ✅ Get all active services for a store
+export const getServices = async (req: Request, res: Response): Promise<void> => {
   const parsed = getServicesSchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { store_id } = parsed.data;
 
+  const { storeId } = parsed.data;
   try {
-    const services = await getDocs("services", store_id, {
-      filter: { field: "status", operator: "===", value: "active" },
-      removeKeys: [
-        "sync_quantity",
-        "sync_cat_and_name",
-        "provider",
-        "percentage",
-        "status",
-        "store_id",
-        "provider_id",
-        "uid",
-        "provider_price",
-      ],
+    const services = await prisma.service.findMany({
+      where: { storeId, status: "active" },
+      orderBy: { position: "asc" },
+      select: {
+        id: true,
+        uid: true,
+        name: true,
+        description: true,
+        category: true,
+        type: true,
+        min: true,
+        max: true,
+        position: true,
+        cancel: true,
+        network: true,
+        refill: true,
+        percentage: true,
+        dripFeed: true,
+        refillDays: true,
+        price: true,
+        timestamp: true,
+      },
     });
 
-    const sortedServices = services.sort(
-      (a: any, b: any) => a.position - b.position
-    );
-    res.status(200).json(sortedServices);
+    res.status(200).json(services);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error("Error fetching services:", error);
+    res.status(500).json({ error: "Failed to fetch services." });
   }
 };
 
-export const getServicesForAdmins = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+// ✅ Get all services for admins
+export const getServicesForAdmins = async (req: Request, res: Response): Promise<void> => {
   const parsed = AuthSchema.safeParse(req.auth);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { store_id, role } = parsed.data;
 
-  if (role === "user") {
-    res.status(403).json({ error: "Unauthorised User." });
-    return;
-  }
-
+  const { storeId } = parsed.data;
   try {
-    const services = await getDocs("services", store_id);
+    const services = await prisma.service.findMany({
+      where: { storeId },
+      orderBy: { position: "asc" },
+    });
 
-    const sortedServices = services.sort(
-      (a: any, b: any) => a.position - b.position
-    );
-    res.status(200).json(sortedServices);
+    res.status(200).json(services);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error("Error fetching admin services:", error);
+    res.status(500).json({ error: "Failed to fetch services for admins." });
   }
 };
 
-export const getServiceByID = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+// ✅ Get service by ID (public)
+export const getServiceByID = async (req: Request, res: Response): Promise<void> => {
   const parsed = serviceIdSchema.safeParse(req.params);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { store_id, service_id } = parsed.data;
 
+  const { storeId, serviceId } = parsed.data;
   try {
-    const service = await getDocs("services", store_id, {
-      find: { field: "id", operator: "===", value: service_id },
-      removeKeys: [
-        "provider_id",
-        "provider_price",
-        "percentage",
-        "provider",
-        "sync_cat_and_name",
-        "sync_quantity",
-        "store_id",
-        "status",
-        "position",
-      ],
+    const service = await prisma.service.findFirst({
+      where: { storeId, id: serviceId },
+      select: {
+        id: true,
+        uid: true,
+        name: true,
+        description: true,
+        category: true,
+        type: true,
+        min: true,
+        max: true,
+        cancel: true,
+        network: true,
+        refill: true,
+        dripFeed: true,
+        refillDays: true,
+        price: true,
+        timestamp: true,
+      },
     });
+
     res.status(200).json({ service });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error("Error fetching service:", error);
+    res.status(500).json({ error: "Failed to fetch service." });
   }
 };
 
-export const getServiceByIDFromAdmin = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+// ✅ Get service by ID (admin)
+export const getServiceByIDFromAdmin = async (req: Request, res: Response): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = serviceIdSchema.safeParse(req.params);
+
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -134,29 +133,27 @@ export const getServiceByIDFromAdmin = async (
     res.status(400).json({ error: authParsed.error.flatten() });
     return;
   }
-  const { service_id } = parsed.data;
-  const { store_id, role } = authParsed.data;
 
-  if (role === "user") {
-    res.status(403).json({ error: "Unauthorised User." });
-    return;
-  }
+  const { storeId } = authParsed.data;
+  const { serviceId } = parsed.data;
+
   try {
-    const service = await getDocs("services", store_id, {
-      find: { field: "id", operator: "===", value: service_id },
+    const service = await prisma.service.findFirst({
+      where: { storeId, id: serviceId },
     });
+
     res.status(200).json({ service });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error("Error fetching admin service:", error);
+    res.status(500).json({ error: "Failed to fetch service for admin." });
   }
 };
 
-export const updateService = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+// ✅ Update service
+export const updateService = async (req: Request, res: Response): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = ServiceUpdateInputSchema.safeParse(req.body);
+
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -165,31 +162,30 @@ export const updateService = async (
     res.status(400).json({ error: authParsed.error.flatten() });
     return;
   }
-  const reqData = parsed.data;
-  const { store_id, role } = authParsed.data;
 
-  if (role === "user") {
-    res.status(403).json({ error: "Unauthorised User." });
-    return;
-  }
+  const { uid, ...updateData } = parsed.data;
+  const { storeId } = authParsed.data;
+
   try {
-    await updateStoreDoc("services", reqData.uid, reqData, store_id);
-
-    const service = await getDocs("services", store_id, {
-      find: { field: "uid", operator: "===", value: reqData.uid },
+    await prisma.service.update({
+      where: { uid },
+      data: updateData,
     });
+
+    const service = await prisma.service.findFirst({ where: { storeId, uid } });
+
     res.status(200).json({ success: "Service updated successfully.", service });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error("Error updating service:", error);
+    res.status(500).json({ error: "Failed to update service." });
   }
 };
 
-export const deleteService = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+// ✅ Delete single service
+export const deleteService = async (req: Request, res: Response): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = DeleteServiceInputSchema.safeParse(req.body);
+
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -198,26 +194,21 @@ export const deleteService = async (
     res.status(400).json({ error: authParsed.error.flatten() });
     return;
   }
-  const { uid } = parsed.data;
-  const { role, store_id } = authParsed.data;
 
-  if (role === "user") {
-    res.status(403).json({ error: "Unauthorised User." });
-    return;
-  }
+  const { uid } = parsed.data;
 
   try {
-    await deleteStoreDoc("services", uid, store_id);
+    await prisma.service.delete({ where: { uid } });
+
     res.status(200).json({ success: "Service deleted successfully." });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error("Error deleting service:", error);
+    res.status(500).json({ error: "Failed to delete service." });
   }
 };
 
-export const deleteMultipleService = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+// ✅ Delete multiple services
+export const deleteMultipleService = async (req: Request, res: Response): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = DeleteMultipleServicesInputSchema.safeParse(req.body);
 
@@ -231,32 +222,23 @@ export const deleteMultipleService = async (
   }
 
   const { uids } = parsed.data;
-  const { role, store_id } = authParsed.data;
-
-  if (role === "user") {
-    res.status(403).json({ error: "Unauthorised User." });
-    return;
-  }
 
   try {
-    await deleteStoreDocs("services", uids, store_id);
+    await prisma.service.deleteMany({
+      where: { uid: { in: uids } },
+    });
 
     res.status(200).json({ success: "Services deleted successfully." });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error("Error deleting multiple services:", error);
+    res.status(500).json({ error: "Failed to delete services." });
   }
 };
 
-export const getServicesByProviderId = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+// ✅ Get services by provider ID
+export const getServicesByProviderId = async (req: Request, res: Response): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
-  const parsed = z
-    .object({
-      provider_id: z.coerce.number(),
-    })
-    .safeParse(req.params);
+  const parsed = z.object({ providerId: z.coerce.number() }).safeParse(req.params);
 
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -267,27 +249,23 @@ export const getServicesByProviderId = async (
     return;
   }
 
-  const { provider_id } = parsed.data;
-  const { role, store_id } = authParsed.data;
+  const { providerId } = parsed.data;
+  const { storeId } = authParsed.data;
 
-  if (role === "user") {
-    res.status(403).json({ error: "Unauthorised User." });
-    return;
-  }
   try {
-    const services = await getDocs("services", store_id, {
-      filter: { field: "provider_id", operator: "===", value: provider_id },
+    const services = await prisma.service.findMany({
+      where: { storeId, providerId: providerId },
     });
+
     res.status(200).json({ services });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error("Error fetching services by provider ID:", error);
+    res.status(500).json({ error: "Failed to fetch services." });
   }
 };
 
-export const addService = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+// ✅ Add a new service
+export const addService = async (req: Request, res: Response): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = ServiceCreateInputSchema.safeParse(req.body);
 
@@ -300,31 +278,38 @@ export const addService = async (
     return;
   }
 
-  const { role, store_id } = authParsed.data;
-  if (role === "user") {
-    res.status(403).json({ error: "Unauthorised User." });
-    return;
-  }
+  const { storeId } = authParsed.data;
 
   try {
-    const services = await getDocs("services", store_id);
-    const newId =
-      services.reduce((max: number, s: any) => Math.max(max, s.id), 0) + 1;
+    const newService = await prisma.$transaction(async (tx) => {
+      const counter = await tx.storeCounter.update({
+        where: { storeId },
+        data: { serviceCounter: { increment: 1 } },
+      });
 
-    const serviceData = {
-      ...parsed.data,
-      position: newId,
-      store_id,
-      status: "active",
-    };
+      const lastService = await tx.service.findFirst({
+        where: { storeId },
+        orderBy: { position: "desc" },
+        select: { position: true },
+      });
 
-    await addStoreDoc("services", serviceData, store_id);
+      const newPosition = lastService ? lastService.position + 1 : 1;
 
-    res.status(200).json({
-      success: "Service added successfully.",
-      service: serviceData,
+      return tx.service.create({
+        data: {
+          ...parsed.data,
+          uid: uuidv4(),
+          storeId,
+          storeScopedId: counter.serviceCounter,
+          status: "active",
+          position: newPosition,
+        },
+      });
     });
+
+    res.status(201).json({ success: "Service added successfully.", service: newService });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error("Error adding service:", error);
+    res.status(500).json({ error: "Failed to add service." });
   }
 };

@@ -1,0 +1,20 @@
+model StoreCounter {
+  storeId Int @id @map("store_id")
+
+  serviceCounter  Int @default(0) @map("service_counter")
+  orderCounter    Int @default(0) @map("order_counter")
+  blogCounter     Int @default(0) @map("blog_counter")
+  faqCounter      Int @default(0) @map("faq_counter")
+  categoryCounter Int @default(0) @map("category_counter")
+  userCounter     Int @default(0) @map("user_counter")
+  emailLogCounter Int @default(0) @map("email_log_counter")
+  uploadLogCounter Int @default(0) @map("upload_log_counter")
+  providerCounter Int @default(0) @map("provider_counter")
+  refillCounter Int @default(0) @map("refill_counter")
+  transactionCounter Int @default(0) @map("transaction_counter")
+  referralOrderCounter Int @default(0) @map("referral_order_counter")
+
+  store Store @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  @@map("store_counters")
+}

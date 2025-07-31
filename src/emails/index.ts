@@ -1,6 +1,7 @@
+import { prisma } from "../config/db";
 import nodemailer from "nodemailer";
-import { addStoreDoc, getDocs } from "../crud";
 import { getTemplate } from "./templates";
+import { v4 as uuidv4 } from "uuid";
 
 const transporter = nodemailer.createTransport({
   sendmail: true,
@@ -15,27 +16,33 @@ function interpolate(template: string, variables: Record<string, any>): string {
   );
 }
 
-async function loadGeneralSettings(store_id: number) {
-  const general = await getDocs("general", store_id);
-  return general[0];
+async function loadGeneralSettings(storeId: number) {
+  return prisma.general.findFirst({
+    where: { storeId },
+    orderBy: { id: "asc" },
+  });
 }
 
-async function loadAdminEmails(store_id: number): Promise<string[]> {
-  const docs = await getDocs("admin_emails", store_id);
-  return docs.map((doc: any) => doc.emails);
+async function loadAdminEmails(storeId: number): Promise<string[]> {
+  const docs = await prisma.adminEmail.findMany({
+    where: { storeId },
+    select: { emails: true },
+  });
+  return docs.flatMap((doc) => doc.emails);
 }
 
 async function buildEmailTemplate(
   type: string,
   data: Record<string, any>,
-  logo_url: string,
-  store_id: number
+  logoUrl: string,
+  storeId: number
 ): Promise<{ subject: string; html: string }> {
-  const template = await getDocs("email_templates", store_id, {
-    find: { type },
+  const template = await prisma.emailTemplate.findFirst({
+    where: { storeId, type },
+    select: { content: true },
   });
 
-  const variables = { logo: logo_url || "", ...data };
+  const variables = { logo: logoUrl || "", ...data };
   const htmlFromDb = interpolate(template?.content || "", variables);
   const fallbackHtml = getTemplate(type as any, variables);
 
@@ -56,47 +63,63 @@ async function dispatchEmail({
   to,
   subject,
   html,
-  store_id,
+  storeId,
 }: {
   from: string;
   to: string;
   subject: string;
   html: string;
-  store_id: number;
+  storeId: number;
 }): Promise<boolean> {
   try {
     const result = await transporter.sendMail({ from, to, subject, html });
 
-    await addStoreDoc(
-      "email_logs",
-      {
-        sender: from,
-        receiver: to,
-        subject,
-        html,
-        status: "success",
-        timestamp: new Date(),
-        message_id: result.messageId,
-        response: result.response,
-      },
-      store_id
-    );
+    await prisma.$transaction(async (tx) => {
+      const counter = await tx.storeCounter.update({
+        where: { storeId },
+        data: { emailLogCounter: { increment: 1 } },
+      });
+
+      await tx.emailLog.create({
+        data: {
+          storeId,
+          sender: from,
+          receiver: to,
+          subject,
+          html,
+          uid: uuidv4(),
+          status: "success",
+          storeScopedId: counter.emailLogCounter,
+          timestamp: new Date(),
+          messageId: result.messageId,
+          response: result.response,
+        },
+      });
+    });
 
     return true;
   } catch (err: any) {
-    await addStoreDoc(
-      "email_logs",
-      {
-        sender: from,
-        receiver: to,
-        subject,
-        html,
-        status: "error",
-        timestamp: new Date(),
-        response: err.message,
-      },
-      store_id
-    );
+    await prisma.$transaction(async (tx) => {
+      const counter = await tx.storeCounter.update({
+        where: { storeId },
+        data: { emailLogCounter: { increment: 1 } },
+      });
+
+      await tx.emailLog.create({
+        data: {
+          storeId,
+          sender: from,
+          receiver: to,
+          subject,
+          html,
+          uid: uuidv4(),
+          status: "error",
+          storeScopedId: counter.emailLogCounter,
+          timestamp: new Date(),
+          response: err.message,
+        },
+      });
+    });
     return false;
   }
 }
@@ -105,26 +128,27 @@ export async function sendEmail(
   from = '"Valid Panel" <contact@validpanel.com>',
   type: string,
   data: Record<string, any>,
-  store_id: number
+  storeId: number
 ): Promise<void> {
   try {
-    if (type === "new_order" && data.price <= 0) return;
+    if (type === "newOrder" && data.price <= 0) return;
 
-    const [logo, recipients] = await Promise.all([
-      loadGeneralSettings(store_id).then((g) => g.logo_url),
-      loadAdminEmails(store_id),
+    const [generalSettings, recipients] = await Promise.all([
+      loadGeneralSettings(storeId),
+      loadAdminEmails(storeId),
     ]);
 
+    const logoUrl = generalSettings?.logoUrl || "";
     const { subject, html } = await buildEmailTemplate(
       type,
       data,
-      logo,
-      store_id
+      logoUrl,
+      storeId
     );
 
     await Promise.all(
       recipients.map((to) =>
-        dispatchEmail({ from, to, subject, html, store_id })
+        dispatchEmail({ from, to, subject, html, storeId })
       )
     );
   } catch (err: any) {
@@ -137,17 +161,18 @@ export async function sendUserEmail(
   to: string,
   type: string,
   data: Record<string, any>,
-  store_id: number
+  storeId: number
 ): Promise<void> {
   try {
-    const logo = (await loadGeneralSettings(store_id)).logo_url;
+    const generalSettings = await loadGeneralSettings(storeId);
+    const logoUrl = generalSettings?.logoUrl || "";
     const { subject, html } = await buildEmailTemplate(
       type,
       data,
-      logo,
-      store_id
+      logoUrl,
+      storeId
     );
-    await dispatchEmail({ from, to, subject, html, store_id });
+    await dispatchEmail({ from, to, subject, html, storeId });
   } catch (err: any) {
     console.error({ error: err.message });
   }

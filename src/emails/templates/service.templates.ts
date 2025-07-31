@@ -5,8 +5,8 @@ interface NewServiceVars {
   category: string;
   min: number;
   max: number;
-  provider_price: number;
-  provider_currency: string;
+  providerPrice: number;
+  providerCurrency: string;
   price: number;
   provider: string;
   logo: string;
@@ -19,8 +19,8 @@ const newService = ({
   category,
   min,
   max,
-  provider_price,
-  provider_currency,
+  providerPrice,
+  providerCurrency,
   price,
   provider,
   logo,
@@ -79,7 +79,7 @@ const newService = ({
           <p><strong>Category:</strong> ${category}</p>
           <p><strong>Min:</strong> ${min}</p>
           <p><strong>Max:</strong> ${max}</p>
-          <p><strong>Provider Price:</strong> ${provider_price} ${provider_currency}</p>
+          <p><strong>Provider Price:</strong> ${providerPrice} ${providerCurrency}</p>
           <p><strong>Price:</strong> $${price}</p>
           <p><strong>Provider:</strong> ${provider}</p>
         </div>

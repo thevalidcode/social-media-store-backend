@@ -41,7 +41,7 @@ Get started by setting up the project locally. Follow these steps:
   JWT_SECRET=your_jwt_secret
   GOOGLE_CLIENT_ID=your_google_client_id
   MASTER_KEY=your_master_key # 32-character encryption key
-  RATE_KEY=your_apilayer_api_key
+  RATE_KEY=your_apilayer_apiKey
   NODE_ENV=development # or production
   ```
 - **Run the Application**:

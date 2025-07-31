@@ -1,17 +1,12 @@
 import { z } from "zod";
-import {
-  getDocs,
-  addStoreDoc,
-  updateStoreDoc,
-  deleteStoreDoc,
-  deleteStoreDocs,
-} from "../crud";
 import type { Request, Response } from "express";
+import { prisma } from "../config/db";
 import { AuthSchema } from "../schemas/user.schema";
+import { v4 as uuidv4 } from "uuid";
 
 const categoryIdSchema = z.object({
-  category_id: z.coerce.number(),
-  store_id: z.coerce.number(),
+  categoryId: z.coerce.number(),
+  storeId: z.coerce.number(),
 });
 
 const updateCategorySchema = z.object({
@@ -29,17 +24,21 @@ export const getCategories = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const parsed = z.object({ store_id: z.coerce.number() }).safeParse(req.query);
+  const parsed = z.object({ storeId: z.coerce.number() }).safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { store_id } = parsed.data;
+
+  const { storeId } = parsed.data;
 
   try {
-    const categories = await getDocs("categories", store_id);
-    const sorted = categories.sort((a: any, b: any) => a.position - b.position);
-    res.status(200).json(sorted);
+    const categories = await prisma.category.findMany({
+      where: { storeId },
+      orderBy: { position: "asc" },
+    });
+
+    res.status(200).json(categories);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -54,12 +53,14 @@ export const getCategoryByID = async (
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { category_id, store_id } = parsed.data;
+
+  const { categoryId, storeId } = parsed.data;
 
   try {
-    const category = await getDocs("categories", store_id, {
-      find: { field: "id", operator: "===", value: category_id },
+    const category = await prisma.category.findFirst({
+      where: { id: categoryId, storeId },
     });
+
     res.status(200).json({ category });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -72,6 +73,7 @@ export const updateCategory = async (
 ): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = updateCategorySchema.safeParse(req.body);
+
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -80,19 +82,20 @@ export const updateCategory = async (
     res.status(400).json({ error: authParsed.error.flatten() });
     return;
   }
-  const { uid } = parsed.data;
-  const { store_id, role } = authParsed.data;
 
-  if (role === "user") {
-    res.status(403).json({ error: "Unauthorised User." });
-    return;
-  }
+  const { uid } = parsed.data;
+  const { storeId } = authParsed.data;
 
   try {
-    await updateStoreDoc("categories", uid, parsed.data, store_id);
-    const category = await getDocs("categories", store_id, {
-      find: { field: "uid", operator: "===", value: uid },
+    await prisma.category.update({
+      where: { uid, storeId },
+      data: parsed.data,
     });
+
+    const category = await prisma.category.findFirst({
+      where: { uid, storeId },
+    });
+
     res
       .status(200)
       .json({ success: "Category updated successfully.", category });
@@ -107,6 +110,7 @@ export const deleteCategory = async (
 ): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = deleteCategorySchema.safeParse(req.body);
+
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -115,16 +119,15 @@ export const deleteCategory = async (
     res.status(400).json({ error: authParsed.error.flatten() });
     return;
   }
-  const { uid } = parsed.data;
-  const { role, store_id } = authParsed.data;
 
-  if (role === "user") {
-    res.status(403).json({ error: "Unauthorised User." });
-    return;
-  }
+  const { uid } = parsed.data;
+  const { storeId } = authParsed.data;
 
   try {
-    await deleteStoreDoc("categories", uid, store_id);
+    await prisma.category.delete({
+      where: { uid, storeId },
+    });
+
     res.status(200).json({ success: "Category deleted successfully." });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -152,15 +155,16 @@ export const deleteMultipleCategory = async (
   }
 
   const { uids } = parsed.data;
-  const { role, store_id } = authParsed.data;
-
-  if (role === "user") {
-    res.status(403).json({ error: "Unauthorised User." });
-    return;
-  }
+  const { storeId } = authParsed.data;
 
   try {
-    await deleteStoreDocs("categories", uids, store_id);
+    await prisma.category.deleteMany({
+      where: {
+        uid: { in: uids },
+        storeId,
+      },
+    });
+
     res.status(200).json({ success: "Categories deleted successfully." });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -188,28 +192,41 @@ export const addCategory = async (
     return;
   }
 
-  const { role, store_id } = authParsed.data;
-  if (role === "user") {
-    res.status(403).json({ error: "Unauthorised User." });
-    return;
-  }
+  const { storeId } = authParsed.data;
 
   try {
-    const categories = await getDocs("categories", store_id);
-    const newId =
-      categories.reduce((max: number, c: any) => Math.max(max, c.id), 0) + 1;
+    const newCategory = await prisma.$transaction(async (tx) => {
+      const counter = await tx.storeCounter.update({
+        where: { storeId },
+        data: { categoryCounter: { increment: 1 } },
+      });
 
-    const categoryData = {
-      name: parsed.data.name,
-      description: parsed.data.description || "",
-      status: "Active",
-      position: newId,
-    };
+      const lastCategory = await tx.category.findFirst({
+        where: { storeId },
+        orderBy: { position: "desc" },
+        select: { position: true },
+      });
 
-    await addStoreDoc("categories", categoryData, store_id);
+      const newPosition = lastCategory ? lastCategory.position + 1 : 1;
+
+      const category = await tx.category.create({
+        data: {
+          name: parsed.data.name,
+          description: parsed.data.description || "",
+          status: "active",
+          position: newPosition,
+          uid: uuidv4(),
+          storeId,
+          storeScopedId: counter.categoryCounter,
+        },
+      });
+
+      return category;
+    });
+
     res.status(200).json({
       success: "Category added successfully.",
-      category: categoryData,
+      category: newCategory,
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

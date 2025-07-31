@@ -1,20 +1,14 @@
 import { z } from "zod";
 import axios from "axios";
 import type { Request, Response } from "express";
-
-import {
-  getDocs,
-  addStoreDoc,
-  updateStoreDoc,
-  deleteStoreDoc,
-  deleteStoreDocs,
-} from "../crud";
+import { prisma } from "../config/db";
 import { decryptKey, encryptKey } from "../utils/encrypt";
 import { AuthSchema } from "../schemas/user.schema";
 import {
   ImportProviderServicesRequestSchema,
   ProviderServicesSchema,
 } from "../schemas/provider.schema";
+import { v4 as uuidv4 } from "uuid";
 
 export const getProviderServices = async (
   req: Request,
@@ -22,6 +16,7 @@ export const getProviderServices = async (
 ): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const bodyParsed = ProviderServicesSchema.safeParse(req.body);
+
   if (!authParsed.success || !bodyParsed.success) {
     res.status(400).json({
       error: {
@@ -32,27 +27,24 @@ export const getProviderServices = async (
     return;
   }
 
-  const { store_id, role } = authParsed.data;
+  const { storeId } = authParsed.data;
   const { provider } = bodyParsed.data;
 
-  if (role === "user") {
-    res.status(403).json({ error: "Access denied. Admins only." });
-    return;
-  }
   try {
-    const providerData = await getDocs("providers", store_id, {
-      find: { url: provider },
+    const providerData = await prisma.provider.findFirst({
+      where: { storeId, url: provider },
     });
 
     if (!providerData) {
       res.status(404).json({ error: "Provider not found." });
       return;
     }
+    const apiKeyData = providerData.apiKey as {
+      encrypted_key: string;
+      iv: string;
+    };
 
-    const decryptedKey = decryptKey(
-      providerData.api_key.encrypted_key,
-      providerData.api_key.iv
-    );
+    const decryptedKey = decryptKey(apiKeyData.encrypted_key, apiKeyData.iv);
 
     const providerResponse = await axios.post(`${provider}`, {
       action: "services",
@@ -82,27 +74,26 @@ export const importServices = async (
     return;
   }
 
-  const { store_id, role } = authParsed.data;
-  const { provider_services_id, import_percent, category, provider } =
+  const { storeId } = authParsed.data;
+  const { providerServicesId, importPercent, category, provider } =
     bodyParsed.data;
 
-  if (role === "user") {
-    res.status(403).json({ error: "Access denied. Admins only." });
-    return;
-  }
-
   try {
-    const [services, categories, providers] = await Promise.all([
-      getDocs("services", store_id),
-      getDocs("categories", store_id),
-      getDocs("providers", store_id, { find: { url: provider } }),
-    ]);
+    const providerData = await prisma.provider.findFirst({
+      where: { storeId, url: provider },
+    });
 
-    const providerData = providers;
-    const decryptedKey = decryptKey(
-      providerData.api_key.encrypted_key,
-      providerData.api_key.iv
-    );
+    if (!providerData) {
+      res.status(404).json({ error: "Provider not found." });
+      return;
+    }
+
+    const apiKeyData = providerData.apiKey as {
+      encrypted_key: string;
+      iv: string;
+    };
+
+    const decryptedKey = decryptKey(apiKeyData.encrypted_key, apiKeyData.iv);
 
     const [{ data: balanceData }, { data: providerServices }] =
       await Promise.all([
@@ -110,82 +101,118 @@ export const importServices = async (
         axios.post(provider, { action: "services", key: decryptedKey }),
       ]);
 
-    const provider_currency = balanceData.currency.toUpperCase();
+    const providerCurrency = balanceData.currency.toUpperCase();
 
-    let maxServiceId = services.reduce(
-      (max: any, svc: any) => Math.max(max, svc.id),
-      0
-    );
-    let categoryId = categories.length;
-
-    for (const providerServiceId of provider_services_id) {
-      const service = providerServices.find(
-        (s: any) => parseInt(s.service) === providerServiceId
+    const newServices = await prisma.$transaction(async (tx) => {
+      // Preload existing services to avoid duplicate checks per loop
+      const existingServices = await tx.service.findMany({
+        where: { storeId },
+        select: { providerId: true },
+      });
+      const existingProviderIds = new Set(
+        existingServices.map((s) => s.providerId)
       );
-      if (!service) continue;
 
-      const baseRate = parseFloat(service.rate);
-      const finalPrice = parseFloat(
-        (baseRate + (baseRate * import_percent) / 100).toFixed(2)
+      // Preload categories and cache them
+      const categories = await tx.category.findMany({ where: { storeId } });
+      const categoryCache = new Map(
+        categories.map((c) => [c.name.toLowerCase(), c])
       );
-      maxServiceId++;
 
-      let serviceCategory = category.label;
-      if (category.value === "createSameCategory") {
-        const existingCategory = categories.find(
-          (c: any) => c.name === service.category
+      // Get and increment service counter
+      const counter = await tx.storeCounter.update({
+        where: { storeId },
+        data: { serviceCounter: { increment: providerServicesId.length } },
+      });
+
+      let currentServiceId = counter.serviceCounter - providerServicesId.length;
+      const servicesToCreate: any[] = [];
+      let actualCreatedCount = 0;
+
+      for (const providerServiceId of providerServicesId) {
+        const service = providerServices.find(
+          (s: any) => parseInt(s.service) === providerServiceId
         );
-        if (!existingCategory) {
-          categoryId++;
-          await addStoreDoc(
-            "categories",
-            {
-              name: service.category,
-              status: "active",
-              position: categoryId,
-            },
-            store_id
-          );
+        if (!service) continue;
+
+        const providerId = parseInt(service.service);
+        if (existingProviderIds.has(providerId)) continue;
+
+        const baseRate = parseFloat(service.rate);
+        const finalPrice = parseFloat(
+          (baseRate + (baseRate * importPercent) / 100).toFixed(2)
+        );
+
+        currentServiceId++;
+
+        let serviceCategory = category.label;
+        if (category.value === "createSameCategory") {
+          const categoryName = service.category.toLowerCase();
+          if (!categoryCache.has(categoryName)) {
+            const catCounter = await tx.storeCounter.update({
+              where: { storeId },
+              data: { categoryCounter: { increment: 1 } },
+            });
+
+            const newCategory = await tx.category.create({
+              data: {
+                name: service.category,
+                status: "active",
+                position: catCounter.categoryCounter,
+                uid: uuidv4(),
+                storeId,
+                storeScopedId: catCounter.categoryCounter,
+              },
+            });
+
+            categoryCache.set(categoryName, newCategory);
+          }
+
+          serviceCategory = categoryCache.get(categoryName)!.name;
         }
-        serviceCategory = service.category;
-      }
 
-      const alreadyExists = services.some(
-        (svc: any) => svc.provider_id === parseInt(service.service)
-      );
-      if (alreadyExists) continue;
-
-      await addStoreDoc(
-        "services",
-        {
-          id: maxServiceId,
+        servicesToCreate.push({
+          id: currentServiceId,
           name: service.name,
           category: serviceCategory,
           type: service.type,
           min: parseInt(service.min),
           max: parseInt(service.max),
-          provider_id: parseInt(service.service),
+          providerId,
           description: service.description || "",
-          provider_price: baseRate,
-          store_id,
+          providerPrice: baseRate,
+          storeId,
           status: "active",
-          sync_quantity: true,
-          sync_cat_and_name: true,
+          syncQuantity: true,
+          syncCatAndName: true,
           price: finalPrice,
-          position: maxServiceId,
+          position: currentServiceId,
           cancel: service.cancel,
           network: service.network || "None",
           refill: service.refill,
-          percentage: import_percent,
-          drip_feed: false,
+          percentage: importPercent,
+          dripFeed: false,
           provider,
-          provider_currency,
-        },
-        store_id
-      );
-    }
+          providerCurrency: providerCurrency,
+          uid: uuidv4(),
+          storeScopedId: currentServiceId,
+        });
 
-    res.status(200).send({ success: "Services imported successfully." });
+        actualCreatedCount++;
+      }
+
+      // Bulk insert services
+      if (servicesToCreate.length > 0) {
+        await tx.service.createMany({ data: servicesToCreate });
+      }
+
+      return actualCreatedCount;
+    });
+
+    res.status(200).json({
+      success: "Services imported successfully.",
+      imported: newServices,
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -194,7 +221,7 @@ export const importServices = async (
 const addProviderSchema = z.object({
   percentage: z.coerce.number(),
   name: z.string(),
-  api_key: z.string().trim(),
+  apiKey: z.string().trim(),
   url: z.string(),
   sync: z.boolean(),
 });
@@ -216,30 +243,47 @@ export const addProvider = async (
     return;
   }
 
-  const { store_id, role } = authParsed.data;
+  const { storeId } = authParsed.data;
   const reqData = bodyParsed.data;
 
-  if (role === "user") {
-    res.status(403).json({ error: "Access denied. Admins only." });
-    return;
-  }
-
   try {
-    const encryptedKey = encryptKey(reqData.api_key);
+    const encrypted_key = encryptKey(reqData.apiKey);
 
-    const newProvider = {
-      ...reqData,
-      api_key: encryptedKey,
-    };
-    const existingProviders = await getDocs("providers", store_id, {
-      find: { url: newProvider.url },
+    const existingProvider = await prisma.provider.findFirst({
+      where: { storeId, url: reqData.url },
     });
-    if (existingProviders) {
+
+    if (existingProvider) {
       res.status(400).json({ error: "Provider already exists." });
       return;
     }
 
-    await addStoreDoc("providers", newProvider, store_id);
+    await prisma.$transaction(async (tx) => {
+      const counter = await tx.storeCounter.update({
+        where: { storeId },
+        data: { providerCounter: { increment: 1 } },
+      });
+
+      const provider = await tx.provider.create({
+        data: {
+          uid: uuidv4(),
+          storeId,
+          storeScopedId: counter.providerCounter,
+          name: reqData.name,
+          url: reqData.url,
+          sync: reqData.sync,
+          percentage: reqData.percentage,
+          apiKey: JSON.parse(JSON.stringify(encrypted_key)),
+        },
+      });
+
+      return provider;
+    });
+
+    res.status(200).json({
+      success: "Provider created successfully",
+    });
+
     res.status(200).json({ success: "Added Provider successfully." });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -254,21 +298,27 @@ export const getProviders = async (
 
   if (!authParsed.success) {
     res.status(400).json({
-      error: !authParsed.success ? authParsed.error.flatten() : undefined,
+      error: authParsed.error.flatten(),
     });
     return;
   }
 
-  const { store_id, role } = authParsed.data;
-
-  if (role === "user") {
-    res.status(403).json({ error: "Access denied. Admins only." });
-    return;
-  }
+  const { storeId } = authParsed.data;
 
   try {
-    const providers = await getDocs("providers", store_id, {
-      removeKeys: ["api_key"],
+    const providers = await prisma.provider.findMany({
+      where: { storeId },
+      select: {
+        id: true,
+        uid: true,
+        name: true,
+        url: true,
+        sync: true,
+        percentage: true,
+        createdAt: true,
+        storeScopedId: true,
+      },
+      orderBy: { id: "desc" },
     });
 
     res.status(200).json({ providers });
@@ -280,7 +330,7 @@ export const getProviders = async (
 const updateProviderSchema = z.object({
   percentage: z.coerce.number().optional(),
   name: z.string().optional(),
-  api_key: z.string().trim(),
+  apiKey: z.string().trim(),
   url: z.string().optional(),
   sync: z.boolean().optional(),
   uid: z.string(),
@@ -292,35 +342,39 @@ export const updateProvider = async (
 ): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = updateProviderSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
-    return;
-  }
-  if (!authParsed.success) {
-    res.status(400).json({ error: authParsed.error.flatten() });
-    return;
-  }
-  const reqData = parsed.data;
-  const { store_id, role } = authParsed.data;
 
-  if (role === "user") {
-    res.status(403).json({ error: "Unauthorised User." });
-    return;
-  }
-  try {
-    const key = encryptKey(reqData.api_key);
-    const newProvider = {
-      ...reqData,
-      api_key: key,
-    };
-    await updateStoreDoc("providers", reqData.uid, newProvider, store_id);
-
-    const service = await getDocs("providers", store_id, {
-      find: { uid: reqData.uid },
+  if (!parsed.success || !authParsed.success) {
+    res.status(400).json({
+      error: {
+        auth: authParsed.error?.flatten(),
+        body: parsed.error?.flatten(),
+      },
     });
-    res
-      .status(200)
-      .json({ success: "Provider updated successfully.", service });
+    return;
+  }
+
+  const { storeId } = authParsed.data;
+  const reqData = parsed.data;
+
+  try {
+    const encryptedKey = encryptKey(reqData.apiKey);
+
+    await prisma.provider.updateMany({
+      where: { uid: reqData.uid, storeId },
+      data: {
+        ...reqData,
+        apiKey: JSON.parse(JSON.stringify(encryptedKey)),
+      },
+    });
+
+    const provider = await prisma.provider.findFirst({
+      where: { uid: reqData.uid, storeId },
+    });
+
+    res.status(200).json({
+      success: "Provider updated successfully.",
+      provider,
+    });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -340,23 +394,21 @@ export const deleteProvider = async (
   if (!authParsed.success || !parsed.success) {
     res.status(400).json({
       error: {
-        auth: !authParsed.success ? authParsed.error.flatten() : undefined,
-        body: !parsed.success ? parsed.error.flatten() : undefined,
+        auth: authParsed.error?.flatten(),
+        body: parsed.error?.flatten(),
       },
     });
     return;
   }
 
-  const { store_id, role } = authParsed.data;
+  const { storeId } = authParsed.data;
   const { uid } = parsed.data;
 
-  if (role === "user") {
-    res.status(403).json({ error: "Access denied. Admins only." });
-    return;
-  }
-
   try {
-    await deleteStoreDoc("providers", uid, store_id);
+    await prisma.provider.deleteMany({
+      where: { uid, storeId },
+    });
+
     res.status(200).json({ success: "Provider deleted successfully." });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -377,23 +429,24 @@ export const deleteMultipleProviders = async (
   if (!authParsed.success || !parsed.success) {
     res.status(400).json({
       error: {
-        auth: !authParsed.success ? authParsed.error.flatten() : undefined,
-        body: !parsed.success ? parsed.error.flatten() : undefined,
+        auth: authParsed.error?.flatten(),
+        body: parsed.error?.flatten(),
       },
     });
     return;
   }
 
-  const { store_id, role } = authParsed.data;
+  const { storeId } = authParsed.data;
   const { uids } = parsed.data;
 
-  if (role === "user") {
-    res.status(403).json({ error: "Access denied. Admins only." });
-    return;
-  }
-
   try {
-    await deleteStoreDocs("providers", uids, store_id);
+    await prisma.provider.deleteMany({
+      where: {
+        uid: { in: uids },
+        storeId,
+      },
+    });
+
     res.status(200).json({ success: "Providers deleted successfully." });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

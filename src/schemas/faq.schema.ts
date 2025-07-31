@@ -4,7 +4,7 @@ import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 extendZodWithOpenApi(z);
 
 export const faqIdSchema = z.object({
-  faq_id: z.coerce.number(),
+  faqId: z.coerce.number(),
 });
 
 export const createFAQSchema = z.object({

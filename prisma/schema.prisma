@@ -9,7 +9,7 @@ datasource db {
 }
 
 model Store {
-  storeId    Int      @id @map("store_id")
+  storeId   Int      @id @map("store_id")
   uid       String   @unique
   ssl       Boolean  @default(false)
   plan      String   @default("starter")
@@ -19,7 +19,7 @@ model Store {
   // Relations
   User             User[]
   Admin            Admin[]
-  Product          Product[]
+  Service          Service[]
   Order            Order[]
   AdminEmail       AdminEmail[]
   AffiliateSetting AffiliateSetting[]
@@ -31,33 +31,42 @@ model Store {
   Faq              Faq[]
   General          General[]
   SessionCode      SessionCode[]
-  
+  Provider         Provider[]
+  Refill           Refill[]
+  UploadLog        UploadLog[]
+  Transaction      Transaction[]
+  ReferralOrder    ReferralOrder[]
+
+  storeCounter StoreCounter?
+
   @@map("stores")
 }
 
 model User {
-  id         Int
-  refCode    Int?     @unique @default(autoincrement()) @map("ref_code")
-  uid        String   @id
-  email      String
-  image      String?
-  password   String
-  username   String
-  apiKey     String   @unique @map("api_key")
-  role       String   @default("user")
-  status     String   @default("active")
-  storeId     Int      @map("store_id")
-  store       Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
-  balance    Decimal  @default(0.00) @db.Decimal(10, 2)
-  spent      Decimal  @default(0.00) @db.Decimal(10, 2)
-  timestamp  DateTime @default(now())
-  lastSeen   DateTime @default(now()) @map("last_seen")
-  currency   String   @default("USD")
-  
-  ref        Int?
-  referredBy User?    @relation("Referral", fields: [ref], references: [refCode], onDelete: SetNull)
-  referrals  User[]   @relation("Referral") 
+  id            Int      @id @default(autoincrement())
+  storeScopedId Int      @map("store_scoped_id")
+  refCode       Int?     @unique @default(autoincrement()) @map("ref_code")
+  uid           String   @unique
+  email         String
+  image         String?
+  password      String
+  username      String
+  apiKey        String   @unique @map("api_key")
+  role          String   @default("user")
+  status        String   @default("active")
+  storeId       Int      @map("store_id")
+  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  balance       Decimal  @default(0.00) @db.Decimal(10, 2)
+  spent         Decimal  @default(0.00) @db.Decimal(10, 2)
+  timestamp     DateTime @default(now())
+  lastSeen      DateTime @default(now()) @map("last_seen")
+  currency      String   @default("USD")
 
+  ref        Int?
+  referredBy User?  @relation("Referral", fields: [ref], references: [refCode], onDelete: SetNull)
+  referrals  User[] @relation("Referral")
+
+  @@unique([storeId, storeScopedId])
   @@map("users")
 }
 
@@ -71,66 +80,81 @@ model Admin {
   apiKey    String   @unique @map("api_key")
   role      String   @default("admin")
   status    String   @default("active")
-  storeId    Int      @map("store_id")
-  store      Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  storeId   Int      @map("store_id")
+  store     Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
   timestamp DateTime @default(now())
   lastSeen  DateTime @default(now()) @map("last_seen")
 
   @@map("admins")
 }
 
-model Product {
-  id             Int       @map("id")
-  uid            String    @id
-  name           String
-  description    String?
-  category       String
-  type           String
-  min            Int       @default(1)
-  max            Int       @default(1)
-  position       Int       @default(1)
-  status         String    @default("active")
-  stock          Int       @default(0)
-  sku            String?
-  imageUrl       String?   @map("image_url")
-  galleryUrls    String[]  @map("gallery_urls")
-  tags           String[]
-  isFeatured     Boolean   @default(false) @map("is_featured")
-  brand          String?
-  weight         Decimal?  
-  dimensions     String?
-  price          Decimal   @default(0.00)
-  comparePrice   Decimal?  @map("compare_price")
-  discountType   String?   @map("discount_type")
-  discountValue  Decimal?  @map("discount_value")
-  slug           String
-  storeId         Int       @map("store_id")
-  timestamp      DateTime  @default(now())
+model Service {
+  id               Int      @id @default(autoincrement())
+  storeScopedId    Int      @map("store_scoped_id")
+  uid              String   @unique
+  name             String
+  description      String?
+  category         String
+  type             String   @default("Default")
+  min              Int      @default(1)
+  max              Int      @default(1)
+  position         Int      @default(1)
+  status           String   @default("active")
+  providerId       Int?     @map("provider_id")
+  providerPrice    Decimal? @map("provider_price") @db.Decimal(10, 2)
+  storeId          Int      @map("store_id")
+  store            Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  timestamp        DateTime @default(now())
+  syncQuantity     Boolean? @default(true) @map("sync_quantity")
+  syncCatAndName   Boolean? @default(true) @map("sync_cat_and_name")
+  cancel           Boolean?
+  network          String?
+  refill           Boolean?
+  percentage       Float?
+  dripFeed         Boolean? @default(false) @map("drip_feed")
+  provider         String?
+  providerCurrency String?  @map("provider_currency")
+  refillDays       Int?     @map("refill_days")
+  price            Decimal  @default(0.00) @db.Decimal(10, 2)
 
-  store           Store      @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
-
-  @@map("products")
+  @@unique([storeId, storeScopedId])
+  @@map("services")
 }
 
 model Order {
-  id                 Int      @map("id")
-  uid                String   @id
-  userUid            String   @map("user_uid")
-  productId          Int      @map("product_id")
-  price              Decimal  @default(0)
+  id                 Int       @id @default(autoincrement())
+  storeScopedId      Int       @map("store_scoped_id")
+  uid                String    @unique
+  timestamp          DateTime  @default(now())
+  userUid            String    @map("user_uid")
+  serviceUid         String    @map("service_uid")
+  currency           String    @default("USD")
+  status             String    @default("Pending")
+  syncOrder          Boolean   @default(true) @map("sync_order")
+  synced             Boolean   @default(false)
+  providerCurrency   String?   @map("provider_currency")
+  providerPrice      Decimal?  @map("provider_price") @db.Decimal(10, 2)
+  providerOrderId    Int?      @map("provider_order_id")
+  provider           String?
+  providerError      String?   @map("provider_error")
   quantity           Int
-  currency           String   @default("USD")
-  status             String   @default("Pending")
-  shippingAddress    String   @map("shipping_address")
-  billingAddress     String   @map("billing_address")
-  paymentMethod      String   @map("payment_method")
-  trackingNumber     String?  @map("tracking_number")
-  estimatedDelivery  DateTime? @map("estimated_delivery")
-  deliveredAt        DateTime? @map("delivered_at")
-  timestamp          DateTime @default(now())
-  storeId             Int      @map("store_id")
-  store               Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  retryCount         Int?      @map("retry_count")
+  url                String
+  lastRunTime        DateTime? @map("last_run_time")
+  comments           String    @default("")
+  dripFeed           Boolean   @default(false) @map("drip_feed")
+  interval           Int?      @default(0)
+  runs               Int?      @default(0)
+  processedRuns      Int?      @default(0) @map("processed_runs")
+  start              Int       @default(0)
+  userInitialBalance Decimal   @default(0.00) @map("user_initial_balance") @db.Decimal(10, 2)
+  userFinalBalance   Decimal   @default(0.00) @map("user_final_balance") @db.Decimal(10, 2)
+  price              Decimal   @default(0.00) @db.Decimal(10, 2)
+  remains            Int       @default(0)
+  storeId            Int       @map("store_id")
+  store              Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
+  @@unique([storeId, storeScopedId])
   @@map("orders")
 }
 
@@ -138,8 +162,8 @@ model AdminEmail {
   id        Int      @id @default(autoincrement())
   uid       String   @unique
   emails    String[]
-  storeId    Int      @map("store_id")
-  store      Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  storeId   Int      @map("store_id")
+  store     Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
   timestamp DateTime @default(now())
 
   @@map("admins_emails")
@@ -150,44 +174,44 @@ model AffiliateSetting {
   uid     String @id
   percent Int
   mode    String @default("percentage")
-  storeId  Int    @map("store_id")
-  store    Store   @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  storeId Int    @map("store_id")
+  store   Store  @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@map("affiliate_settings")
 }
 
 model Blog {
-  id          Int      @map("id")
-  title       String
-  content     String
-  description String   @default("")
-  status      String   @default("active")
-  position    Int
-  slug        String
-  uid         String   @id
-  storeId      Int      @map("store_id")
-  store        Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
-  timestamp   DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  storeScopedId Int      @map("store_scoped_id")
+  title         String
+  content       String
+  description   String   @default("")
+  coverImage    String   @default("") @map("cover_image")
+  status        String   @default("active")
+  position      Int
+  slug          String
+  uid           String   @unique
+  storeId       Int      @map("store_id")
+  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  timestamp     DateTime @default(now())
 
+  @@unique([storeId, storeScopedId])
   @@map("blogs")
 }
 
 model Category {
-  id          Int      @map("id")
-  uid         String   @id
-  name        String
-  slug        String
-  description String   @default("")
-  imageUrl    String?  @map("image_url")
-  bannerUrl   String?  @map("banner_url")
-  iconUrl     String?  @map("icon_url")
-  status      String   @default("active")
-  position    Int      @default(1)
-  parentUid   String?  @map("parent_uid")
-  storeId      Int      @map("store_id")
-  store        Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
-  timestamp   DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  storeScopedId Int      @map("store_scoped_id")
+  name          String
+  timestamp     DateTime @default(now())
+  status        String   @default("active")
+  description   String   @default("")
+  position      Int
+  uid           String   @unique @map("uid")
+  storeId       Int      @map("store_id")
+  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
+  @@unique([storeId, storeScopedId])
   @@map("categories")
 }
 
@@ -201,81 +225,197 @@ model Currency {
 }
 
 model DesignStyle {
-  id      Int    @map("id")
-  uid     String @id
-  storeId  Int    @map("store_id")
-  store    Store   @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
-  title   String
-  hex     String
-  schema  Json
+  id            Int    @id @default(autoincrement())
+  storeScopedId Int    @map("store_scoped_id")
+  uid           String @unique
+  storeId       Int    @map("store_id")
+  store         Store  @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  title         String
+  hex           String
+  schema        Json
 
+  @@unique([storeId, storeScopedId])
   @@map("design_styles")
 }
 
 model EmailLog {
-  id        Int      @map("id")
-  uid       String   @id
-  sender    String
-  receiver  String
-  subject   String
-  html      String
-  status    String
-  messageId String?  @map("message_id")
-  response  String?
-  storeId    Int      @map("store_id")
-  store      Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
-  timestamp DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  storeScopedId Int      @map("store_scoped_id")
+  uid           String   @unique
+  sender        String
+  receiver      String
+  subject       String
+  html          String
+  status        String
+  messageId     String?  @map("message_id")
+  response      String?
+  storeId       Int      @map("store_id")
+  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  timestamp     DateTime @default(now())
 
+  @@unique([storeId, storeScopedId])
   @@map("email_logs")
 }
 
 model EmailTemplate {
-  id        Int      @map("id")
-  uid       String   @id
-  type      String
-  content   String
-  storeId    Int      @map("store_id")
-  store      Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
-  timestamp DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  storeScopedId Int      @map("store_scoped_id")
+  uid           String   @unique
+  type          String
+  content       String
+  storeId       Int      @map("store_id")
+  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  timestamp     DateTime @default(now())
 
+  @@unique([storeId, storeScopedId])
   @@map("email_templates")
 }
 
 model Faq {
-  id        Int      @map("id")
-  question  String
-  answer    String
-  status    String   @default("active")
-  position  Int
-  slug      String
-  uid       String   @id
-  storeId    Int      @map("store_id")
-  store      Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
-  timestamp DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  storeScopedId Int      @map("store_scoped_id")
+  question      String
+  answer        String
+  status        String   @default("active")
+  position      Int
+  slug          String
+  uid           String   @unique
+  storeId       Int      @map("store_id")
+  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  timestamp     DateTime @default(now())
 
+  @@unique([storeId, storeScopedId])
   @@map("faqs")
 }
 
 model General {
-  id                    Int    @map("id")
-  uid                   String @id
-  storeId                Int    @map("store_id")
-  store                  Store   @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
-  title                 String @default("Store")
+  id                    Int     @id @default(autoincrement())
+  storeScopedId         Int     @map("store_scoped_id")
+  uid                   String  @unique
+  storeId               Int     @map("store_id")
+  store                 Store   @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  title                 String  @default("Store")
   logoUrl               String? @map("logo_url")
   faviconUrl            String? @map("favicon_url")
   defaultClientCurrency String? @map("default_client_currency")
 
+  @@unique([storeId, storeScopedId])
   @@map("general")
+}
+
+model Provider {
+  id            Int      @id @default(autoincrement())
+  storeScopedId Int      @map("store_scoped_id")
+  uid           String   @unique
+  name          String
+  apiKey        Json     @map("api_key")
+  url           String
+  sync          Boolean  @default(false)
+  percentage    Float    @default(0)
+  createdAt     DateTime @default(now()) @map("created_at")
+  storeId       Int      @map("store_id")
+  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  @@unique([storeId, storeScopedId])
+  @@map("providers")
+}
+
+model ReferralOrder {
+  id            Int      @id @default(autoincrement())
+  storeScopedId Int      @map("store_scoped_id")
+  uid           String   @unique
+  refId         Int      @unique @map("ref_id")
+  timestamp     DateTime @default(now())
+  username      String
+  currency      String   @default("USD")
+  price         Decimal  @default(0.00) @db.Decimal(10, 2)
+  storeId       Int      @map("store_id")
+  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  @@unique([storeId, storeScopedId])
+  @@map("referral_orders")
+}
+
+model Refill {
+  id              Int      @id @default(autoincrement())
+  storeScopedId   Int      @map("store_scoped_id")
+  uid             String   @unique
+  timestamp       DateTime @default(now())
+  userUid         String   @map("user_uid")
+  providerId      Int      @map("provider_id")
+  status          String   @default("Pending")
+  providerOrderId Int      @map("provider_order_id")
+  orderId         Int      @map("order_id")
+  provider        String
+  providerError   String?  @map("provider_error")
+  storeId         Int      @map("store_id")
+  store           Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  @@unique([storeId, storeScopedId])
+  @@map("refills")
 }
 
 model SessionCode {
   code      String   @id
   email     String
-  storeId    Int      @map("store_id")
-  store      Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  storeId   Int      @map("store_id")
+  store     Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
   expiresAt DateTime @map("expires_at")
   used      Boolean  @default(false)
 
   @@map("session_codes")
+}
+
+model StoreCounter {
+  storeId Int @id @map("store_id")
+
+  serviceCounter       Int @default(0) @map("service_counter")
+  orderCounter         Int @default(0) @map("order_counter")
+  blogCounter          Int @default(0) @map("blog_counter")
+  faqCounter           Int @default(0) @map("faq_counter")
+  categoryCounter      Int @default(0) @map("category_counter")
+  userCounter          Int @default(0) @map("user_counter")
+  emailLogCounter      Int @default(0) @map("email_log_counter")
+  uploadLogCounter     Int @default(0) @map("upload_log_counter")
+  providerCounter      Int @default(0) @map("provider_counter")
+  refillCounter        Int @default(0) @map("refill_counter")
+  transactionCounter   Int @default(0) @map("transaction_counter")
+  referralOrderCounter Int @default(0) @map("referral_order_counter")
+
+  store Store @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  @@map("store_counters")
+}
+
+model Transaction {
+  id            Int      @id @default(autoincrement())
+  storeScopedId Int      @map("store_scoped_id")
+  uid           String   @unique
+  amount        Decimal  @db.Decimal(10, 2)
+  timestamp     DateTime @default(now())
+  status        String
+  currency      String   @default("USD")
+  paymentMethod String   @map("payment_method")
+  userUid       String   @map("user_uid")
+  storeId       Int      @map("store_id")
+  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  @@unique([storeId, storeScopedId])
+  @@map("transactions")
+}
+
+model UploadLog {
+  id            Int      @id @default(autoincrement())
+  storeScopedId Int      @map("store_scoped_id")
+  uid           String   @unique
+  size          Int
+  url           String
+  filename      String
+  mimetype      String
+  storeId       Int      @map("store_id")
+  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  timestamp     DateTime @default(now())
+
+  @@unique([storeId, storeScopedId])
+  @@map("upload_logs")
 }

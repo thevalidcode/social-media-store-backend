@@ -21,7 +21,7 @@ All notable changes to this project will be documented in this file. See [standa
 ### Bug Fixes
 
 * fixed crud.js to not retrun object on single objects ([f7a69fe](https://github.com/thevalidcode/social-media-store-backend/commit/f7a69fe52beff0295e777ec7e3653ecfcd40ad82))
-* Removed the api_key for getting the user ([0acc329](https://github.com/thevalidcode/social-media-store-backend/commit/0acc329d0e02f178ae4e9746427f67a6312a18ff))
+* Removed the apiKey for getting the user ([0acc329](https://github.com/thevalidcode/social-media-store-backend/commit/0acc329d0e02f178ae4e9746427f67a6312a18ff))
 
 ### [1.5.1](https://github.com/thevalidcode/social-media-store-backend/compare/v1.5.0...v1.5.1) (2025-07-10)
 

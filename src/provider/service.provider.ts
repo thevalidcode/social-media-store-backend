@@ -1,9 +1,10 @@
-import { getDocs, addStoreDoc, updateStoreDoc } from "../crud";
 import axios from "axios";
 import https from "https";
+import { prisma } from "../config/db";
 import { sendEmail } from "../emails";
-import { pool } from "../config/db";
 import { decryptKey } from "../utils/encrypt";
+import { v4 as uuidv4 } from "uuid";
+
 const agent = new https.Agent({
   keepAlive: true,
   rejectUnauthorized: false,
@@ -17,22 +18,31 @@ const safeInt = (n: any, d = 0): number =>
 
 export const updateExistingServices = async (): Promise<void> => {
   try {
-    const storeIds = (
-      await pool.query(`SELECT DISTINCT store_id FROM services`)
-    ).rows.map((r: any) => r.store_id);
+    const storeIds = await prisma.service.findMany({
+      distinct: ["storeId"],
+      select: { storeId: true },
+    });
 
-    for (const store_id of storeIds) {
-      const services = await getDocs("services", store_id);
-      const providers = await getDocs("providers", store_id);
+    for (const { storeId } of storeIds) {
+      const services = await prisma.service.findMany({ where: { storeId } });
+      const providers = await prisma.provider.findMany({ where: { storeId } });
 
       const provCache: Record<string, any> = {};
 
       for (const svc of services) {
-        const prov = providers.find((p: any) => p.url === svc.provider);
+        const prov = providers.find((p) => p.url === svc.provider);
         if (!prov) continue;
 
         if (!provCache[prov.url]) {
-          const decryptedKey = decryptKey(prov.key.encrypted_key, prov.key.iv);
+          const apiKeyData = prov.apiKey as {
+            encrypted_key: string;
+            iv: string;
+          };
+
+          const decryptedKey = decryptKey(
+            apiKeyData.encrypted_key,
+            apiKeyData.iv
+          );
           const baseURL = `${prov.url}`;
           const [balanceRes, servicesRes] = await Promise.all([
             axios.post(
@@ -55,71 +65,43 @@ export const updateExistingServices = async (): Promise<void> => {
 
         const { currency: provCur, list } = provCache[prov.url];
         const liveSvc = list.find(
-          (x: any) => String(x.service) === String(svc.provider_id)
+          (x: any) => String(x.service) === String(svc.providerId)
         );
 
         if (!liveSvc) {
-          await updateStoreDoc(
-            "services",
-            svc.uid,
-            { status: "disabled" },
-            store_id
-          );
+          await prisma.service.update({
+            where: { uid: svc.uid },
+            data: { status: "disabled" },
+          });
           continue;
         }
 
         const calcPrice =
           safeFloat(liveSvc.rate) +
-          (safeFloat(liveSvc.rate) * svc.percentage) / 100;
+          (safeFloat(liveSvc.rate) * (svc.percentage ?? 0)) / 100;
         const priceUSD = safeFloat(calcPrice).toFixed(3);
 
-        await updateStoreDoc(
-          "services",
-          svc.uid,
-          {
+        await prisma.service.update({
+          where: { uid: svc.uid },
+          data: {
             type: liveSvc.type,
-            provider_price: safeFloat(liveSvc.rate),
+            providerPrice: safeFloat(liveSvc.rate),
             price: safeFloat(priceUSD),
             cancel: liveSvc.cancel,
-            provider_currency: provCur,
+            providerCurrency: provCur,
             network: liveSvc.network || "None",
             refill: liveSvc.refill,
-          },
-          store_id
-        );
-
-        if (liveSvc.description) {
-          await updateStoreDoc(
-            "services",
-            svc.uid,
-            { description: liveSvc.description },
-            store_id
-          );
-        }
-
-        if (svc.sync_quantity) {
-          await updateStoreDoc(
-            "services",
-            svc.uid,
-            {
+            ...(liveSvc.description && { description: liveSvc.description }),
+            ...(svc.syncQuantity && {
               min: safeInt(liveSvc.min),
               max: safeInt(liveSvc.max),
-            },
-            store_id
-          );
-        }
-
-        if (svc.sync_cat_and_name) {
-          await updateStoreDoc(
-            "services",
-            svc.uid,
-            {
+            }),
+            ...(svc.syncCatAndName && {
               name: liveSvc.name,
               category: liveSvc.category,
-            },
-            store_id
-          );
-        }
+            }),
+          },
+        });
       }
     }
   } catch (err: any) {
@@ -127,26 +109,38 @@ export const updateExistingServices = async (): Promise<void> => {
   }
 };
 
-export const syncServices = async () => {
+export const syncServices = async (): Promise<void> => {
   try {
-    const stores = await getDocs("stores");
+    const stores = await prisma.store.findMany();
 
-    for (const p of stores) {
-      const store_id = p.store_id;
-      const providers = (await getDocs("providers", store_id)).filter(
-        (pr: any) => pr.sync
-      );
+    for (const store of stores) {
+      const storeId = store.storeId;
+
+      const providers = await prisma.provider.findMany({
+        where: { storeId, sync: true },
+      });
+
       if (!providers.length) continue;
 
-      const services = await getDocs("services", store_id);
-      const categories = await getDocs("categories", store_id);
-
-      let maxId = services.reduce((m: any, s: any) => Math.max(m, s.id), 0);
-      let categoryId = categories.length;
+      const existingServices = await prisma.service.findMany({
+        where: { storeId },
+      });
+      const existingCategories = await prisma.category.findMany({
+        where: { storeId },
+      });
 
       for (const prov of providers) {
-        const decryptedKey = decryptKey(prov.key.encrypted_key, prov.key.iv);
+        const apiKeyData = prov.apiKey as {
+          encrypted_key: string;
+          iv: string;
+        };
+
+        const decryptedKey = decryptKey(
+          apiKeyData.encrypted_key,
+          apiKeyData.iv
+        );
         const baseURL = `${prov.url}`;
+
         const [{ data: balance }, { data: svcList }] = await Promise.all([
           axios.post(
             baseURL,
@@ -162,72 +156,88 @@ export const syncServices = async () => {
 
         const provCur = balance.currency.toUpperCase();
 
-        for (const s of svcList) {
-          if (!categories.some((c: any) => c.name === s.category)) {
-            categoryId++;
-            await addStoreDoc(
-              "categories",
-              {
-                name: s.category,
+        await prisma.$transaction(async (tx) => {
+          for (const s of svcList) {
+            const categoryExists = existingCategories.some(
+              (c) => c.name === s.category
+            );
+
+            if (!categoryExists) {
+              const categoryCounter = await tx.storeCounter.update({
+                where: { storeId },
+                data: { categoryCounter: { increment: 1 } },
+              });
+
+              await tx.category.create({
+                data: {
+                  name: s.category,
+                  status: "active",
+                  storeScopedId: categoryCounter.categoryCounter,
+                  uid: uuidv4(),
+                  position: categoryCounter.categoryCounter,
+                  storeId,
+                },
+              });
+            }
+
+            const exists = existingServices.find(
+              (x) => safeInt(x.providerId) === safeInt(s.service)
+            );
+            if (exists) continue;
+
+            const serviceCounter = await tx.storeCounter.update({
+              where: { storeId },
+              data: { serviceCounter: { increment: 1 } },
+            });
+
+            const calcPrice =
+              safeFloat(s.rate) + (safeFloat(s.rate) * prov.percentage) / 100;
+            const endPrice = safeFloat(calcPrice).toFixed(3);
+
+            const newService = await tx.service.create({
+              data: {
+                storeScopedId: serviceCounter.serviceCounter,
+                uid: uuidv4(),
+                name: s.name,
+                category: s.category,
+                type: s.type,
+                providerCurrency: provCur,
+                min: safeInt(s.min),
+                max: safeInt(s.max),
+                providerId: safeInt(s.service),
+                description: s.description || "",
+                providerPrice: safeFloat(s.rate),
+                storeId,
                 status: "active",
-                position: categoryId,
+                syncQuantity: true,
+                syncCatAndName: true,
+                price: safeFloat(endPrice),
+                position: serviceCounter.serviceCounter,
+                cancel: s.cancel,
+                network: s.network || "None",
+                refill: s.refill,
+                percentage: prov.percentage,
+                dripFeed: false,
+                provider: prov.url,
               },
-              store_id
-            );
+            });
+
+            try {
+              await sendEmail(
+                undefined,
+                "newService",
+                {
+                  ...newService,
+                  providerCurrency: newService.providerCurrency,
+                  providerPrice: newService.providerPrice,
+                },
+                storeId
+              );
+            } catch (err: any) {
+              console.error(`Email error (store ${storeId}):`, err.message);
+            }
           }
-
-          const exists = services.find(
-            (x: any) => safeInt(x.provider_id) === safeInt(s.service)
-          );
-          if (exists) continue;
-
-          maxId++;
-          const calcPrice =
-            safeFloat(s.rate) + (safeFloat(s.rate) * prov.percentage) / 100;
-          const endPrice = safeFloat(calcPrice).toFixed(3);
-
-          const row = {
-            id: maxId,
-            name: s.name,
-            category: s.category,
-            type: s.type,
-            provider_currency: provCur,
-            min: safeInt(s.min),
-            max: safeInt(s.max),
-            provider_id: safeInt(s.service),
-            description: s.description || "",
-            provider_price: safeFloat(s.rate),
-            store_id,
-            status: "active",
-            sync_quantity: true,
-            sync_cat_and_name: true,
-            price: safeFloat(endPrice),
-            position: maxId,
-            cancel: s.cancel,
-            network: s.network || "None",
-            refill: s.refill,
-            percentage: prov.percentage,
-            drip_feed: false,
-            provider: prov.url,
-          };
-
-          await addStoreDoc("services", row, store_id);
-
-          try {
-            await sendEmail(
-              undefined,
-              "new_service",
-              {
-                ...row,
-                provider_currency: row.provider_currency,
-                provider_price: row.provider_price,
-              },
-              store_id
-            );
-          } catch (err: any) {
-            console.error(`Email error (store ${store_id}):`, err.message);
-          }
-        }
+        });
       }
     }
   } catch (err: any) {

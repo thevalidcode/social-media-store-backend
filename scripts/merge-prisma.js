@@ -6,7 +6,7 @@ const inputDir = path.resolve("prisma/models");
 const outputFile = path.resolve("prisma/schema.prisma");
 
 // Manually define model order (add yours in correct order)
-const manualOrder = ["Store", "User", "Admin", "Product", "Order"];
+const manualOrder = ["Store", "User", "Admin", "Service", "Order"];
 
 // Load base content
 const base = fs.readFileSync(baseFile, "utf-8").trim();

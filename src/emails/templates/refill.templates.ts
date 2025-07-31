@@ -1,6 +1,6 @@
 interface RefillVars {
   id: number | string;
-  order_id: string;
+  orderId: string;
   username: string;
   number: number;
   price: number;
@@ -17,7 +17,7 @@ export const newRefill = ({
   username,
   logo,
   provider,
-  order_id,
+  orderId,
   price,
   number,
 }: RefillVars): string => `
@@ -70,7 +70,7 @@ export const newRefill = ({
         <p>A new refill has been requested on your site. Here are the details:</p>
         <div class="order-details">
           <p><strong>ID:</strong> ${id}</p>
-          <p><strong>Order ID:</strong> ${order_id}</p>
+          <p><strong>Order ID:</strong> ${orderId}</p>
           <p><strong>Username:</strong> ${username}</p>
           <p><strong>Quantity:</strong> ${number}</p>
           <p><strong>Total Price:</strong> $${price}</p>
@@ -89,7 +89,7 @@ export const newFailedRefill = ({
   username,
   logo,
   provider,
-  order_id,
+  orderId,
   price,
   number,
   error,
@@ -143,7 +143,7 @@ export const newFailedRefill = ({
         <p>A recent refill on your store didn't go through. Here are the details:</p>
         <div class="order-details">
           <p><strong>ID:</strong> ${id}</p>
-          <p><strong>Order ID:</strong> ${order_id}</p>
+          <p><strong>Order ID:</strong> ${orderId}</p>
           <p><strong>Username:</strong> ${username}</p>
           <p><strong>Quantity:</strong> ${number}</p>
           <p><strong>Total Price:</strong> $${price}</p>

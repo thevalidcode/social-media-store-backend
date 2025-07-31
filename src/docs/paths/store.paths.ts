@@ -40,15 +40,15 @@ registry.registerPath({
   },
 });
 
-// GET /store/{store_id}/general-data
+// GET /store/{storeId}/general-data
 registry.registerPath({
   method: "get",
-  path: "/store/{store_id}/general-data",
+  path: "/store/{storeId}/general-data",
   summary: "Get the general data for a store",
   tags: ["Store"],
   parameters: [
     {
-      name: "store_id",
+      name: "storeId",
       in: "path",
       required: true,
       schema: { type: "number" },
@@ -107,15 +107,15 @@ registry.registerPath({
   },
 });
 
-// GET /store/{store_id}/styles
+// GET /store/{storeId}/styles
 registry.registerPath({
   method: "get",
-  path: "/store/{store_id}/styles",
+  path: "/store/{storeId}/styles",
   summary: "Get design styles for a store",
   tags: ["Store"],
   parameters: [
     {
-      name: "store_id",
+      name: "storeId",
       in: "path",
       required: true,
       schema: { type: "number" },

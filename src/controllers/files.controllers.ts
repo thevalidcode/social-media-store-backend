@@ -1,13 +1,11 @@
-import { addStoreDoc, getDocs } from "../crud";
 import type { Request, Response } from "express";
 import { UploadImageRequest, FileSchema } from "../schemas/files.schema";
 import { AuthSchema } from "../schemas/user.schema";
 import { uploadToS3 } from "../services/s3.services";
+import { prisma } from "../config/db";
+import { v4 as uuidv4 } from "uuid";
 
-export const uploadImage = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const uploadImage = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.file) {
       res.status(400).json({ error: "No file uploaded" });
@@ -32,16 +30,14 @@ export const uploadImage = async (
       return;
     }
 
-    const { role, store_id } = authResult.data;
+    const { storeId } = authResult.data;
     const { collection } = bodyResult.data;
 
-    if (role !== "admin") {
-      res.status(403).json({ error: "Access denied. Admins only." });
-      return;
-    }
+    const store = await prisma.store.findUnique({
+      where: { storeId },
+    });
 
-    const store = await getDocs("stores", store_id);
-    if (!store || !store.length) {
+    if (!store) {
       res.status(404).json({ error: "Store not found" });
       return;
     }
@@ -52,27 +48,37 @@ export const uploadImage = async (
       .toLowerCase();
 
     const buffer = req.file.buffer;
-    const s3Url = await uploadToS3(buffer, safeName, store_id, collection);
+    const s3Url = await uploadToS3(buffer, safeName, storeId, collection);
 
     if (!s3Url) {
       res.status(500).json({ error: "Failed to upload image to S3" });
       return;
     }
 
-    await addStoreDoc(
-      "upload_logs",
-      {
-        filename: safeName,
-        url: s3Url,
-        mimetype: req.file.mimetype,
-        size: req.file.size,
-      },
-      store_id
-    );
+    const uploadLog = await prisma.$transaction(async (tx) => {
+      const counter = await tx.storeCounter.update({
+        where: { storeId },
+        data: { uploadLogCounter: { increment: 1 } },
+      });
+
+      const log = await tx.uploadLog.create({
+        data: {
+          uid: uuidv4(),
+          storeId,
+          storeScopedId: counter.uploadLogCounter,
+          filename: safeName,
+          url: s3Url,
+          mimetype: req.file?.mimetype || "application/octet-stream",
+          size: req.file?.size || 0,
+        },
+      });
+
+      return log;
+    });
 
     res.status(200).json({
       message: "Image uploaded successfully",
-      url: s3Url,
+      url: uploadLog.url,
     });
   } catch (err: any) {
     console.error("Upload error:", err);

@@ -4,14 +4,14 @@ interface NewOrderVars {
   url: string;
   number: number;
   price: number;
-  user_balance: number;
-  service_id: number | string;
+  userBalance: number;
+  serviceId: number | string;
   provider: string;
   logo: string;
 }
 
 interface FailedOrderVars extends NewOrderVars {
-  provider_error: string;
+  providerError: string;
 }
 
 export const newOrder = ({
@@ -20,8 +20,8 @@ export const newOrder = ({
   url,
   number,
   price,
-  user_balance,
-  service_id,
+  userBalance,
+  serviceId,
   provider,
   logo,
 }: NewOrderVars): string => `
@@ -78,8 +78,8 @@ export const newOrder = ({
             <p><strong>Order URL:</strong> ${url}</p>
             <p><strong>Quantity:</strong> ${number}</p>
             <p><strong>Total Price:</strong> $${price}</p>
-            <p><strong>User Balance After Purchase:</strong> $${user_balance}</p>
-            <p><strong>Service ID:</strong> ${service_id}</p>
+            <p><strong>User Balance After Purchase:</strong> $${userBalance}</p>
+            <p><strong>Service ID:</strong> ${serviceId}</p>
             <p><strong>Provider:</strong> ${provider}</p>
           </div>
           <p>Please process this order through the admin store.</p>
@@ -95,11 +95,11 @@ export const newFailedOrder = ({
   logo,
   url,
   number,
-  user_balance,
-  service_id,
+  userBalance,
+  serviceId,
   price,
   provider,
-  provider_error,
+  providerError,
 }: FailedOrderVars): string => `
     <!DOCTYPE html>
     <html lang="en">
@@ -154,10 +154,10 @@ export const newFailedOrder = ({
             <p><strong>Order URL:</strong> ${url}</p>
             <p><strong>Quantity:</strong> ${number}</p>
             <p><strong>Total Price:</strong> $${price}</p>
-            <p><strong>User Balance After Purchase:</strong> $${user_balance}</p>
-            <p><strong>Service ID:</strong> ${service_id}</p>
+            <p><strong>User Balance After Purchase:</strong> $${userBalance}</p>
+            <p><strong>Service ID:</strong> ${serviceId}</p>
             <p><strong>Provider:</strong> ${provider}</p>
-            <p><strong>Provider Error:</strong> ${provider_error}</p>
+            <p><strong>Provider Error:</strong> ${providerError}</p>
           </div>
           <p>Please fix this order through the admin or provider's store.</p>
           <p>Thank you!</p>

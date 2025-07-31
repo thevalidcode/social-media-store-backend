@@ -47,16 +47,16 @@ registry.registerPath({
   },
 });
 
-// GET /refill/{refill_uid}
+// GET /refill/{refillUid}
 registry.registerPath({
   method: "get",
-  path: "/refill/{refill_uid}",
+  path: "/refill/{refillUid}",
   summary: "Get a refill by UID (admin or user)",
   tags: ["Refills"],
   security: [{ CookieAuth: [] }],
   parameters: [
     {
-      name: "refill_uid",
+      name: "refillUid",
       in: "path",
       required: true,
       schema: { type: "string" },
@@ -93,16 +93,16 @@ registry.registerPath({
   },
 });
 
-// PATCH /refill/{refill_uid} (Admin)
+// PATCH /refill/{refillUid} (Admin)
 registry.registerPath({
   method: "patch",
-  path: "/refill/{refill_uid}",
+  path: "/refill/{refillUid}",
   summary: "Update a refill",
   tags: ["Refills"],
   security: [{ CookieAuth: [] }],
   parameters: [
     {
-      name: "refill_uid",
+      name: "refillUid",
       in: "path",
       required: true,
       schema: { type: "string" },
@@ -125,16 +125,16 @@ registry.registerPath({
   },
 });
 
-// DELETE /refill/{refill_uid} (Admin)
+// DELETE /refill/{refillUid} (Admin)
 registry.registerPath({
   method: "delete",
-  path: "/refill/{refill_uid}",
+  path: "/refill/{refillUid}",
   summary: "Delete a single refill",
   tags: ["Refills"],
   security: [{ CookieAuth: [] }],
   parameters: [
     {
-      name: "refill_uid",
+      name: "refillUid",
       in: "path",
       required: true,
       schema: { type: "string" },

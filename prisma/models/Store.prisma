@@ -9,7 +9,7 @@ model Store {
   // Relations
   User             User[]
   Admin            Admin[]
-  Product          Product[]
+  Service          Service[]
   Order            Order[]
   AdminEmail       AdminEmail[]
   AffiliateSetting AffiliateSetting[]
@@ -21,6 +21,13 @@ model Store {
   Faq              Faq[]
   General          General[]
   SessionCode      SessionCode[]
+  Provider         Provider[]
+  Refill           Refill[]
+  UploadLog        UploadLog[]
+  Transaction      Transaction[]
+  ReferralOrder    ReferralOrder[]
+  
+  storeCounter     StoreCounter?
   
   @@map("stores")
 }

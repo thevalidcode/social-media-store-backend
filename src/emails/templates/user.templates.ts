@@ -1,6 +1,6 @@
 interface VerificationCodeVars {
   username: string;
-  verification_code: string;
+  verificationCode: string;
   company: string;
   logo: string;
 }
@@ -22,7 +22,7 @@ interface FundsAddedVars {
 
 const verificationCode = ({
   username,
-  verification_code,
+  verificationCode,
   company,
   logo,
 }: VerificationCodeVars): string => `

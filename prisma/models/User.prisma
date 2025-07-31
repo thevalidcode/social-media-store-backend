@@ -1,7 +1,8 @@
 model User {
-  id         Int
+  id             Int     @id @default(autoincrement())
+  storeScopedId   Int     @map("store_scoped_id")
   refCode    Int?     @unique @default(autoincrement()) @map("ref_code")
-  uid        String   @id
+  uid        String   @unique
   email      String
   image      String?
   password   String
@@ -21,5 +22,6 @@ model User {
   referredBy User?    @relation("Referral", fields: [ref], references: [refCode], onDelete: SetNull)
   referrals  User[]   @relation("Referral") 
 
+  @@unique([storeId, storeScopedId])
   @@map("users")
 }

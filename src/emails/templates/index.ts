@@ -10,16 +10,16 @@ interface EmailTemplates {
 
 // Templates object
 const templates: EmailTemplates = {
-  verification_code: verificationCode,
-  new_user: newUser,
-  new_order: newOrder,
-  new_failed_order: newFailedOrder,
-  new_refill: newRefill,
-  new_failed_refill: newFailedRefill,
-  new_service: newService,
-  new_support: newSupport,
-  new_message: newMessage,
-  funds_added: fundsAdded,
+  verificationCode,
+  newUser,
+  newOrder,
+  newFailedOrder,
+  newRefill,
+  newFailedRefill,
+  newService,
+  newSupport,
+  newMessage,
+  fundsAdded,
 };
 
 type TemplateVariables = Record<string, any>;

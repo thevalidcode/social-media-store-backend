@@ -1,15 +1,18 @@
 model Blog {
-  id          Int      @map("id")
+  id             Int     @id @default(autoincrement())
+  storeScopedId   Int     @map("store_scoped_id")
   title       String
   content     String
   description String   @default("")
+  coverImage  String   @default("") @map("cover_image")
   status      String   @default("active")
   position    Int
   slug        String
-  uid         String   @id
+  uid         String   @unique
   storeId      Int      @map("store_id")
   store        Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
   timestamp   DateTime @default(now())
 
+  @@unique([storeId, storeScopedId])
   @@map("blogs")
 }

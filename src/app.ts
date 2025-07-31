@@ -11,7 +11,7 @@ import { apiLimiter } from "./middleware/ratelimit";
 
 // Routes
 import userRouter from "./routes/user.routes";
-import oauthRoutes from "./routes/oauth.routes";
+import authRoutes from "./routes/auth.routes";
 import storeRoutes from "./routes/store.routes";
 import blogRoutes from "./routes/blog.routes";
 import faqRoutes from "./routes/faq.routes";
@@ -23,7 +23,7 @@ import orderRoutes from "./routes/order.routes";
 import refillRoutes from "./routes/refill.routes";
 import versionRouter from "./routes/version.routes";
 import filesRouter from "./routes/files.routes";
-import { getDocs } from "./crud";
+import { prisma } from "./config/db";
 import swaggerRouter from "./docs/swagger";
 
 const app = express();
@@ -31,26 +31,31 @@ const app = express();
 // --- Dynamic CORS Setup ---
 let allowedOrigins: string[] = [];
 
-async function updateAllowedOrigins(): Promise<void> {
-  const stores = await getDocs("stores", null, {
-    filter: { field: "ssl", operator: "===", value: true },
-  });
+// FIX: Export this function to be awaited at startup
+export async function updateAllowedOrigins(): Promise<void> {
+  try {
+    const shops = await prisma.store.findMany({
+      where: { ssl: true },
+    });
 
-  const domains = stores.map((store: any) => store.uid);
-  allowedOrigins = [
-    "http://localhost:3000",
-    "http://localhost:6060",
-    ...domains.flatMap((domain: string) => [
-      `https://${domain}`,
-      `https://${domain}:6060`,
-    ]),
-  ];
+    const domains = shops.map((shop: any) => shop.uid);
+    allowedOrigins = [
+      "http://localhost:3000",
+      "http://localhost:6060",
+      ...domains.flatMap((domain: string) => [
+        `https://${domain}`,
+        `https://${domain}:6060`,
+      ]),
+    ];
+    console.log("Allowed CORS origins updated.");
+  } catch (error) {
+    console.error("Failed to update allowed origins:", error);
+  }
 }
 
-updateAllowedOrigins();
+// Set an interval to refresh the origins list periodically
 setInterval(updateAllowedOrigins, 5 * 60 * 1000);
 
-// Define CORS Middleware for all non-/admin routes
 const dynamicCors = function (
   req: CorsRequest,
   callback: (err: Error | null, options?: CorsOptions) => void
@@ -119,7 +124,7 @@ app.use("/api/v1/files", cors(dynamicCors), filesRouter);
 
 // Internal Routes
 app.use("/admin", adminRoutes);
-app.use("/api/auth/store", oauthRoutes);
+app.use("/api/auth/store", authRoutes);
 
 app.use(swaggerRouter);
 

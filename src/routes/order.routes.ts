@@ -1,38 +1,39 @@
 import express from "express";
 const router = express.Router();
 import * as orders from "../controllers/order.controllers"
-;
+  ;
 import { authenticate } from "../middleware/authenticate";
 import {
   limitOrderActions,
   limitBulkOrders,
 } from "../middleware/ratelimit/order.ratelimit";
+import { isAdmin, isUser } from "../middleware/authorize";
 
-router.get("/", authenticate, orders.getOrders);
-router.get("/admin", authenticate, orders.getOrdersForAdmins);
-router.get("/:order_uid", authenticate, orders.getOrderByID);
+router.get("/", authenticate, isUser, orders.getOrders);
+router.get("/admin", authenticate, isAdmin, orders.getOrdersForAdmins);
+router.get("/:orderUid", authenticate, orders.getOrderByID);
 
-router.post("/", authenticate, limitOrderActions, orders.placeOrder);
+router.post("/", authenticate, limitOrderActions, isUser, orders.placeOrder);
 router.patch(
-  "/:order_uid",
+  "/:orderUid",
   authenticate,
-  limitOrderActions,
+  limitOrderActions, isAdmin,
   orders.updateOrder
 );
 router.delete(
-  "/:order_uid",
+  "/:orderUid",
   authenticate,
-  limitOrderActions,
+  limitOrderActions, isAdmin,
   orders.deleteOrder
 );
 
 router.get("/status/:status", authenticate, orders.getOrdersByStatus);
 
-router.post("/bulk", authenticate, limitBulkOrders, orders.bulkCreateOrders);
+router.post("/bulk", authenticate, limitBulkOrders, isUser, orders.bulkCreateOrders);
 router.patch(
   "/bulk/status",
   authenticate,
-  limitBulkOrders,
+  limitBulkOrders, isAdmin,
   orders.bulkUpdateOrderStatus
 );
 

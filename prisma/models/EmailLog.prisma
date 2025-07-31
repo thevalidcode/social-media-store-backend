@@ -1,6 +1,7 @@
 model EmailLog {
-  id        Int      @map("id")
-  uid       String   @id
+  id             Int     @id @default(autoincrement())
+  storeScopedId   Int     @map("store_scoped_id")
+  uid       String   @unique
   sender    String
   receiver  String
   subject   String
@@ -12,5 +13,6 @@ model EmailLog {
   store      Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
   timestamp DateTime @default(now())
 
+  @@unique([storeId, storeScopedId])
   @@map("email_logs")
 }

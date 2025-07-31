@@ -1,0 +1,16 @@
+model Transaction {
+  id                  Int       @id @default(autoincrement())
+  storeScopedId       Int       @map("store_scoped_id")
+  uid                 String    @unique
+  amount              Decimal   @db.Decimal(10, 2)   
+  timestamp           DateTime  @default(now())
+  status              String  
+  currency            String    @default("USD")
+  paymentMethod       String    @map("payment_method")
+  userUid             String    @map("user_uid")
+  storeId             Int       @map("store_id")
+  store               Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  @@unique([storeId, storeScopedId])
+  @@map("transactions")
+}

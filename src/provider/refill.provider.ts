@@ -1,8 +1,11 @@
-import { getDocs, addStoreDoc, updateStoreDoc } from "../crud";
 import axios from "axios";
 import https from "https";
+import { prisma } from "../config/db";
 import { sendEmail } from "../emails";
 import { decryptKey } from "../utils/encrypt";
+import { Prisma } from "@prisma/client";
+import { v4 as uuidv4 } from "uuid";
+
 const agent = new https.Agent({
   keepAlive: true,
   rejectUnauthorized: false,
@@ -12,23 +15,35 @@ const safeInt = (n: any, d = 0): number =>
   Number.isFinite(+n) ? parseInt(n, 10) : d;
 
 export const sendRefillToMainServer = async (
-  order_uid: string,
-  store_id: number
+  orderUid: string,
+  storeId: number
 ): Promise<boolean> => {
   try {
-    const order = await getDocs("orders", store_id, {
-      find: { field: "uid", operator: "===", value: order_uid },
+    const order = await prisma.order.findFirst({
+      where: { uid: orderUid, storeId },
     });
-    const prov = await getDocs("providers", store_id, {
-      find: { field: "url", operator: "===", value: order.provider },
-    });
-    if (!order || !prov) return false;
 
-    const url = `${order.provider}`;
-    const decryptedKey = decryptKey(prov.key.encrypted_key, prov.key.iv);
+    if (!order) return false;
+
+    const provider = await prisma.provider.findFirst({
+      where: { url: order.provider || "", storeId },
+    });
+
+    if (!provider) return false;
+
+    const apiKeyData = provider.apiKey as {
+      encrypted_key: string;
+      iv: string;
+    };
+
+    const decryptedKey = decryptKey(
+      apiKeyData.encrypted_key,
+      apiKeyData.iv
+    );
+
     const { data: res } = await axios.post(
-      url,
-      { key: decryptedKey, action: "refill", order: order.provider_order_id },
+      provider.url,
+      { key: decryptedKey, action: "refill", order: order.providerOrderId },
       { httpsAgent: agent }
     );
 
@@ -36,15 +51,15 @@ export const sendRefillToMainServer = async (
       try {
         await sendEmail(
           undefined,
-          "new_failed_refill",
+          "newFailedRefill",
           {
-            order_id: order.id,
+            orderId: order.id,
             quantity: order.quantity,
             price: order.price,
             provider: order.provider,
             error: res.error,
           },
-          store_id
+          storeId
         );
       } catch (e: any) {
         console.error("Email error (failed refill):", e.message);
@@ -52,31 +67,42 @@ export const sendRefillToMainServer = async (
       return false;
     }
 
-    const refillRow = await addStoreDoc(
-      "refills",
-      {
-        provider_id: safeInt(res.refill),
-        provider: order.provider,
-        url: order.url,
-        order_id: order.id,
-      },
-      store_id
-    );
+    // Transaction: create refill and update its status
+    const [refill] = await prisma.$transaction(async (tx) => {
+      const counter = await tx.storeCounter.update({
+        where: { storeId },
+        data: { refillCounter: { increment: 1 } },
+      });
 
-    await updateRefillStatus(refillRow.uid, store_id);
+      const refillRow = await tx.refill.create({
+        data: {
+          providerId: safeInt(res.refill),
+          provider: order.provider || "",
+          orderId: order.id,
+          storeScopedId: counter.refillCounter,
+          userUid: order.userUid,
+          providerOrderId: safeInt(res.order),
+          uid: uuidv4(),
+          storeId,
+        },
+      });
+
+      const updated = await updateRefillStatusTx(refillRow.uid, storeId, tx);
+
+      return [refillRow, updated];
+    });
 
     try {
       await sendEmail(
         undefined,
-        "new_refill",
+        "newRefill",
         {
-          order_id: order.id,
-          username: order.username,
-          number: order.number,
+          orderId: order.id,
+          number: order.quantity,
           price: order.price,
           provider: order.provider,
         },
-        store_id
+        storeId
       );
     } catch (e: any) {
       console.error("Email error (new refill):", e.message);
@@ -90,52 +116,64 @@ export const sendRefillToMainServer = async (
 };
 
 export const updateRefillStatus = async (
-  refill_uid: string,
-  store_id: number
+  refillUid: string,
+  storeId: number
 ): Promise<boolean> => {
   try {
-    const refill = (await getDocs("refills", store_id)).find(
-      (r: any) => r.uid === refill_uid
-    );
-    const provider = (await getDocs("providers", store_id)).find(
-      (p: any) => p.url === refill.provider
-    );
-    if (!refill || !provider) return false;
-
-    const url = `${refill.provider}`;
-    const decryptedKey = decryptKey(
-      provider.key.encrypted_key,
-      provider.key.iv
-    );
-    const { data: res } = await axios.post(
-      url,
-      {
-        key: decryptedKey,
-        action: "refill_status",
-        refill: refill.provider_id,
-      },
-      { httpsAgent: agent }
-    );
-
-    if (res.error) {
-      await updateStoreDoc(
-        "refills",
-        refill_uid,
-        { provider_error: res.error },
-        store_id
-      );
-      return false;
-    }
-
-    await updateStoreDoc(
-      "refills",
-      refill_uid,
-      { status: res.status },
-      store_id
-    );
-    return true;
+    return await prisma.$transaction(async (tx) => {
+      return updateRefillStatusTx(refillUid, storeId, tx);
+    });
   } catch (err: any) {
     console.error("Error updating refill:", err.message);
     return false;
   }
+};
+
+const updateRefillStatusTx = async (
+  refillUid: string,
+  storeId: number,
+  tx: Prisma.TransactionClient
+): Promise<boolean> => {
+  const refill = await tx.refill.findFirst({
+    where: { uid: refillUid, storeId },
+  });
+
+  if (!refill) return false;
+
+  const provider = await tx.provider.findFirst({
+    where: { url: refill.provider, storeId },
+  });
+
+  if (!provider) return false;
+
+  const apiKeyData = provider.apiKey as {
+    encrypted_key: string;
+    iv: string;
+  };
+
+  const decryptedKey = decryptKey(
+    apiKeyData.encrypted_key,
+    apiKeyData.iv
+  );
+
+  const { data: res } = await axios.post(
+    provider.url,
+    { key: decryptedKey, action: "refill_status", refill: refill.providerId },
+    { httpsAgent: agent }
+  );
+
+  if (res.error) {
+    await tx.refill.update({
+      where: { uid: refillUid },
+      data: { providerError: res.error },
+    });
+    return false;
+  }
+
+  await tx.refill.update({
+    where: { uid: refillUid },
+    data: { status: res.status },
+  });
+
+  return true;
 };

@@ -15,13 +15,13 @@ const s3 = new S3Client({
 export const uploadToS3 = async (
   buffer: Buffer,
   originalName: string,
-  store_id: number,
+  storeId: number,
   collection: string
 ): Promise<string> => {
   const ext = path.extname(originalName);
   const mimeType = mime.lookup(ext) || "application/octet-stream";
   const filename = `${Date.now()}-${randomUUID()}${ext}`;
-  const key = `${store_id}/${collection}/${filename}`;
+  const key = `${storeId}/${collection}/${filename}`;
 
   await s3.send(
     new PutObjectCommand({

@@ -19,7 +19,7 @@ import {
   SuccessResponse,
 } from "../responses/common.response";
 
-// GET /faq?store_id=123
+// GET /faq?storeId=123
 registry.registerPath({
   method: "get",
   path: "/faq",
@@ -27,7 +27,7 @@ registry.registerPath({
   tags: ["FAQs"],
   parameters: [
     {
-      name: "store_id",
+      name: "storeId",
       in: "query",
       required: true,
       description: "Store ID to filter FAQs",
@@ -41,21 +41,21 @@ registry.registerPath({
   },
 });
 
-// GET /faq/{faq_id}?store_id=123
+// GET /faq/{faqId}?storeId=123
 registry.registerPath({
   method: "get",
-  path: "/faq/{faq_id}",
+  path: "/faq/{faqId}",
   summary: "Get FAQ by ID",
   tags: ["FAQs"],
   parameters: [
     {
-      name: "faq_id",
+      name: "faqId",
       in: "path",
       required: true,
       schema: { type: "number" },
     },
     {
-      name: "store_id",
+      name: "storeId",
       in: "query",
       required: true,
       schema: { type: "number" },

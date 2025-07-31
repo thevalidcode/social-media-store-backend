@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
-import { getDocs, addStoreDoc, updateStoreDoc, deleteStoreDoc } from "../crud";
+import { prisma } from "../config/db";
+import { v4 as uuidv4 } from "uuid";
 import { AuthSchema } from "../schemas/user.schema";
 import {
   placeRefillSchema,
@@ -21,20 +22,15 @@ export const getRefills = async (
     return;
   }
 
-  const { role, store_id, user } = authParsed.data;
+  const { storeId, user } = authParsed.data;
 
-  if (role !== "user") {
-    res.status(403).json({ error: "Access denied, Users only." });
-    return;
-  }
   try {
-    const refills = await getDocs("refills", store_id, {
-      filter: { user_uid: user.uid },
+    const refills = await prisma.refill.findMany({
+      where: { storeId, userUid: user.uid },
+      orderBy: { id: "desc" },
     });
-    const sorted = refills.sort((a: any, b: any) => b.id - a.id);
-    const parsedRefills = sorted.map(
-      (r: any) => RefillPublicSchema.safeParse(r).data
-    );
+
+    const parsedRefills = refills.map((r) => RefillPublicSchema.safeParse(r).data);
     res.status(200).json(parsedRefills);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -51,148 +47,165 @@ export const getRefillsForAdmins = async (
     return;
   }
 
-  const { role, store_id } = authParsed.data;
-
-  if (role === "user") {
-    res.status(403).json({ error: "Access denied, Admins only." });
-    return;
-  }
+  const { storeId } = authParsed.data;
 
   try {
-    const refills = await getDocs("refills", store_id);
-    const sorted = refills.sort((a: any, b: any) => b.id - a.id);
-    const parsedRefills = sorted.map(
-      (r: any) => RefillSchema.safeParse(r).data
-    );
+    const refills = await prisma.refill.findMany({
+      where: { storeId },
+      orderBy: { id: "desc" },
+    });
+
+    const parsedRefills = refills.map((r) => RefillSchema.safeParse(r).data);
     res.status(200).json(parsedRefills);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
 
-export const getRefilByID = async (
+export const getRefillById = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
-  const { refill_uid } = req.params;
+  const { refillUid } = req.params;
 
   if (!authParsed.success) {
     res.status(400).json({ error: authParsed.error.flatten() });
     return;
   }
 
-  const { role, store_id, user } = authParsed.data;
+  const { storeId, role, user } = authParsed.data;
 
   try {
-    const refil = await getDocs("refills", store_id, {
-      find: {
-        uid: refill_uid,
-        user_uid: user.uid,
+    const refill = await prisma.refill.findFirst({
+      where: {
+        uid: refillUid,
+        storeId,
+        ...(role === "user" ? { userUid: user.uid } : {}),
       },
     });
 
-    if (!refil) {
-      res.status(404).json({ error: "Refil not found" });
+    if (!refill) {
+      res.status(404).json({ error: "Refill not found" });
       return;
     }
 
-    const parsedRefil =
+    const parsedRefill =
       role === "user"
-        ? RefillPublicSchema.safeParse(refil)
-        : RefillSchema.safeParse(refil);
-    res.status(200).json(parsedRefil.data);
+        ? RefillPublicSchema.safeParse(refill)
+        : RefillSchema.safeParse(refill);
+
+    res.status(200).json(parsedRefill.data);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
 
-export const placeRefil = async (
+export const placeRefill = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = placeRefillSchema.safeParse(req.body);
 
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
-    return;
-  }
-  if (!authParsed.success) {
-    res.status(400).json({ error: authParsed.error.flatten() });
-    return;
-  }
-
-  const { store_id, role } = authParsed.data;
-  if (role !== "user") {
-    res.status(403).json({ error: "Access denied, Users only." });
+  if (!authParsed.success || !parsed.success) {
+    res.status(400).json({
+      error: {
+        auth: !authParsed.success ? authParsed.error.flatten() : undefined,
+        body: !parsed.success ? parsed.error.flatten() : undefined,
+      },
+    });
     return;
   }
 
+  const { storeId, user } = authParsed.data;
   const reqData = parsed.data;
 
   try {
-    const newRefil = await addStoreDoc("refills", reqData, store_id);
-    res
-      .status(200)
-      .json({ success: "Refil placed successfully", uid: newRefil.uid });
+    const newRefill = await prisma.$transaction(async (tx) => {
+      const counter = await tx.storeCounter.update({
+        where: { storeId },
+        data: { refillCounter: { increment: 1 } },
+      });
+
+      const refill = await tx.refill.create({
+        data: {
+          ...reqData,
+          uid: uuidv4(),
+          storeId,
+          storeScopedId: counter.refillCounter,
+          userUid: user.uid,
+          providerId: 1, // Assuming a default provider ID, adjust as necessary
+          providerOrderId: 1, // Assuming a default provider order ID, adjust as necessary
+        },
+      });
+
+      return refill;
+    });
+
+    res.status(200).json({
+      success: "Refill placed successfully",
+      uid: newRefill.uid,
+    });
   } catch (error: any) {
+    console.error("Failed to place refill:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
-export const updateRefil = async (
+export const updateRefill = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = updateRefillSchema.safeParse(req.body);
-  const { refill_uid } = req.params;
+  const { refillUid } = req.params;
 
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
-    return;
-  }
-  if (!authParsed.success) {
-    res.status(400).json({ error: authParsed.error.flatten() });
+
+  if (!authParsed.success || !parsed.success) {
+    res.status(400).json({
+      error: {
+        auth: !authParsed.success ? authParsed.error.flatten() : undefined,
+        body: !parsed.success ? parsed.error.flatten() : undefined,
+      },
+    });
     return;
   }
 
-  const { role, store_id } = authParsed.data;
-  if (role === "user") {
-    res.status(403).json({ error: "Access denied, Admins only." });
-    return;
-  }
+  const { storeId } = authParsed.data;
 
   try {
-    await updateStoreDoc("refills", refill_uid, parsed.data.update, store_id);
-    res.status(200).json({ success: "Refil updated successfully" });
+    await prisma.refill.updateMany({
+      where: { uid: refillUid, storeId },
+      data: parsed.data.update,
+    });
+
+    res.status(200).json({ success: "Refill updated successfully" });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
 
-export const deleteRefil = async (
+export const deleteRefill = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
-  const { refill_uid } = req.params;
+  const { refillUid } = req.params;
 
   if (!authParsed.success) {
     res.status(400).json({ error: authParsed.error.flatten() });
     return;
   }
 
-  const { role, store_id } = authParsed.data;
-  if (role === "user") {
-    res.status(403).json({ error: "Access denied, Admins only." });
-    return;
-  }
+  const { storeId } = authParsed.data;
 
   try {
-    await deleteStoreDoc("refills", refill_uid, store_id);
-    res.status(200).json({ success: "Refil deleted successfully" });
+    await prisma.refill.deleteMany({
+      where: { uid: refillUid, storeId },
+    });
+
+    res.status(200).json({ success: "Refill deleted successfully" });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -205,39 +218,34 @@ export const getRefillsByStatus = async (
   const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = getRefillsByStatusSchema.safeParse(req.params);
 
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
-    return;
-  }
-  if (!authParsed.success) {
-    res.status(400).json({ error: authParsed.error.flatten() });
+
+  if (!authParsed.success || !parsed.success) {
+    res.status(400).json({
+      error: {
+        auth: !authParsed.success ? authParsed.error.flatten() : undefined,
+        body: !parsed.success ? parsed.error.flatten() : undefined,
+      },
+    });
     return;
   }
 
-  const { store_id, role, user } = authParsed.data;
+  const { storeId, role, user } = authParsed.data;
   const { status } = parsed.data;
 
   try {
-    const allRefills = await getDocs(
-      "refills",
-      store_id,
-      role === "user"
-        ? {
-            filter: { user_uid: user.uid },
-            removeKeys: ["provider", "provider_refil_id", "provider_error"],
-          }
-        : undefined
-    );
-
-    const filtered =
-      status === "all"
-        ? allRefills
-        : allRefills.filter((r: any) => r.status === status);
+    const refills = await prisma.refill.findMany({
+      where: {
+        storeId,
+        ...(role === "user" ? { userUid: user.uid } : {}),
+        ...(status !== "all" ? { status } : {}),
+      },
+      orderBy: { id: "desc" },
+    });
 
     const parsedRefills =
       role === "user"
-        ? filtered.map((r: any) => RefillPublicSchema.safeParse(r).data)
-        : filtered.map((r: any) => RefillSchema.safeParse(r).data);
+        ? refills.map((r) => RefillPublicSchema.safeParse(r).data)
+        : refills.map((r) => RefillSchema.safeParse(r).data);
 
     res.status(200).json(parsedRefills);
   } catch (error: any) {
@@ -252,29 +260,41 @@ export const bulkCreateRefills = async (
   const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = bulkCreateRefillSchema.safeParse(req.body);
 
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
-    return;
-  }
-  if (!authParsed.success) {
-    res.status(400).json({ error: authParsed.error.flatten() });
+  if (!authParsed.success || !parsed.success) {
+    res.status(400).json({
+      error: {
+        auth: !authParsed.success ? authParsed.error.flatten() : undefined,
+        body: !parsed.success ? parsed.error.flatten() : undefined,
+      },
+    });
     return;
   }
 
-  const { role, store_id } = authParsed.data;
-
-  if (role !== "user") {
-    res.status(403).json({ error: "Access denied, Users only." });
-    return;
-  }
+  const { storeId, user } = authParsed.data;
 
   try {
-    const results = await Promise.all(
-      parsed.data.refills.map((refil: any) =>
-        addStoreDoc("refills", refil, store_id)
+    const counter = await prisma.storeCounter.update({
+      where: { storeId },
+      data: { refillCounter: { increment: parsed.data.refills.length } }, // Adjust counter type
+    });
+
+    const baseCount = counter.refillCounter - parsed.data.refills.length;
+
+    const created = await Promise.all(
+      parsed.data.refills.map((refill: any, index: number) =>
+        prisma.refill.create({
+          data: {
+            ...refill,
+            uid: uuidv4(),
+            storeId,
+            storeScopedId: baseCount + index + 1,
+            userUid: user.uid,
+          },
+        })
       )
     );
-    const uids = results.map((r: any) => r.uid);
+
+    const uids = created.map((r) => r.uid);
     res.status(200).json({ success: "Bulk refills created", uids });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -288,34 +308,36 @@ export const bulkUpdateRefillStatus = async (
   const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = bulkStatusUpdateRefillSchema.safeParse(req.body);
 
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
-    return;
-  }
-  if (!authParsed.success) {
-    res.status(400).json({ error: authParsed.error.flatten() });
+  if (!authParsed.success || !parsed.success) {
+    res.status(400).json({
+      error: {
+        auth: !authParsed.success ? authParsed.error.flatten() : undefined,
+        body: !parsed.success ? parsed.error.flatten() : undefined,
+      },
+    });
     return;
   }
 
-  const { role, store_id } = authParsed.data;
-  if (role === "user") {
-    res.status(403).json({ error: "Access denied, Admins only." });
-    return;
-  }
+  const { storeId } = authParsed.data;
 
   try {
-    await Promise.all(
-      parsed.data.updates.map((update: any) =>
-        updateStoreDoc(
-          "refills",
-          update.uid,
-          { status: update.status },
-          store_id
-        )
+    await prisma.$transaction(
+      parsed.data.updates.map((update) =>
+        prisma.refill.updateMany({
+          where: {
+            uid: update.uid,
+            storeId,
+          },
+          data: {
+            status: update.status,
+          },
+        })
       )
     );
+
     res.status(200).json({ success: "Bulk status update completed" });
   } catch (error: any) {
+    console.error("Bulk update failed:", error);
     res.status(500).json({ error: error.message });
   }
 };

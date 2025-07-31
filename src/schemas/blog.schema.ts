@@ -4,12 +4,12 @@ import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 extendZodWithOpenApi(z);
 
 export const blogIdSchema = z.object({
-  blog_id: z.coerce.number(),
+  blogId: z.coerce.number(),
 });
 
 export const createBlogSchema = z.object({
   title: z.string().min(1),
-  cover_image: z.string().url(),
+  coverImage: z.string().url(),
   content: z.string().min(1),
   description: z.string().optional(),
 });
@@ -18,7 +18,7 @@ export const BlogSchema = z
   .object({
     id: z.coerce.number(),
     title: z.string().min(1),
-    cover_image: z.string().url(),
+    coverImage: z.string().url(),
     content: z.string().min(1),
     status: z.boolean(),
     position: z.coerce.number(),
@@ -41,4 +41,4 @@ export const deleteMultipleBlogsSchema = z.object({
   uids: z.array(z.string()),
 });
 
-export const getBlogsSchema = z.object({ store_id: z.coerce.number() });
+export const getBlogsSchema = z.object({ storeId: z.coerce.number() });
