@@ -47,7 +47,6 @@ export async function updateAllowedOrigins(): Promise<void> {
         `https://${domain}:6060`,
       ]),
     ];
-    console.log("Allowed CORS origins updated.");
   } catch (error) {
     console.error("Failed to update allowed origins:", error);
   }

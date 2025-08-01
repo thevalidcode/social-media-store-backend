@@ -4,5 +4,5 @@ nodemon.json
 
 node_modules
 
-dist
+app
 /prisma/generated/
