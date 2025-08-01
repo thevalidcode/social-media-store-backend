@@ -1,6 +1,6 @@
 import axios from "axios";
 import https from "https";
-import convertCurrency from "../utils/convertCurrency";
+import convertCurrency from "../utils/ConvertCurrency";
 import { sendEmail } from "../emails";
 import { prisma } from "../config/db";
 import { placeOrderSchema } from "../schemas/order.schema";
