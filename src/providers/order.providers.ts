@@ -183,7 +183,7 @@ export const sendOrderToProvider = async (
 
           await tx.transaction.create({
             data: {
-              status: "success",
+              status: "SUCCESS",
               amount: earned,
               currency: "USD",
               paymentGateway: "REFERRAL",
@@ -571,7 +571,7 @@ export const processDripFeedOrders = async (): Promise<void> => {
 
                 await tx.transaction.create({
                   data: {
-                    status: "success",
+                    status: "SUCCESS",
                     amount: earned,
                     currency: "USD",
                     paymentGateway: "REFERRAL",
