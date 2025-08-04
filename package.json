@@ -10,7 +10,7 @@
     "dev:migrate": "npx prisma migrate dev",
     "migrate": "npx prisma migrate deploy",
     "release": "standard-version && git push --follow-tags",
-    "merge-prisma": "node scripts/merge-prisma.js"
+    "merge-prisma": "node scripts/merge-prisma.js && npx prisma format"
   },
   "keywords": [],
   "author": "",

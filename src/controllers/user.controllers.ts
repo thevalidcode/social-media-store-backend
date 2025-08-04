@@ -8,7 +8,7 @@ import { sendEmail } from "../emails";
 import { env } from "../config/env";
 import { AuthSchema } from "../schemas/user.schema";
 import crypto from "crypto";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "../../prisma/generated";
 
 const createUserSchema = z.object({
   storeId: z.coerce.number(),

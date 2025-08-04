@@ -23,6 +23,8 @@ import orderRoutes from "./routes/order.routes";
 import refillRoutes from "./routes/refill.routes";
 import versionRouter from "./routes/version.routes";
 import filesRouter from "./routes/files.routes";
+import paymentGatewayRouter from "./routes/paymentGateway.routes";
+import webhookRouter from "./routes/webhook.routes";
 import { prisma } from "./config/db";
 import swaggerRouter from "./docs/swagger";
 
@@ -120,6 +122,8 @@ app.use("/api/v1/order", cors(dynamicCors), orderRoutes);
 app.use("/api/v1/refill", cors(dynamicCors), refillRoutes);
 app.use("/api/v1/version", cors(dynamicCors), versionRouter);
 app.use("/api/v1/files", cors(dynamicCors), filesRouter);
+app.use("/api/v1/webhook", cors(dynamicCors), webhookRouter);
+app.use("/api/v1/paymentGateway", cors(dynamicCors), paymentGatewayRouter);
 
 // Internal Routes
 app.use("/admin", adminRoutes);

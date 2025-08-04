@@ -4,9 +4,9 @@ import {
   processDripFeedOrders,
   sendUnsyncedOrders,
   syncAllStoresOrderDetails,
-} from "../provider/order.provider"
+} from "../providers/order.providers"
 ;
-import { syncServices, updateExistingServices } from "../provider/service.provider"
+import { syncServices, updateExistingServices } from "../providers/service.providers"
 ;
 
 function startCronJobs() {

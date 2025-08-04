@@ -13,6 +13,7 @@ model StoreCounter {
   refillCounter Int @default(0) @map("refill_counter")
   transactionCounter Int @default(0) @map("transaction_counter")
   referralOrderCounter Int @default(0) @map("referral_order_counter")
+  paymentGatewayCounter Int @default(0) @map("payment_gateway_counter")
 
   store Store @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 

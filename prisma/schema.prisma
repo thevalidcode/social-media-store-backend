@@ -37,7 +37,8 @@ model Store {
   Transaction      Transaction[]
   ReferralOrder    ReferralOrder[]
 
-  storeCounter StoreCounter?
+  storeCounter   StoreCounter?
+  PaymentGateway PaymentGateway[]
 
   @@map("stores")
 }
@@ -303,6 +304,39 @@ model General {
   @@map("general")
 }
 
+enum Status {
+  ACTIVE   @map("active")
+  DISABLED @map("disabled")
+}
+
+enum Platform {
+  MANUAL      @map("manual")
+  FLUTTERWAVE @map("flutterwave")
+  PAYSTACK    @map("paystack")
+  REFERRAL    @map("referral")
+}
+
+model PaymentGateway {
+  id            Int      @id @default(autoincrement())
+  storeScopedId Int      @map("store_scoped_id")
+  uid           String   @unique
+  platform      Platform @default(MANUAL)
+  name          String
+  description   String?
+  secretKey     Json?    @map("secret_key")
+  image         String
+  status        Status   @default(ACTIVE)
+  createdAt     DateTime @default(now()) @map("created_at")
+  storeId       Int      @map("store_id")
+  position      Int      @map("position")
+  min           Decimal  @db.Decimal(10, 2)
+  max           Decimal  @db.Decimal(10, 2)
+  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  @@unique([storeId, storeScopedId])
+  @@map("payment_gateways")
+}
+
 model Provider {
   id            Int      @id @default(autoincrement())
   storeScopedId Int      @map("store_scoped_id")
@@ -369,18 +403,19 @@ model SessionCode {
 model StoreCounter {
   storeId Int @id @map("store_id")
 
-  serviceCounter       Int @default(0) @map("service_counter")
-  orderCounter         Int @default(0) @map("order_counter")
-  blogCounter          Int @default(0) @map("blog_counter")
-  faqCounter           Int @default(0) @map("faq_counter")
-  categoryCounter      Int @default(0) @map("category_counter")
-  userCounter          Int @default(0) @map("user_counter")
-  emailLogCounter      Int @default(0) @map("email_log_counter")
-  uploadLogCounter     Int @default(0) @map("upload_log_counter")
-  providerCounter      Int @default(0) @map("provider_counter")
-  refillCounter        Int @default(0) @map("refill_counter")
-  transactionCounter   Int @default(0) @map("transaction_counter")
-  referralOrderCounter Int @default(0) @map("referral_order_counter")
+  serviceCounter        Int @default(0) @map("service_counter")
+  orderCounter          Int @default(0) @map("order_counter")
+  blogCounter           Int @default(0) @map("blog_counter")
+  faqCounter            Int @default(0) @map("faq_counter")
+  categoryCounter       Int @default(0) @map("category_counter")
+  userCounter           Int @default(0) @map("user_counter")
+  emailLogCounter       Int @default(0) @map("email_log_counter")
+  uploadLogCounter      Int @default(0) @map("upload_log_counter")
+  providerCounter       Int @default(0) @map("provider_counter")
+  refillCounter         Int @default(0) @map("refill_counter")
+  transactionCounter    Int @default(0) @map("transaction_counter")
+  referralOrderCounter  Int @default(0) @map("referral_order_counter")
+  paymentGatewayCounter Int @default(0) @map("payment_gateway_counter")
 
   store Store @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
@@ -388,17 +423,18 @@ model StoreCounter {
 }
 
 model Transaction {
-  id            Int      @id @default(autoincrement())
-  storeScopedId Int      @map("store_scoped_id")
-  uid           String   @unique
-  amount        Decimal  @db.Decimal(10, 2)
-  timestamp     DateTime @default(now())
-  status        String
-  currency      String   @default("USD")
-  paymentMethod String   @map("payment_method")
-  userUid       String   @map("user_uid")
-  storeId       Int      @map("store_id")
-  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  id             Int      @id @default(autoincrement())
+  storeScopedId  Int      @map("store_scoped_id")
+  uid            String   @unique
+  amount         Decimal  @db.Decimal(10, 2)
+  timestamp      DateTime @default(now())
+  status         String
+  currency       String   @default("USD")
+  paymentGateway Platform @default(MANUAL) @map("payment_gateway")
+  chargedAmount  Decimal  @map("charged_amount")
+  userUid        String   @map("user_uid")
+  storeId        Int      @map("store_id")
+  store          Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@unique([storeId, storeScopedId])
   @@map("transactions")

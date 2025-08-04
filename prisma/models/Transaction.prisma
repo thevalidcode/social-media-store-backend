@@ -6,7 +6,8 @@ model Transaction {
   timestamp           DateTime  @default(now())
   status              String  
   currency            String    @default("USD")
-  paymentMethod       String    @map("payment_method")
+  paymentGateway      Platform  @default(MANUAL) @map("payment_gateway")
+  chargedAmount       Decimal   @map("charged_amount")
   userUid             String    @map("user_uid")
   storeId             Int       @map("store_id")
   store               Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)

@@ -1,6 +1,5 @@
 .env
 .vscode
-nodemon.json
 
 node_modules
 
