@@ -1,6 +1,27 @@
 import { prisma } from "../config/db";
 import convertCurrency from "../utils/ConvertCurrency";
 import { v4 as uuidv4 } from "uuid";
+import axios from "axios";
+import { decryptKey } from "../utils/encrypt";
+
+export const initFlutterwavePayment = async (
+  paymentData: any,
+  secretKey: { encrypted_key: string; iv: string }
+) => {
+  const response = await axios.post(
+    "https://api.flutterwave.com/v3/payments",
+    paymentData,
+    {
+      headers: {
+        Authorization: `Bearer ${decryptKey(
+          secretKey.encrypted_key,
+          secretKey.iv
+        )}`,
+      },
+    }
+  );
+  return { url: response.data.data.link };
+};
 
 const processSuccess = async (data: any, customer: any, storeId: number) => {
   const user = await prisma.user.findFirst({
@@ -21,7 +42,7 @@ const processSuccess = async (data: any, customer: any, storeId: number) => {
     await prisma.transaction.create({
       data: {
         uid: uuidv4(),
-        status: "success",
+        status: "SUCCESS",
         amount: data.charged_amount,
         paymentGateway: "FLUTTERWAVE",
         currency: data.currency,
@@ -32,7 +53,7 @@ const processSuccess = async (data: any, customer: any, storeId: number) => {
       },
     });
   });
-  
+
   if (!exchangeRates || !exchangeRates.quotes) {
     throw new Error("Exchange rates not available");
   }
@@ -68,10 +89,10 @@ const processFailure = async (data: any, customer: any, storeId: number) => {
     await tx.transaction.create({
       data: {
         uid: uuidv4(),
-        status: data.status,
+        status: data.status.toUppercase(),
         amount: data.charged_amount,
         paymentGateway: "FLUTTERWAVE",
-        storeScopedId: data.id,
+        storeScopedId: counter.transactionCounter,
         currency: data.currency,
         chargedAmount: data.charged_amount,
         userUid: user.uid,

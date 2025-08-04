@@ -1,6 +1,32 @@
 import { prisma } from "../config/db";
 import convertCurrency from "../utils/ConvertCurrency";
 import { v4 as uuidv4 } from "uuid";
+import axios from "axios";
+import { decryptKey } from "../utils/encrypt";
+
+export const initPaystackPayment = async (
+  paymentData: any,
+  secretKey: { encrypted_key: string; iv: string }
+) => {
+  const response = await axios.post(
+    "https://api.paystack.co/transaction/initialize",
+    {
+      email: paymentData.customer.email,
+      amount: paymentData.amount * 100, // Paystack uses kobo
+      currency: paymentData.currency,
+      callback_url: paymentData.redirect_url,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${decryptKey(
+          secretKey.encrypted_key,
+          secretKey.iv
+        )}`,
+      },
+    }
+  );
+  return { url: response.data.data.authorization_url };
+};
 
 const processSuccess = async (data: any, customer: any, storeId: number) => {
   const user = await prisma.user.findFirst({
@@ -13,7 +39,7 @@ const processSuccess = async (data: any, customer: any, storeId: number) => {
 
   if (!user) throw new Error("User not found");
 
-  const amount = data.amount / 100; // Paystack uses kobo
+  const amount = Number(data.amount) / 100; // Paystack uses kobo
   await prisma.$transaction(async (tx) => {
     const counter = await tx.storeCounter.update({
       where: { storeId },
@@ -22,7 +48,7 @@ const processSuccess = async (data: any, customer: any, storeId: number) => {
     await tx.transaction.create({
       data: {
         uid: uuidv4(),
-        status: "success",
+        status: "SUCCESS",
         amount,
         paymentGateway: "PAYSTACK",
         storeScopedId: counter.transactionCounter,
@@ -66,7 +92,7 @@ const processFailure = async (data: any, customer: any, storeId: number) => {
     await tx.transaction.create({
       data: {
         uid: crypto.randomUUID(),
-        status: data.status,
+        status: data.status.toUppercase(),
         amount: data.amount / 100,
         paymentGateway: "PAYSTACK",
         currency: data.currency,

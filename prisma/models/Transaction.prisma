@@ -1,10 +1,18 @@
+enum TransactionStatus {
+  SUCCESS   @map("success")
+  FAILED    @map("failed")
+  COMPLETED @map("completed")
+  REVERSED  @map("reversed")
+  CANCELLED @map("cancelled")
+}
+
 model Transaction {
   id                  Int       @id @default(autoincrement())
   storeScopedId       Int       @map("store_scoped_id")
   uid                 String    @unique
   amount              Decimal   @db.Decimal(10, 2)   
   timestamp           DateTime  @default(now())
-  status              String  
+  status              TransactionStatus
   currency            String    @default("USD")
   paymentGateway      Platform  @default(MANUAL) @map("payment_gateway")
   chargedAmount       Decimal   @map("charged_amount")

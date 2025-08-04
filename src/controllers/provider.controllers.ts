@@ -357,13 +357,13 @@ export const updateProvider = async (
   const reqData = parsed.data;
 
   try {
-    const encryptedKey = encryptKey(reqData.apiKey);
+    const encrypted_key = encryptKey(reqData.apiKey);
 
     await prisma.provider.updateMany({
       where: { uid: reqData.uid, storeId },
       data: {
         ...reqData,
-        apiKey: JSON.parse(JSON.stringify(encryptedKey)),
+        apiKey: JSON.parse(JSON.stringify(encrypted_key)),
       },
     });
 

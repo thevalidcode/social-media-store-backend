@@ -422,19 +422,27 @@ model StoreCounter {
   @@map("store_counters")
 }
 
+enum TransactionStatus {
+  SUCCESS   @map("success")
+  FAILED    @map("failed")
+  COMPLETED @map("completed")
+  REVERSED  @map("reversed")
+  CANCELLED @map("cancelled")
+}
+
 model Transaction {
-  id             Int      @id @default(autoincrement())
-  storeScopedId  Int      @map("store_scoped_id")
-  uid            String   @unique
-  amount         Decimal  @db.Decimal(10, 2)
-  timestamp      DateTime @default(now())
-  status         String
-  currency       String   @default("USD")
-  paymentGateway Platform @default(MANUAL) @map("payment_gateway")
-  chargedAmount  Decimal  @map("charged_amount")
-  userUid        String   @map("user_uid")
-  storeId        Int      @map("store_id")
-  store          Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  id             Int               @id @default(autoincrement())
+  storeScopedId  Int               @map("store_scoped_id")
+  uid            String            @unique
+  amount         Decimal           @db.Decimal(10, 2)
+  timestamp      DateTime          @default(now())
+  status         TransactionStatus
+  currency       String            @default("USD")
+  paymentGateway Platform          @default(MANUAL) @map("payment_gateway")
+  chargedAmount  Decimal           @map("charged_amount")
+  userUid        String            @map("user_uid")
+  storeId        Int               @map("store_id")
+  store          Store             @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@unique([storeId, storeScopedId])
   @@map("transactions")
