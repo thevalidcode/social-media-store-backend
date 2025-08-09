@@ -1,5 +1,5 @@
 import express from "express";
-import * as payments from "../controllers/paymentGateway.controllers";
+import * as paymentGateways from "../controllers/paymentGateway.controllers";
 import { authenticate } from "../middleware/authenticate";
 import {
   limitPaymentAdd,
@@ -7,56 +7,55 @@ import {
 } from "../middleware/ratelimit/paymentGateway.ratelimit";
 import { isAdmin, isUser } from "../middleware/authorize";
 
-
 const router = express.Router();
 
 router.get(
-  "/admin/gateways",
+  "/admin",
   authenticate,
   limitPaymentActions, isAdmin,
-  payments.getPaymentGateways
+  paymentGateways.getPaymentGateways
 );
 
 router.get(
-  "/admin/gateways/:uid",
+  "/admin/:uid",
   authenticate,
   limitPaymentActions, isAdmin,
-  payments.getPaymentGatewayByUid
+  paymentGateways.getPaymentGatewayByUid
 );
 
 router.get(
-  "/gateways",
+  "/",
   authenticate,
   limitPaymentActions, isUser,
-  payments.getPaymentGatewaysForUser
+  paymentGateways.getPaymentGatewaysForUser
 );
 
 router.get(
-  "/gateways/:uid",
+  "/:uid",
   authenticate,
   limitPaymentActions, isAdmin,
-  payments.getPaymentGatewayByUidForUser
+  paymentGateways.getPaymentGatewayByUidForUser
 );
 
 router.post(
-  "/gateways",
+  "/",
   authenticate,
   limitPaymentAdd, isAdmin,
-  payments.addPaymentGateway
+  paymentGateways.addPaymentGateway
 );
 
 router.patch(
-  "/gateways",
+  "/",
   authenticate,
   limitPaymentActions, isAdmin,
-  payments.updatePaymentGateway
+  paymentGateways.updatePaymentGateway
 );
 
 router.delete(
-  "/gateways",
+  "/",
   authenticate,
   limitPaymentActions, isAdmin,
-  payments.deletePaymentGateway
+  paymentGateways.deletePaymentGateway
 );
 
 export default router;

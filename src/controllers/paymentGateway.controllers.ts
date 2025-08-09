@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { prisma } from "../config/db";
-import { decryptKey, encryptKey } from "../utils/encrypt";
+import { encryptKey } from "../utils/encrypt";
 import { AuthSchema } from "../schemas/user.schema";
 import {
   DeletePaymentGatewaySchema,
@@ -9,6 +9,7 @@ import {
   PaymentUpdateRequestSchema,
 } from "../schemas/paymentGateway.schema";
 import { v4 as uuidv4 } from "uuid";
+import crypto from "crypto";
 
 export const getPaymentGateways = async (
   req: Request,
@@ -197,7 +198,7 @@ export const addPaymentGateway = async (
     }
   }
   try {
-    await prisma.$transaction(async (tx) => {
+    const gateway = await prisma.$transaction(async (tx) => {
       const counter = await tx.storeCounter.update({
         where: { storeId },
         data: { paymentGatewayCounter: { increment: 1 } },
@@ -215,6 +216,7 @@ export const addPaymentGateway = async (
         min: reqData.min,
         max: reqData.max,
         status: "ACTIVE",
+        signature: crypto.randomBytes(32).toString("hex"),
       };
 
       if (reqData.secretKey) {
@@ -228,9 +230,11 @@ export const addPaymentGateway = async (
 
       return payment;
     });
+    const signature = gateway.signature;
 
     res.status(200).json({
       success: "Payment created successfully",
+      signature,
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -273,6 +277,7 @@ export const updatePaymentGateway = async (
       min: reqData.min,
       max: reqData.max,
       secretKey: undefined,
+      signature: crypto.randomBytes(32).toString("hex"),
     };
     if (reqData.secretKey) {
       const encrypted_key = encryptKey(reqData.secretKey);
@@ -291,6 +296,7 @@ export const updatePaymentGateway = async (
 
     res.status(200).json({
       success: "Payment updated successfully.",
+      signature: payment?.signature,
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

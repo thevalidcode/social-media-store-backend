@@ -1,9 +1,9 @@
-enum Status {
+enum PaymentGatewayStatus {
   ACTIVE      @map("active")
   DISABLED    @map("disabled")
 }
 
-enum Platform {
+enum PaymentGatewayPlatform {
   MANUAL       @map("manual")
   FLUTTERWAVE  @map("flutterwave")
   PAYSTACK     @map("paystack")
@@ -14,12 +14,13 @@ model PaymentGateway {
   id             Int      @id @default(autoincrement())
   storeScopedId  Int      @map("store_scoped_id")
   uid            String   @unique
-  platform       Platform @default(MANUAL)
+  platform       PaymentGatewayPlatform @default(MANUAL)
   name           String
   description    String?
+  signature      String?
   secretKey      Json?    @map("secret_key")
   image          String   
-  status         Status   @default(ACTIVE)
+  status         PaymentGatewayStatus   @default(ACTIVE)
   createdAt      DateTime @default(now()) @map("created_at")
   storeId        Int      @map("store_id")
   position       Int      @map("position")

@@ -14,7 +14,7 @@ model Transaction {
   timestamp           DateTime  @default(now())
   status              TransactionStatus
   currency            String    @default("USD")
-  paymentGateway      Platform  @default(MANUAL) @map("payment_gateway")
+  paymentGateway      PaymentGatewayPlatform  @default(MANUAL) @map("payment_gateway")
   chargedAmount       Decimal   @map("charged_amount")
   userUid             String    @map("user_uid")
   storeId             Int       @map("store_id")

@@ -305,12 +305,12 @@ model General {
   @@map("general")
 }
 
-enum Status {
+enum PaymentGatewayStatus {
   ACTIVE   @map("active")
   DISABLED @map("disabled")
 }
 
-enum Platform {
+enum PaymentGatewayPlatform {
   MANUAL      @map("manual")
   FLUTTERWAVE @map("flutterwave")
   PAYSTACK    @map("paystack")
@@ -318,21 +318,22 @@ enum Platform {
 }
 
 model PaymentGateway {
-  id            Int      @id @default(autoincrement())
-  storeScopedId Int      @map("store_scoped_id")
-  uid           String   @unique
-  platform      Platform @default(MANUAL)
+  id            Int                    @id @default(autoincrement())
+  storeScopedId Int                    @map("store_scoped_id")
+  uid           String                 @unique
+  platform      PaymentGatewayPlatform @default(MANUAL)
   name          String
   description   String?
-  secretKey     Json?    @map("secret_key")
+  signature     String?
+  secretKey     Json?                  @map("secret_key")
   image         String
-  status        Status   @default(ACTIVE)
-  createdAt     DateTime @default(now()) @map("created_at")
-  storeId       Int      @map("store_id")
-  position      Int      @map("position")
-  min           Decimal  @db.Decimal(10, 2)
-  max           Decimal  @db.Decimal(10, 2)
-  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  status        PaymentGatewayStatus   @default(ACTIVE)
+  createdAt     DateTime               @default(now()) @map("created_at")
+  storeId       Int                    @map("store_id")
+  position      Int                    @map("position")
+  min           Decimal                @db.Decimal(10, 2)
+  max           Decimal                @db.Decimal(10, 2)
+  store         Store                  @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@unique([storeId, storeScopedId])
   @@map("payment_gateways")
@@ -432,18 +433,18 @@ enum TransactionStatus {
 }
 
 model Transaction {
-  id             Int               @id @default(autoincrement())
-  storeScopedId  Int               @map("store_scoped_id")
-  uid            String            @unique
-  amount         Decimal           @db.Decimal(10, 2)
-  timestamp      DateTime          @default(now())
+  id             Int                    @id @default(autoincrement())
+  storeScopedId  Int                    @map("store_scoped_id")
+  uid            String                 @unique
+  amount         Decimal                @db.Decimal(10, 2)
+  timestamp      DateTime               @default(now())
   status         TransactionStatus
-  currency       String            @default("USD")
-  paymentGateway Platform          @default(MANUAL) @map("payment_gateway")
-  chargedAmount  Decimal           @map("charged_amount")
-  userUid        String            @map("user_uid")
-  storeId        Int               @map("store_id")
-  store          Store             @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  currency       String                 @default("USD")
+  paymentGateway PaymentGatewayPlatform @default(MANUAL) @map("payment_gateway")
+  chargedAmount  Decimal                @map("charged_amount")
+  userUid        String                 @map("user_uid")
+  storeId        Int                    @map("store_id")
+  store          Store                  @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@unique([storeId, storeScopedId])
   @@map("transactions")

@@ -1,9 +1,15 @@
 import type { Request, Response } from "express";
 import paymentService from "../services/payment.services";
 import {
+  verifyPaystackSignature,
+  verifyFlutterwaveSignature,
+} from "../utils/webhook/verifySignatures";
+import {
   FlutterwaveWebhookSchema,
   PaystackWebhookSchema,
 } from "../schemas/webhook.schema";
+import { prisma } from "../config/db";
+import { decryptKey } from "../utils/encrypt";
 
 export const flutterwaveWebhook = async (
   req: Request,
@@ -14,6 +20,20 @@ export const flutterwaveWebhook = async (
 
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const gateway = await prisma.paymentGateway.findFirst({
+    where: { storeId: Number(storeId), platform: "PAYSTACK" },
+  });
+
+  if (!gateway || !gateway.signature) {
+    res.status(400).json({ error: "Invalid store or missing signature" });
+    return;
+  }
+
+  if (!verifyFlutterwaveSignature(req, gateway.signature)) {
+    res.status(401).json({ error: "Invalid signature" });
     return;
   }
 
@@ -52,6 +72,25 @@ export const paystackWebhook = async (
 
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const gateway = await prisma.paymentGateway.findFirst({
+    where: { storeId: Number(storeId), platform: "PAYSTACK" },
+  });
+
+  if (!gateway || !gateway.secretKey) {
+    res.status(400).json({ error: "Invalid store or missing signature" });
+    return;
+  }
+  const signature = gateway.secretKey as {
+    encrypted_key: string;
+    iv: string;
+  };
+
+  const decryptedKey = decryptKey(signature.encrypted_key, signature.iv);
+  if (!verifyPaystackSignature(req, decryptedKey)) {
+    res.status(401).json({ error: "Invalid signature" });
     return;
   }
 

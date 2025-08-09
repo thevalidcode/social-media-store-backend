@@ -12,5 +12,8 @@ import "./blog.paths";
 import "./faq.paths";
 import "./refill.paths";
 import "./files.paths";
+import "./paymentGateway.paths";
+import "./payment.paths";
+import "./webhook.paths";
 
 export { registry };

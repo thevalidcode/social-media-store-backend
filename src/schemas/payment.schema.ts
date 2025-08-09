@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
-import { Platform } from "../../prisma/generated";
+import { PaymentGatewayPlatform } from "../../prisma/generated";
 
 extendZodWithOpenApi(z);
 
 export const CreatePaymentSchema = z.object({
   apiKey: z.string(),
   storeId: z.coerce.number(),
-  platform: z.nativeEnum(Platform),
+  platform: z.nativeEnum(PaymentGatewayPlatform),
   currency: z.string().length(3),
   amount: z.number().positive(),
   redirect_url: z.string().url(),

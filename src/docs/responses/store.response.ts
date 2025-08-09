@@ -25,15 +25,6 @@ export const GeneralDataResponse = {
   },
 };
 
-export const CSrfTokenResponse = {
-  description: "CSRF Token lookup result",
-  content: {
-    "application/json": {
-      schema: z.object({ csrfToken: z.string() }),
-    },
-  },
-};
-
 export const DesignStylesResponse = {
   description: "Design styles configuration",
   content: {
