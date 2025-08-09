@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.7.0](https://github.com/thevalidcode/social-media-store-backend/compare/v1.6.1...v1.7.0) (2025-08-09)
+
+
+### Features
+
+* add binary targets for Prisma client to support Debian OpenSSL versions ([836665c](https://github.com/thevalidcode/social-media-store-backend/commit/836665c6e72e16dfc3269ef3a6452fce6af33ce2))
+* Add cover image field to blog schema and migrations ([8c5c131](https://github.com/thevalidcode/social-media-store-backend/commit/8c5c131821547bf5dd592a0c94bd63918eca7499))
+* add payment gateway routes, controllers, and models; update migrations and schemas ([5561a46](https://github.com/thevalidcode/social-media-store-backend/commit/5561a4674523505b1a8cd27afc36a0f93a4986f5))
+* add script to merge Prisma models into a single schema file with manual ordering ([bf0d6ec](https://github.com/thevalidcode/social-media-store-backend/commit/bf0d6ecc263c63bdf100ad7e75d3c5a76b72bd57))
+* implement payment gateway integration with webhook support and update schemas ([ca9bb94](https://github.com/thevalidcode/social-media-store-backend/commit/ca9bb9406725c284187087cae5ec2661539c7f81))
+* implement payment processing routes, controllers, and schemas; add transaction status enum ([ba247d6](https://github.com/thevalidcode/social-media-store-backend/commit/ba247d6ef660c730d1b5c802322d837c34b340bd))
+
+
+### Bug Fixes
+
+* change deployment environment to Ubuntu ([8aeab88](https://github.com/thevalidcode/social-media-store-backend/commit/8aeab885bab9f25716fb73c9a371ae831dad7c21))
+* change deployment environment to Windows ([1abc952](https://github.com/thevalidcode/social-media-store-backend/commit/1abc952f89133a298d38c7c18f4caf5f8b5e6c3a))
+* fixed file casing ([400715c](https://github.com/thevalidcode/social-media-store-backend/commit/400715c06ff637fc38dbfa1efc7f64db2ec8bde1))
+* fixed prisma issue ([719e387](https://github.com/thevalidcode/social-media-store-backend/commit/719e387b8e0848921fc1d55d7ef4013b2726a2ba))
+* standardize transaction status to uppercase "SUCCESS" ([15c5598](https://github.com/thevalidcode/social-media-store-backend/commit/15c5598bed806262c24eafbf88171b7238530d1f))
+
 ### [1.6.1](https://github.com/thevalidcode/social-media-store-backend/compare/v1.6.0...v1.6.1) (2025-07-19)
 
 
