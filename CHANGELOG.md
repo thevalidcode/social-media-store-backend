@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.8.0](https://github.com/thevalidcode/social-media-store-backend/compare/v1.7.0...v1.8.0) (2025-08-11)
+
+
+### Features
+
+* update database configuration and schemas, add new enum types, and modify import paths ([04f258d](https://github.com/thevalidcode/social-media-store-backend/commit/04f258dba284ecacbc94f208591a4ad32fcc50c7))
+
 ## [1.7.0](https://github.com/thevalidcode/social-media-store-backend/compare/v1.6.1...v1.7.0) (2025-08-09)
 
 
