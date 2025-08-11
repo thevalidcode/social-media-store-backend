@@ -1,9 +1,14 @@
+enum FaqStatus {
+  ACTIVE      @map("active")
+  DISABLED    @map("disabled")
+}
+
 model Faq {
   id             Int     @id @default(autoincrement())
   storeScopedId   Int     @map("store_scoped_id")
   question  String
   answer    String
-  status    String   @default("active")
+  status    FaqStatus   @default(ACTIVE)
   position  Int
   slug      String
   uid       String   @unique

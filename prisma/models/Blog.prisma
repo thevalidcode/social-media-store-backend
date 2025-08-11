@@ -1,3 +1,8 @@
+enum BlogStatus {
+  ACTIVE      @map("active")
+  DISABLED    @map("disabled")
+}
+
 model Blog {
   id             Int     @id @default(autoincrement())
   storeScopedId   Int     @map("store_scoped_id")
@@ -5,7 +10,7 @@ model Blog {
   content     String
   description String   @default("")
   coverImage  String   @default("") @map("cover_image")
-  status      String   @default("active")
+  status      BlogStatus    @default(ACTIVE)
   position    Int
   slug        String
   uid         String   @unique

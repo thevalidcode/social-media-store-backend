@@ -1,3 +1,12 @@
+enum RefillStatus {
+  PENDING     @map("Pending")
+  CANCELED    @map("Canceled")
+  REJECTED    @map("Rejected")
+  COMPLETED   @map("Completed")
+  ACTIVE      @map("In progress")
+  ERROR       @map("Error")
+}
+
 model Refill {
   id             Int     @id @default(autoincrement())
   storeScopedId   Int     @map("store_scoped_id")
@@ -5,7 +14,7 @@ model Refill {
   timestamp       DateTime  @default(now())
   userUid         String    @map("user_uid")
   providerId      Int       @map("provider_id")
-  status          String    @default("Pending")
+  status          RefillStatus    @default(PENDING)
   providerOrderId Int       @map("provider_order_id")
   orderId         Int       @map("order_id")
   provider        String

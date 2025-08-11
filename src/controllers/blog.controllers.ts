@@ -1,4 +1,4 @@
-import { prisma } from "../config/db";
+import { prisma } from "../config/db.config";
 import { AuthSchema } from "../schemas/user.schema";
 import {
   blogIdSchema,
@@ -109,7 +109,7 @@ export const addBlog = async (req: Request, res: Response): Promise<void> => {
           content: parsed.data.content,
           coverImage: parsed.data.coverImage,
           description: parsed.data.description || "",
-          status: "active",
+          status: "ACTIVE",
           position: newPosition,
           uid: uuidv4(),
           storeId,

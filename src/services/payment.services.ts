@@ -1,6 +1,6 @@
 import flutterwaveProvider from "../providers/flutterwave.providers";
 import paystackProvider from "../providers/paystack.providers";
-import { prisma } from "../config/db";
+import { prisma } from "../config/db.config";
 import { initFlutterwavePayment } from "../providers/flutterwave.providers";
 import { initPaystackPayment } from "../providers/paystack.providers";
 import type { CreatePaymentInput } from "../schemas/payment.schema";

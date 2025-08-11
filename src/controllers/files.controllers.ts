@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { UploadImageRequest, FileSchema } from "../schemas/files.schema";
 import { AuthSchema } from "../schemas/user.schema";
 import { uploadToS3 } from "../services/s3.services";
-import { prisma } from "../config/db";
+import { prisma } from "../config/db.config";
 import { v4 as uuidv4 } from "uuid";
 
 export const uploadImage = async (req: Request, res: Response): Promise<void> => {

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import axios from "axios";
 import type { Request, Response } from "express";
-import { prisma } from "../config/db";
+import { prisma } from "../config/db.config";
 import { decryptKey, encryptKey } from "../utils/encrypt";
 import { AuthSchema } from "../schemas/user.schema";
 import {
@@ -157,7 +157,7 @@ export const importServices = async (
             const newCategory = await tx.category.create({
               data: {
                 name: service.category,
-                status: "active",
+                status: "ACTIVE",
                 position: catCounter.categoryCounter,
                 uid: uuidv4(),
                 storeId,

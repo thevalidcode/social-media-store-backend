@@ -1,7 +1,8 @@
-import { prisma } from "../config/db";
+import { prisma } from "../config/db.config";
 import nodemailer from "nodemailer";
 import { getTemplate } from "./templates";
 import { v4 as uuidv4 } from "uuid";
+import { EmailTemplateType } from "../../prisma/generated";
 
 const transporter = nodemailer.createTransport({
   sendmail: true,
@@ -32,7 +33,7 @@ async function loadAdminEmails(storeId: number): Promise<string[]> {
 }
 
 async function buildEmailTemplate(
-  type: string,
+  type: EmailTemplateType,
   data: Record<string, any>,
   logoUrl: string,
   storeId: number
@@ -126,12 +127,12 @@ async function dispatchEmail({
 
 export async function sendEmail(
   from = '"Valid Panel" <contact@validpanel.com>',
-  type: string,
+  type: EmailTemplateType,
   data: Record<string, any>,
   storeId: number
 ): Promise<void> {
   try {
-    if (type === "newOrder" && data.price <= 0) return;
+    if (type === "NEWFAILEDORDER" && data.price <= 0) return;
 
     const [generalSettings, recipients] = await Promise.all([
       loadGeneralSettings(storeId),
@@ -159,7 +160,7 @@ export async function sendEmail(
 export async function sendUserEmail(
   from = '"Store" <notifications@validpanel.com>',
   to: string,
-  type: string,
+  type: EmailTemplateType,
   data: Record<string, any>,
   storeId: number
 ): Promise<void> {

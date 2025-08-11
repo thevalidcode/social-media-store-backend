@@ -1,6 +1,6 @@
 model ReferralOrder {
   id             Int     @id @default(autoincrement())
-  storeScopedId   Int     @map("store_scoped_id")
+  storeScopedId  Int     @map("store_scoped_id")
   uid                 String    @unique
   refId                 Int    @unique @map("ref_id")
   timestamp           DateTime  @default(now())

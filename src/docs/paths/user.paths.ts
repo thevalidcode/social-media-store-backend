@@ -27,7 +27,7 @@ import {
 registry.registerPath({
   method: "post",
   path: "/user/me",
-  summary: "Authenticate user",
+  summary: "Authenticate a user",
   tags: ["Users"],
   request: {
     body: {

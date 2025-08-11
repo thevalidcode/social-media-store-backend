@@ -1,9 +1,14 @@
+enum CategoryStatus {
+  ACTIVE      @map("active")
+  DISABLED    @map("disabled")
+}
+
 model Category {
   id             Int     @id @default(autoincrement())
   storeScopedId   Int     @map("store_scoped_id")
   name        String
   timestamp   DateTime @default(now())
-  status      String   @default("active")
+  status      CategoryStatus    @default(ACTIVE)
   description String   @default("")
   position    Int
   uid         String   @unique @map("uid")

@@ -1,6 +1,6 @@
 import axios from "axios";
-import { prisma } from "../config/db";
-import { env } from "../config/env";
+import { prisma } from "../config/db.config";
+import { env } from "../config/env.config";
 import { v4 as uuidv4 } from "uuid";
 
 const rateKey = env.RATE_KEY;

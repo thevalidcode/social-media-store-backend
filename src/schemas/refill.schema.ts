@@ -1,16 +1,10 @@
 import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
+import { RefillStatus } from "../../prisma/generated";
 
 extendZodWithOpenApi(z);
 
-const refillStatus = z.enum([
-  "Pending",
-  "Processing",
-  "Completed",
-  "Canceled",
-  "In progress",
-  "Failed",
-]);
+const refillStatus = z.nativeEnum(RefillStatus);
 
 export const RefillPublicSchema = z
   .object({

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Request, Response } from "express";
-import { prisma } from "../config/db";
+import { prisma } from "../config/db.config";
 import { AuthSchema } from "../schemas/user.schema";
 import { v4 as uuidv4 } from "uuid";
 
@@ -213,7 +213,7 @@ export const addCategory = async (
         data: {
           name: parsed.data.name,
           description: parsed.data.description || "",
-          status: "active",
+          status: "ACTIVE",
           position: newPosition,
           uid: uuidv4(),
           storeId,

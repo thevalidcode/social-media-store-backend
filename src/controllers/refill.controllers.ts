@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { prisma } from "../config/db";
+import { prisma } from "../config/db.config";
 import { v4 as uuidv4 } from "uuid";
 import { AuthSchema } from "../schemas/user.schema";
 import {

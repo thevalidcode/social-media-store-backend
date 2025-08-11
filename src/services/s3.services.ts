@@ -2,7 +2,7 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import path from "path";
 import { randomUUID } from "crypto";
 import mime from "mime-types";
-import { env } from "../config/env";
+import { env } from "../config/env.config";
 
 const s3 = new S3Client({
   region: env.AWS_REGION!,

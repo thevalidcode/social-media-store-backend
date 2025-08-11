@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Request, Response } from "express";
-import { prisma } from "../config/db";
+import { prisma } from "../config/db.config";
 import {
   StoreGeneralDataRequestSchema,
   StoreGeneralDataResponseSchema,
@@ -14,7 +14,10 @@ const storeIdQuerySchema = z.object({ domain: z.string().min(1) });
 const storeIdSchema = z.object({ storeId: z.coerce.number() });
 
 // ✅ Get store data by domain
-export const getStoreData = async (req: Request, res: Response): Promise<void> => {
+export const getStoreData = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const parsed = storeIdQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -42,7 +45,10 @@ export const getStoreData = async (req: Request, res: Response): Promise<void> =
 };
 
 // ✅ Get general store data
-export const getStoreGeneralData = async (req: Request, res: Response): Promise<void> => {
+export const getStoreGeneralData = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const parsed = StoreGeneralDataRequestSchema.safeParse(req.params);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -57,7 +63,9 @@ export const getStoreGeneralData = async (req: Request, res: Response): Promise<
     });
 
     if (!generalData) {
-      res.status(404).json({ error: "General Data not found for the given store" });
+      res
+        .status(404)
+        .json({ error: "General Data not found for the given store" });
       return;
     }
 
@@ -77,7 +85,10 @@ export const getStoreGeneralData = async (req: Request, res: Response): Promise<
 };
 
 // ✅ Update general store data
-export const updateStoreGeneralData = async (req: Request, res: Response): Promise<void> => {
+export const updateStoreGeneralData = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const bodyParsed = UpdateGeneralDataRequestSchema.safeParse(req.body);
 
@@ -140,7 +151,10 @@ export const getStyles = async (req: Request, res: Response): Promise<void> => {
 };
 
 // ✅ Update store design styles
-export const updateStoreStyles = async (req: Request, res: Response): Promise<void> => {
+export const updateStoreStyles = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const bodyParsed = UpdateStylesRequestSchema.safeParse(req.body);
 
@@ -165,7 +179,9 @@ export const updateStoreStyles = async (req: Request, res: Response): Promise<vo
     const existing = await prisma.designStyle.findFirst({ where: { storeId } });
 
     if (!existing) {
-      await prisma.designStyle.create({ data: { ...bodyData, storeId, storeScopedId: 1, uid: uuidv4() } });
+      await prisma.designStyle.create({
+        data: { ...bodyData, storeId, storeScopedId: 1, uid: uuidv4() },
+      });
     } else {
       await prisma.designStyle.update({
         where: { id: existing.id },
@@ -181,7 +197,10 @@ export const updateStoreStyles = async (req: Request, res: Response): Promise<vo
 };
 
 // ✅ Get site data
-export const getSiteData = async (req: Request, res: Response): Promise<void> => {
+export const getSiteData = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const parsed = storeIdSchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -211,7 +230,10 @@ export const getRates = async (_req: Request, res: Response): Promise<void> => {
 };
 
 // ✅ Get current logged-in user
-export const getCurrentUser = async (req: Request, res: Response): Promise<void> => {
+export const getCurrentUser = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   if (!req.auth) {
     res.status(401).json({ error: "Unauthorized: auth info missing" });
     return;
@@ -238,18 +260,16 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
 };
 
 // ✅ Get current logged-in admin
-export const getCurrentAdmin = async (req: Request, res: Response): Promise<void> => {
+export const getCurrentAdmin = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   if (!req.auth) {
     res.status(401).json({ error: "Unauthorized: auth info missing" });
     return;
   }
 
-  const { uid, storeId, role } = req.auth;
-
-  if (role !== "admin") {
-    res.status(403).json({ error: "Access denied. Admins only." });
-    return;
-  }
+  const { uid, storeId } = req.auth;
 
   try {
     const admin = await prisma.admin.findFirst({

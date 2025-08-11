@@ -1,4 +1,4 @@
-import { prisma } from "../config/db";
+import { prisma } from "../config/db.config";
 import convertCurrency from "../utils/ConvertCurrency";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";

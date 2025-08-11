@@ -1,17 +1,15 @@
 import express from "express";
 const router = express.Router();
-import * as stores from "../controllers/store.controllers"
-    ;
-import { authenticate } from "../middleware/authenticate";
-import { isAdmin, isUser } from "../middleware/authorize";
+import * as stores from "../controllers/store.controllers";
+import { authenticateAdmin, authenticateUser } from "../middleware/auth";
 
 router.get("/data", stores.getStoreData);
 router.get("/:storeId/general-data", stores.getStoreGeneralData);
-router.patch("/general-data", authenticate, isAdmin, stores.updateStoreGeneralData);
+router.patch("/general-data", authenticateAdmin, stores.updateStoreGeneralData);
 router.get("/:storeId/styles", stores.getStyles);
-router.patch("/styles", authenticate, isAdmin, stores.updateStoreStyles);
+router.patch("/styles", authenticateAdmin, stores.updateStoreStyles);
 router.get("/rates", stores.getRates);
-router.get("/current-user", authenticate, isUser, stores.getCurrentUser);
-router.get("/current-admin", authenticate, isAdmin, stores.getCurrentAdmin);
+router.get("/current-user", authenticateUser, stores.getCurrentUser);
+router.get("/current-admin", authenticateAdmin, stores.getCurrentAdmin);
 
 export default router;

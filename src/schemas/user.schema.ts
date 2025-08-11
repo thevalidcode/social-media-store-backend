@@ -1,9 +1,8 @@
 import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
+import { UserRole, UserStatus } from "../../prisma/generated";
 
 extendZodWithOpenApi(z);
-
-
 
 export const UserSchema = z
   .object({
@@ -11,9 +10,9 @@ export const UserSchema = z
     email: z.string().email(),
     username: z.string(),
     password: z.string(),
-    status: z.string(),
+    status: z.nativeEnum(UserStatus),
     apiKey: z.string(),
-    role: z.string(),
+    role: z.nativeEnum(UserRole),
     uid: z.string(),
   })
   .openapi("User");
@@ -24,7 +23,7 @@ export const AuthSchema = z.object({
   uid: z.string(),
   apiKey: z.string(),
   role: z.string(),
-  user: UserSchema
+  user: UserSchema,
 });
 
 export const UserPublicSchema = z
@@ -43,7 +42,7 @@ export const UserUpdateRequestSchema = z.object({
 });
 
 export const AuthenticateUserSchema = z.object({
-  storeId: z.number().describe("Associated store ID"),
+  storeId: z.coerce.number().describe("Associated store ID"),
   email: z.string().email().describe("User email"),
   password: z.string().describe("User password"),
 });
@@ -89,12 +88,12 @@ export const CreateUserSchema = z.object({
     id: z.coerce.number().describe("User id"),
     email: z.string().email().describe("User email"),
     username: z.string().describe("User username"),
-  })
+  }),
 });
 
 export const tokenPayloadSchema = z.object({
   email: z.string().email(),
   storeId: z.number(),
   apiKey: z.string(),
-  role: z.enum(["admin", "user"]),
+  uid: z.string(),
 });

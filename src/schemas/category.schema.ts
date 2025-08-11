@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
+import { CategoryStatus } from "../../prisma/generated";
 
 extendZodWithOpenApi(z);
 
@@ -9,7 +10,7 @@ export const CategorySchema = z
     uid: z.string(),
     name: z.string(),
     description: z.string(),
-    status: z.string(),
+    status: z.nativeEnum(CategoryStatus),
     position: z.number(),
   })
   .openapi("Category");

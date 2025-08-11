@@ -1,10 +1,25 @@
+enum StoreStatus {
+  ACTIVE      @map("active")
+  INACTIVE    @map("inactive")
+  DISABLED    @map("disabled")
+}
+
+enum StorePlan {
+  FREE          @map("free")
+  STARTER       @map("starter")
+  ESSESENTIALS  @map("essesentials")
+  PRO           @map("pro")
+  BUSINESS      @map("business")
+  EMPIRE        @map("empire")
+}
+
 model Store {
-  storeId    Int      @id @map("store_id")
-  uid       String   @unique
-  ssl       Boolean  @default(false)
-  plan      String   @default("starter")
-  status    String   @default("active")
-  timestamp DateTime @default(now())
+  storeId   Int        @id @map("store_id")
+  uid       String      @unique
+  ssl       Boolean     @default(false)
+  plan      StorePlan   @default(FREE)
+  status    StoreStatus @default(ACTIVE)
+  timestamp DateTime    @default(now())
 
   // Relations
   User             User[]

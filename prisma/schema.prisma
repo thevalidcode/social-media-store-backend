@@ -9,13 +9,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum StoreStatus {
+  ACTIVE   @map("active")
+  INACTIVE @map("inactive")
+  DISABLED @map("disabled")
+}
+
+enum StorePlan {
+  FREE         @map("free")
+  STARTER      @map("starter")
+  ESSESENTIALS @map("essesentials")
+  PRO          @map("pro")
+  BUSINESS     @map("business")
+  EMPIRE       @map("empire")
+}
+
 model Store {
-  storeId   Int      @id @map("store_id")
-  uid       String   @unique
-  ssl       Boolean  @default(false)
-  plan      String   @default("starter")
-  status    String   @default("active")
-  timestamp DateTime @default(now())
+  storeId   Int         @id @map("store_id")
+  uid       String      @unique
+  ssl       Boolean     @default(false)
+  plan      StorePlan   @default(FREE)
+  status    StoreStatus @default(ACTIVE)
+  timestamp DateTime    @default(now())
 
   // Relations
   User             User[]
@@ -44,25 +59,38 @@ model Store {
   @@map("stores")
 }
 
+enum UserStatus {
+  ACTIVE   @map("active")
+  INACTIVE @map("inactive")
+  BANNED   @map("banned")
+}
+
+enum UserRole {
+  BASIC    @map("basic")
+  VIP      @map("vip")
+  RESELLER @map("reseller")
+  PARTNER  @map("partner")
+}
+
 model User {
-  id            Int      @id @default(autoincrement())
-  storeScopedId Int      @map("store_scoped_id")
-  refCode       Int?     @unique @default(autoincrement()) @map("ref_code")
-  uid           String   @unique
+  id            Int        @id @default(autoincrement())
+  storeScopedId Int        @map("store_scoped_id")
+  refCode       Int?       @unique @default(autoincrement()) @map("ref_code")
+  uid           String     @unique
   email         String
   image         String?
   password      String
   username      String
-  apiKey        String   @unique @map("api_key")
-  role          String   @default("user")
-  status        String   @default("active")
-  storeId       Int      @map("store_id")
-  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
-  balance       Decimal  @default(0.00) @db.Decimal(10, 2)
-  spent         Decimal  @default(0.00) @db.Decimal(10, 2)
-  timestamp     DateTime @default(now())
-  lastSeen      DateTime @default(now()) @map("last_seen")
-  currency      String   @default("USD")
+  apiKey        String     @unique @map("api_key")
+  role          UserRole   @default(BASIC)
+  status        UserStatus @default(ACTIVE)
+  storeId       Int        @map("store_id")
+  store         Store      @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  balance       Decimal    @default(0.00) @db.Decimal(10, 2)
+  spent         Decimal    @default(0.00) @db.Decimal(10, 2)
+  timestamp     DateTime   @default(now())
+  lastSeen      DateTime   @default(now()) @map("last_seen")
+  currency      String     @default("USD")
 
   ref        Int?
   referredBy User?  @relation("Referral", fields: [ref], references: [refCode], onDelete: SetNull)
@@ -72,89 +100,126 @@ model User {
   @@map("users")
 }
 
+enum AdminStatus {
+  ACTIVE   @map("active")
+  INACTIVE @map("inactive")
+  BANNED   @map("banned")
+}
+
+enum AdminRole {
+  SUPER           @map("super")
+  BASIC           @map("basic")
+  MANAGER         @map("manager")
+  SUPPORTSTAFF    @map("support_staff")
+  FINANCEOFFICER  @map("finance_officer")
+  SERVICEOPERATOR @map("service_operator")
+}
+
 model Admin {
-  id        Int      @id @default(autoincrement())
-  uid       String   @unique
+  id        Int         @id @default(autoincrement())
+  uid       String      @unique
   email     String
   image     String?
   password  String
   username  String
-  apiKey    String   @unique @map("api_key")
-  role      String   @default("admin")
-  status    String   @default("active")
-  storeId   Int      @map("store_id")
-  store     Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
-  timestamp DateTime @default(now())
-  lastSeen  DateTime @default(now()) @map("last_seen")
+  apiKey    String      @unique @map("api_key")
+  role      AdminRole   @default(BASIC)
+  status    AdminStatus @default(ACTIVE)
+  storeId   Int         @map("store_id")
+  store     Store       @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  timestamp DateTime    @default(now())
+  lastSeen  DateTime    @default(now()) @map("last_seen")
 
   @@map("admins")
 }
 
+enum ServiceStatus {
+  ACTIVE   @map("active")
+  DISABLED @map("disabled")
+}
+
+enum ServiceType {
+  DEFAULT        @map("Default")
+  PACKAGE        @map("Package")
+  SUBSCRIPTION   @map("Subscription")
+  CUSTOMCOMMENTS @map("Custom Comments")
+}
+
 model Service {
-  id               Int      @id @default(autoincrement())
-  storeScopedId    Int      @map("store_scoped_id")
-  uid              String   @unique
+  id               Int           @id @default(autoincrement())
+  storeScopedId    Int           @map("store_scoped_id")
+  uid              String        @unique
   name             String
   description      String?
   category         String
-  type             String   @default("Default")
-  min              Int      @default(1)
-  max              Int      @default(1)
-  position         Int      @default(1)
-  status           String   @default("active")
-  providerId       Int?     @map("provider_id")
-  providerPrice    Decimal? @map("provider_price") @db.Decimal(10, 2)
-  storeId          Int      @map("store_id")
-  store            Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
-  timestamp        DateTime @default(now())
-  syncQuantity     Boolean? @default(true) @map("sync_quantity")
-  syncCatAndName   Boolean? @default(true) @map("sync_cat_and_name")
+  type             ServiceType   @default(DEFAULT)
+  min              Int           @default(1)
+  max              Int           @default(1)
+  position         Int           @default(1)
+  status           ServiceStatus @default(ACTIVE)
+  providerId       Int?          @map("provider_id")
+  providerPrice    Decimal?      @map("provider_price") @db.Decimal(10, 2)
+  storeId          Int           @map("store_id")
+  store            Store         @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  timestamp        DateTime      @default(now())
+  syncQuantity     Boolean?      @default(true) @map("sync_quantity")
+  syncCatAndName   Boolean?      @default(true) @map("sync_cat_and_name")
   cancel           Boolean?
   network          String?
   refill           Boolean?
   percentage       Float?
-  dripFeed         Boolean? @default(false) @map("drip_feed")
+  dripFeed         Boolean?      @default(false) @map("drip_feed")
   provider         String?
-  providerCurrency String?  @map("provider_currency")
-  refillDays       Int?     @map("refill_days")
-  price            Decimal  @default(0.00) @db.Decimal(10, 2)
+  providerCurrency String?       @map("provider_currency")
+  refillDays       Int?          @map("refill_days")
+  price            Decimal       @default(0.00) @db.Decimal(10, 2)
 
   @@unique([storeId, storeScopedId])
   @@map("services")
 }
 
+enum OrderStatus {
+  PENDING    @map("Pending")
+  CANCELED   @map("Canceled")
+  PARTIAL    @map("Partial")
+  FAILED     @map("Failed")
+  COMPLETED  @map("Completed")
+  ACTIVE     @map("In progress")
+  PROCESSING @map("Processing")
+}
+
 model Order {
-  id                 Int       @id @default(autoincrement())
-  storeScopedId      Int       @map("store_scoped_id")
-  uid                String    @unique
-  timestamp          DateTime  @default(now())
-  userUid            String    @map("user_uid")
-  serviceUid         String    @map("service_uid")
-  currency           String    @default("USD")
-  status             String    @default("Pending")
-  syncOrder          Boolean   @default(true) @map("sync_order")
-  synced             Boolean   @default(false)
-  providerCurrency   String?   @map("provider_currency")
-  providerPrice      Decimal?  @map("provider_price") @db.Decimal(10, 2)
-  providerOrderId    Int?      @map("provider_order_id")
+  id                 Int         @id @default(autoincrement())
+  storeScopedId      Int         @map("store_scoped_id")
+  uid                String      @unique
+  timestamp          DateTime    @default(now())
+  userUid            String      @map("user_uid")
+  serviceUid         String      @map("service_uid")
+  currency           String      @default("USD")
+  status             OrderStatus @default(PENDING)
+  syncOrder          Boolean     @default(true) @map("sync_order")
+  synced             Boolean     @default(false)
+  providerCurrency   String?     @map("provider_currency")
+  providerPrice      Decimal?    @map("provider_price") @db.Decimal(10, 2)
+  providerOrderId    Int?        @map("provider_order_id")
   provider           String?
-  providerError      String?   @map("provider_error")
+  providerError      String?     @map("provider_error")
   quantity           Int
-  retryCount         Int?      @map("retry_count")
+  retryCount         Int?        @map("retry_count")
   url                String
-  lastRunTime        DateTime? @map("last_run_time")
-  comments           String    @default("")
-  dripFeed           Boolean   @default(false) @map("drip_feed")
-  interval           Int?      @default(0)
-  runs               Int?      @default(0)
-  processedRuns      Int?      @default(0) @map("processed_runs")
-  start              Int       @default(0)
-  userInitialBalance Decimal   @default(0.00) @map("user_initial_balance") @db.Decimal(10, 2)
-  userFinalBalance   Decimal   @default(0.00) @map("user_final_balance") @db.Decimal(10, 2)
-  price              Decimal   @default(0.00) @db.Decimal(10, 2)
-  remains            Int       @default(0)
-  storeId            Int       @map("store_id")
-  store              Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  lastRunTime        DateTime?   @map("last_run_time")
+  comments           String      @default("")
+  dripFeed           Boolean     @default(false) @map("drip_feed")
+  interval           Int?        @default(0)
+  runs               Int?        @default(0)
+  processedRuns      Int?        @default(0) @map("processed_runs")
+  start              Int         @default(0)
+  userInitialBalance Decimal     @default(0.00) @map("user_initial_balance") @db.Decimal(10, 2)
+  userFinalBalance   Decimal     @default(0.00) @map("user_final_balance") @db.Decimal(10, 2)
+  price              Decimal     @default(0.00) @db.Decimal(10, 2)
+  remains            Int         @default(0)
+  storeId            Int         @map("store_id")
+  store              Store       @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@unique([storeId, storeScopedId])
   @@map("orders")
@@ -182,36 +247,46 @@ model AffiliateSetting {
   @@map("affiliate_settings")
 }
 
+enum BlogStatus {
+  ACTIVE   @map("active")
+  DISABLED @map("disabled")
+}
+
 model Blog {
-  id            Int      @id @default(autoincrement())
-  storeScopedId Int      @map("store_scoped_id")
+  id            Int        @id @default(autoincrement())
+  storeScopedId Int        @map("store_scoped_id")
   title         String
   content       String
-  description   String   @default("")
-  coverImage    String   @default("") @map("cover_image")
-  status        String   @default("active")
+  description   String     @default("")
+  coverImage    String     @default("") @map("cover_image")
+  status        BlogStatus @default(ACTIVE)
   position      Int
   slug          String
-  uid           String   @unique
-  storeId       Int      @map("store_id")
-  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
-  timestamp     DateTime @default(now())
+  uid           String     @unique
+  storeId       Int        @map("store_id")
+  store         Store      @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  timestamp     DateTime   @default(now())
 
   @@unique([storeId, storeScopedId])
   @@map("blogs")
 }
 
+enum CategoryStatus {
+  ACTIVE   @map("active")
+  DISABLED @map("disabled")
+}
+
 model Category {
-  id            Int      @id @default(autoincrement())
-  storeScopedId Int      @map("store_scoped_id")
+  id            Int            @id @default(autoincrement())
+  storeScopedId Int            @map("store_scoped_id")
   name          String
-  timestamp     DateTime @default(now())
-  status        String   @default("active")
-  description   String   @default("")
+  timestamp     DateTime       @default(now())
+  status        CategoryStatus @default(ACTIVE)
+  description   String         @default("")
   position      Int
-  uid           String   @unique @map("uid")
-  storeId       Int      @map("store_id")
-  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  uid           String         @unique @map("uid")
+  storeId       Int            @map("store_id")
+  store         Store          @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@unique([storeId, storeScopedId])
   @@map("categories")
@@ -259,32 +334,50 @@ model EmailLog {
   @@map("email_logs")
 }
 
+enum EmailTemplateType {
+  NEWORDER        @map("new_order")
+  NEWPAYMENT      @map("new_payment")
+  NEWSERVICE      @map("new_service")
+  NEWUSER         @map("new_user")
+  NEWFAILEDORDER  @map("new_failed_order")
+  NEWSUPPORT      @map("new_support")
+  NEWMESSAGE      @map("new_message")
+  VERFICATIONCODE @map("verification_code")
+  NEWREFILL       @map("new_refill")
+  NEWFAILEDREFILL @map("new_failed_refill")
+}
+
 model EmailTemplate {
-  id            Int      @id @default(autoincrement())
-  storeScopedId Int      @map("store_scoped_id")
-  uid           String   @unique
-  type          String
+  id            Int               @id @default(autoincrement())
+  storeScopedId Int               @map("store_scoped_id")
+  uid           String            @unique
+  type          EmailTemplateType
   content       String
-  storeId       Int      @map("store_id")
-  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
-  timestamp     DateTime @default(now())
+  storeId       Int               @map("store_id")
+  store         Store             @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  timestamp     DateTime          @default(now())
 
   @@unique([storeId, storeScopedId])
   @@map("email_templates")
 }
 
+enum FaqStatus {
+  ACTIVE   @map("active")
+  DISABLED @map("disabled")
+}
+
 model Faq {
-  id            Int      @id @default(autoincrement())
-  storeScopedId Int      @map("store_scoped_id")
+  id            Int       @id @default(autoincrement())
+  storeScopedId Int       @map("store_scoped_id")
   question      String
   answer        String
-  status        String   @default("active")
+  status        FaqStatus @default(ACTIVE)
   position      Int
   slug          String
-  uid           String   @unique
-  storeId       Int      @map("store_id")
-  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
-  timestamp     DateTime @default(now())
+  uid           String    @unique
+  storeId       Int       @map("store_id")
+  store         Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  timestamp     DateTime  @default(now())
 
   @@unique([storeId, storeScopedId])
   @@map("faqs")
@@ -372,20 +465,29 @@ model ReferralOrder {
   @@map("referral_orders")
 }
 
+enum RefillStatus {
+  PENDING   @map("Pending")
+  CANCELED  @map("Canceled")
+  REJECTED  @map("Rejected")
+  COMPLETED @map("Completed")
+  ACTIVE    @map("In progress")
+  ERROR     @map("Error")
+}
+
 model Refill {
-  id              Int      @id @default(autoincrement())
-  storeScopedId   Int      @map("store_scoped_id")
-  uid             String   @unique
-  timestamp       DateTime @default(now())
-  userUid         String   @map("user_uid")
-  providerId      Int      @map("provider_id")
-  status          String   @default("Pending")
-  providerOrderId Int      @map("provider_order_id")
-  orderId         Int      @map("order_id")
+  id              Int          @id @default(autoincrement())
+  storeScopedId   Int          @map("store_scoped_id")
+  uid             String       @unique
+  timestamp       DateTime     @default(now())
+  userUid         String       @map("user_uid")
+  providerId      Int          @map("provider_id")
+  status          RefillStatus @default(PENDING)
+  providerOrderId Int          @map("provider_order_id")
+  orderId         Int          @map("order_id")
   provider        String
-  providerError   String?  @map("provider_error")
-  storeId         Int      @map("store_id")
-  store           Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  providerError   String?      @map("provider_error")
+  storeId         Int          @map("store_id")
+  store           Store        @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@unique([storeId, storeScopedId])
   @@map("refills")

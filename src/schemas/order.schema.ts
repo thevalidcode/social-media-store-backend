@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
+import { OrderStatus } from "../../prisma/generated";
 
 extendZodWithOpenApi(z);
 
@@ -13,14 +14,7 @@ export const OrderPublicSchema = z
     userInitialBalance: z.coerce.number(),
     userFinalBalance: z.coerce.number(),
     currency: z.string(),
-    status: z.enum([
-      "Pending",
-      "Processing",
-      "Completed",
-      "Canceled",
-      "In progress",
-      "Failed",
-    ]),
+    status: z.nativeEnum(OrderStatus),
     url: z.string(),
     uid: z.string(),
     serviceUid: z.string(),
@@ -43,14 +37,7 @@ export const OrderSchema = z
     userInitialBalance: z.coerce.number(),
     userFinalBalance: z.coerce.number(),
     currency: z.string(),
-    status: z.enum([
-      "Pending",
-      "Processing",
-      "Completed",
-      "Canceled",
-      "In progress",
-      "Failed",
-    ]),
+    status: z.nativeEnum(OrderStatus),
     url: z.string(),
     uid: z.string(),
     serviceUid: z.string(),
@@ -82,14 +69,7 @@ export const placeOrderSchema = z.object({
 
 export const updateOrderSchema = z.object({
   update: z.object({
-    status: z.enum([
-      "Pending",
-      "Processing",
-      "Completed",
-      "Canceled",
-      "In progress",
-      "Failed",
-    ]),
+    status: z.nativeEnum(OrderStatus),
     url: z.string(),
     remains: z.coerce.number(),
     comments: z.string().optional(),
@@ -99,15 +79,7 @@ export const updateOrderSchema = z.object({
 });
 
 export const getOrdersByStatusSchema = z.object({
-  status: z.enum([
-    "all",
-    "Pending",
-    "Processing",
-    "Completed",
-    "Canceled",
-    "In progress",
-    "Failed",
-  ]),
+  status: z.nativeEnum(OrderStatus),
 });
 
 export const bulkCreateSchema = z.object({
@@ -128,14 +100,7 @@ export const bulkStatusUpdateSchema = z.object({
   updates: z.array(
     z.object({
       uid: z.string(),
-      status: z.enum([
-        "Pending",
-        "Processing",
-        "Completed",
-        "Canceled",
-        "In progress",
-        "Failed",
-      ]),
+      status: z.nativeEnum(OrderStatus),
     })
   ),
 });

@@ -1,3 +1,18 @@
+enum AdminStatus {
+  ACTIVE      @map("active")
+  INACTIVE    @map("inactive")
+  BANNED      @map("banned")
+}
+
+enum AdminRole {
+  SUPER              @map("super")
+  BASIC              @map("basic")
+  MANAGER            @map("manager")
+  SUPPORTSTAFF       @map("support_staff")
+  FINANCEOFFICER     @map("finance_officer")
+  SERVICEOPERATOR    @map("service_operator")
+}
+
 model Admin {
   id        Int      @id @default(autoincrement())
   uid       String   @unique
@@ -6,8 +21,8 @@ model Admin {
   password  String
   username  String
   apiKey    String   @unique @map("api_key")
-  role      String   @default("admin")
-  status    String   @default("active")
+  role      AdminRole   @default(BASIC)
+  status    AdminStatus @default(ACTIVE)
   storeId    Int      @map("store_id")
   store      Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
   timestamp DateTime @default(now())

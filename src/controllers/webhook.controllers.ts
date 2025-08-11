@@ -8,7 +8,7 @@ import {
   FlutterwaveWebhookSchema,
   PaystackWebhookSchema,
 } from "../schemas/webhook.schema";
-import { prisma } from "../config/db";
+import { prisma } from "../config/db.config";
 import { decryptKey } from "../utils/encrypt";
 
 export const flutterwaveWebhook = async (

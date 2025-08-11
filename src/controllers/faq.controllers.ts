@@ -8,7 +8,7 @@ import {
 } from "../schemas/faq.schema";
 import { StoreIdSchema } from "../schemas/common.schema";
 import { AuthSchema } from "../schemas/user.schema";
-import { prisma } from "../config/db";
+import { prisma } from "../config/db.config";
 import { v4 as uuidv4 } from "uuid";
 
 export const getFAQs = async (req: Request, res: Response): Promise<void> => {
@@ -112,7 +112,7 @@ export const addFAQ = async (req: Request, res: Response): Promise<void> => {
         data: {
           question: parsed.data.question,
           answer: parsed.data.answer,
-          status: "active",
+          status: "ACTIVE",
           position: newPosition,
           uid: uuidv4(),
           slug: parsed.data.question.toLowerCase().replace(/\s+/g, "-"),

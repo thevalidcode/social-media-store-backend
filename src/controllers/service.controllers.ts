@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Request, Response } from "express";
-import { prisma } from "../config/db";
+import { prisma } from "../config/db.config";
 import { v4 as uuidv4 } from "uuid";
 import { AuthSchema } from "../schemas/user.schema";
 import {
@@ -30,7 +30,7 @@ export const getServices = async (req: Request, res: Response): Promise<void> =>
   const { storeId } = parsed.data;
   try {
     const services = await prisma.service.findMany({
-      where: { storeId, status: "active" },
+      where: { storeId, status: "ACTIVE" },
       orderBy: { position: "asc" },
       select: {
         id: true,
@@ -301,7 +301,7 @@ export const addService = async (req: Request, res: Response): Promise<void> => 
           uid: uuidv4(),
           storeId,
           storeScopedId: counter.serviceCounter,
-          status: "active",
+          status: "ACTIVE",
           position: newPosition,
         },
       });

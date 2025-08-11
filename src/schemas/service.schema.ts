@@ -1,16 +1,12 @@
 import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
+import { ServiceStatus, ServiceType } from "../../prisma/generated";
 
 extendZodWithOpenApi(z);
 
-const serviceType = z.enum([
-  "Default",
-  "Custom Comments",
-  "Package",
-  "Subscription",
-]);
+const serviceType = z.nativeEnum(ServiceType);
 
-const serviceStatus = z.enum(["active", "disabled"]);
+const serviceStatus = z.nativeEnum(ServiceStatus);
 
 export const ServiceSchema = z
   .object({

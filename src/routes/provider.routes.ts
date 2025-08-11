@@ -1,40 +1,48 @@
 import express from "express";
 const router = express.Router();
-import * as providers from "../controllers/provider.controllers"
-  ;
-import { authenticate } from "../middleware/authenticate";
+import * as providers from "../controllers/provider.controllers";
+import { authenticateAdmin } from "../middleware/auth";
 import {
   limitProviderImport,
   limitProviderActions,
 } from "../middleware/ratelimit/provider.ratelimit";
-import { isAdmin } from "../middleware/authorize";
 
 router.post(
   "/services/import",
-  authenticate,
-  limitProviderImport, isAdmin,
+  authenticateAdmin,
+  limitProviderImport,
   providers.importServices
 );
 router.post(
   "/services",
-  authenticate,
+  authenticateAdmin,
   limitProviderActions,
   providers.getProviderServices
 );
 
-router.post("/", authenticate, limitProviderActions, isAdmin, providers.addProvider);
-router.get("/", authenticate, isAdmin, providers.getProviders);
-router.patch("/", authenticate, limitProviderActions, isAdmin, providers.updateProvider);
+router.post(
+  "/",
+  authenticateAdmin,
+  limitProviderActions,
+  providers.addProvider
+);
+router.get("/", authenticateAdmin, providers.getProviders);
+router.patch(
+  "/",
+  authenticateAdmin,
+  limitProviderActions,
+  providers.updateProvider
+);
 router.delete(
   "/",
-  authenticate,
-  limitProviderActions, isAdmin,
+  authenticateAdmin,
+  limitProviderActions,
   providers.deleteProvider
 );
 router.delete(
   "/multiple",
-  authenticate,
-  limitProviderActions, isAdmin,
+  authenticateAdmin,
+  limitProviderActions,
   providers.deleteMultipleProviders
 );
 

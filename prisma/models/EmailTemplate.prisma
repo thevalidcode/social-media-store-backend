@@ -1,8 +1,21 @@
+enum EmailTemplateType {
+  NEWORDER         @map("new_order")
+  NEWPAYMENT       @map("new_payment")
+  NEWSERVICE       @map("new_service")
+  NEWUSER          @map("new_user")
+  NEWFAILEDORDER   @map("new_failed_order")
+  NEWSUPPORT       @map("new_support")
+  NEWMESSAGE       @map("new_message")
+  VERFICATIONCODE  @map("verification_code")
+  NEWREFILL        @map("new_refill")
+  NEWFAILEDREFILL  @map("new_failed_refill")
+}
+
 model EmailTemplate {
   id             Int     @id @default(autoincrement())
   storeScopedId   Int     @map("store_scoped_id")
   uid       String   @unique
-  type      String
+  type      EmailTemplateType
   content   String
   storeId    Int      @map("store_id")
   store      Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)

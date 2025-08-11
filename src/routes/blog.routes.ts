@@ -1,8 +1,7 @@
 import express from "express";
 const router = express.Router();
-import * as blogs from "../controllers/blog.controllers"
-  ;
-import { authenticate } from "../middleware/authenticate";
+import * as blogs from "../controllers/blog.controllers";
+import { authenticateAdmin } from "../middleware/auth";
 import {
   getBlogsLimiter,
   getBlogByIDLimiter,
@@ -11,16 +10,20 @@ import {
   deleteBlogLimiter,
   deleteMultipleBlogsLimiter,
 } from "../middleware/ratelimit/blog.ratelimit";
-import { isAdmin } from "../middleware/authorize";
 
 // Public routes
 router.get("/", getBlogsLimiter, blogs.getBlogs);
 router.get("/:blogId", getBlogByIDLimiter, blogs.getBlogByID);
 
 // Protected routes
-router.post("/", authenticate, addBlogLimiter, isAdmin, blogs.addBlog);
-router.patch("/", authenticate, updateBlogLimiter, isAdmin, blogs.updateBlog);
-router.delete("/", authenticate, deleteBlogLimiter, isAdmin, blogs.deleteBlog);
-router.delete("/multiple", authenticate, deleteMultipleBlogsLimiter, isAdmin, blogs.deleteMultipleBlogs);
+router.post("/", authenticateAdmin, addBlogLimiter, blogs.addBlog);
+router.patch("/", authenticateAdmin, updateBlogLimiter, blogs.updateBlog);
+router.delete("/", authenticateAdmin, deleteBlogLimiter, blogs.deleteBlog);
+router.delete(
+  "/multiple",
+  authenticateAdmin,
+  deleteMultipleBlogsLimiter,
+  blogs.deleteMultipleBlogs
+);
 
 export default router;

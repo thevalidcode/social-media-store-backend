@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
+import { FaqStatus } from "../../prisma/generated";
 
 extendZodWithOpenApi(z);
 
@@ -17,7 +18,7 @@ export const FAQSchema = z
     id: z.coerce.number(),
     question: z.string().min(1),
     answer: z.string().min(1),
-    status: z.boolean(),
+    status: z.nativeEnum(FaqStatus),
     position: z.coerce.number(),
   })
   .openapi("FAQ");

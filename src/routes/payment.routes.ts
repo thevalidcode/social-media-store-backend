@@ -1,16 +1,15 @@
 import express from "express";
-import { authenticate } from "../middleware/authenticate";
+import { authenticateUser } from "../middleware/auth";
 import { limitPaymentAdd } from "../middleware/ratelimit/paymentGateway.ratelimit";
 import * as payments from "../controllers/payment.controllers";
-import { isUser } from "../middleware/authorize";
+
 
 const router = express.Router();
 
 router.post(
   "/create",
   limitPaymentAdd,
-  authenticate,
-  isUser,
+  authenticateUser,
   payments.createPayment
 );
 

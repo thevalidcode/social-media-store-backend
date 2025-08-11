@@ -1,13 +1,17 @@
 import http from "http";
 import https from "https";
 import { Server } from "socket.io";
-import app, { updateAllowedOrigins } from "./app";
-import { SNICallback } from "./config/ssl";
+import app from "./app";
+import { updateAllowedOrigins } from "./config/cors.config";
+import { SNICallback } from "./config/ssl.config";
 import { startCronJobs } from "./cronJobs/index";
 import { setupSocket } from "./socket/index";
-import { env } from "./config/env";
+import { env } from "./config/env.config";
 
 let mainServer: http.Server | https.Server;
+
+setInterval(updateAllowedOrigins, 5 * 60 * 1000);
+
 async function startServer() {
   await updateAllowedOrigins();
 

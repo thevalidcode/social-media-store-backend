@@ -1,3 +1,15 @@
+enum ServiceStatus {
+  ACTIVE      @map("active")
+  DISABLED    @map("disabled")
+}
+
+enum ServiceType {
+  DEFAULT           @map("Default")
+  PACKAGE           @map("Package")
+  SUBSCRIPTION      @map("Subscription")
+  CUSTOMCOMMENTS    @map("Custom Comments")
+}
+
 model Service {
   id             Int     @id @default(autoincrement())
   storeScopedId   Int     @map("store_scoped_id")
@@ -5,11 +17,11 @@ model Service {
   name             String
   description      String?
   category         String
-  type             String    @default("Default")
+  type             ServiceType   @default(DEFAULT)
   min              Int       @default(1)
   max              Int       @default(1)
   position         Int       @default(1)
-  status           String    @default("active")
+  status           ServiceStatus    @default(ACTIVE)
   providerId       Int?      @map("provider_id")
   providerPrice    Decimal?  @map("provider_price") @db.Decimal(10, 2)
   storeId          Int       @map("store_id")

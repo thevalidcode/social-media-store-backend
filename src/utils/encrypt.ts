@@ -1,6 +1,6 @@
 
 import crypto from "crypto";
-import { env } from "../config/env";
+import { env } from "../config/env.config";
 
 // AES encryption algorithm to use
 const algorithm = "aes-256-cbc";

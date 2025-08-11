@@ -14,6 +14,7 @@ import "./refill.paths";
 import "./files.paths";
 import "./paymentGateway.paths";
 import "./payment.paths";
+import "./admin.paths";
 import "./webhook.paths";
 
 export { registry };

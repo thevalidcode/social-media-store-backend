@@ -2,7 +2,7 @@ import axios from "axios";
 import https from "https";
 import convertCurrency from "../utils/ConvertCurrency";
 import { sendEmail } from "../emails";
-import { prisma } from "../config/db";
+import { prisma } from "../config/db.config";
 import { placeOrderSchema } from "../schemas/order.schema";
 import { z } from "zod";
 import { decryptKey } from "../utils/encrypt";
@@ -59,7 +59,7 @@ export const sendOrderToProvider = async (
     );
 
     let chargeUSD = 0;
-    if (service.type === "Package") {
+    if (service.type === "PACKAGE") {
       chargeUSD = pricePer1000;
     } else {
       const quantity = safeFloat(orderData.quantity);
@@ -91,8 +91,8 @@ export const sendOrderToProvider = async (
       quantity: orderData.quantity,
     };
 
-    if (service.type === "Package") delete payload.quantity;
-    if (service.type === "Custom Comments") {
+    if (service.type === "PACKAGE") delete payload.quantity;
+    if (service.type === "CUSTOMCOMMENTS") {
       payload.comments = orderData.comments;
     }
 
@@ -109,14 +109,14 @@ export const sendOrderToProvider = async (
         where: { uid: orderData.uid },
         data: {
           providerError: res.error,
-          status: "Failed",
+          status: "FAILED",
         },
       });
 
       try {
         await sendEmail(
           undefined,
-          "newFailedOrder",
+          "NEWFAILEDORDER",
           {
             ...orderData,
             userBalance: userFinalBalance,
@@ -200,7 +200,7 @@ export const sendOrderToProvider = async (
 
     await sendEmail(
       undefined,
-      "newOrder",
+      "NEWORDER",
       {
         ...orderData,
         userBalance: userFinalBalance,
@@ -345,7 +345,7 @@ export const syncOrderDetails = async (
       });
       await prisma.order.update({
         where: { uid: orderData.uid },
-        data: { status: "Canceled", price: 0 },
+        data: { status: "CANCELED", price: 0 },
       });
     }
 
@@ -372,7 +372,7 @@ export const syncOrderDetails = async (
       await prisma.order.update({
         where: { uid: orderData.uid },
         data: {
-          status: "Partial",
+          status: "PARTIAL",
           price: safeFloat(orderPrice),
           remains: safeInt(resp.remains),
         },
@@ -402,7 +402,7 @@ export const syncOrderDetails = async (
         await prisma.order.update({
           where: { uid: orderData.uid },
           data: {
-            status: "Completed",
+            status: "COMPLETED",
             remains: 0,
             price: safeFloat(totalPrice),
           },
@@ -422,7 +422,7 @@ export const syncOrderDetails = async (
         await prisma.order.update({
           where: { uid: orderData.uid },
           data: {
-            status: "Completed",
+            status: "COMPLETED",
             remains: 0,
             price: safeFloat(originalPrice),
           },
@@ -430,7 +430,7 @@ export const syncOrderDetails = async (
       } else {
         await prisma.order.update({
           where: { uid: orderData.uid },
-          data: { status: "Completed", remains: 0 },
+          data: { status: "COMPLETED", remains: 0 },
         });
       }
     }
@@ -495,7 +495,7 @@ export const processDripFeedOrders = async (): Promise<void> => {
       const dripFeedOrders = await prisma.order.findMany({
         where: {
           storeId,
-          status: "Completed",
+          status: "COMPLETED",
           dripFeed: true,
         },
       });

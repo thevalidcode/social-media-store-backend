@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
+import { BlogStatus } from "../../prisma/generated";
 
 extendZodWithOpenApi(z);
 
@@ -20,7 +21,7 @@ export const BlogSchema = z
     title: z.string().min(1),
     coverImage: z.string().url(),
     content: z.string().min(1),
-    status: z.boolean(),
+    status: z.nativeEnum(BlogStatus),
     position: z.coerce.number(),
     description: z.string().optional(),
   })

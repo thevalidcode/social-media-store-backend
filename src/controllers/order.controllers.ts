@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { prisma } from "../config/db";
+import { prisma } from "../config/db.config";
 import { v4 as uuidv4 } from "uuid";
 import {
   placeOrderSchema,
@@ -34,7 +34,10 @@ export const getOrders = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export const getOrdersForAdmins = async (req: Request, res: Response): Promise<void> => {
+export const getOrdersForAdmins = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   if (!authParsed.success) {
     res.status(400).json({ error: authParsed.error.flatten() });
@@ -56,7 +59,10 @@ export const getOrdersForAdmins = async (req: Request, res: Response): Promise<v
   }
 };
 
-export const getOrderByID = async (req: Request, res: Response): Promise<void> => {
+export const getOrderByID = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const { orderUid } = req.params;
 
@@ -91,7 +97,10 @@ export const getOrderByID = async (req: Request, res: Response): Promise<void> =
   }
 };
 
-export const placeOrder = async (req: Request, res: Response): Promise<void> => {
+export const placeOrder = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = placeOrderSchema.safeParse(req.body);
 
@@ -135,7 +144,10 @@ export const placeOrder = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-export const updateOrder = async (req: Request, res: Response): Promise<void> => {
+export const updateOrder = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = updateOrderSchema.safeParse(req.body);
   const { orderUid } = req.params;
@@ -164,7 +176,10 @@ export const updateOrder = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-export const deleteOrder = async (req: Request, res: Response): Promise<void> => {
+export const deleteOrder = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const { orderUid } = req.params;
 
@@ -186,7 +201,10 @@ export const deleteOrder = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-export const getOrdersByStatus = async (req: Request, res: Response): Promise<void> => {
+export const getOrdersByStatus = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = getOrdersByStatusSchema.safeParse(req.params);
 
@@ -207,7 +225,7 @@ export const getOrdersByStatus = async (req: Request, res: Response): Promise<vo
     const orders = await prisma.order.findMany({
       where: {
         storeId,
-        ...(status !== "all" ? { status } : {}),
+        status,
       },
       orderBy: { id: "desc" },
     });
@@ -224,7 +242,10 @@ export const getOrdersByStatus = async (req: Request, res: Response): Promise<vo
   }
 };
 
-export const bulkCreateOrders = async (req: Request, res: Response): Promise<void> => {
+export const bulkCreateOrders = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = bulkCreateSchema.safeParse(req.body);
 
@@ -266,7 +287,10 @@ export const bulkCreateOrders = async (req: Request, res: Response): Promise<voi
   }
 };
 
-export const bulkUpdateOrderStatus = async (req: Request, res: Response): Promise<void> => {
+export const bulkUpdateOrderStatus = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = bulkStatusUpdateSchema.safeParse(req.body);
 

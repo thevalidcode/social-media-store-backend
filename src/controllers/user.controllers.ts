@@ -3,9 +3,9 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import { Request, Response } from "express";
-import { prisma } from "../config/db";
+import { prisma } from "../config/db.config";
 import { sendEmail } from "../emails";
-import { env } from "../config/env";
+import { env } from "../config/env.config";
 import { AuthSchema } from "../schemas/user.schema";
 import crypto from "crypto";
 import { Prisma } from "../../prisma/generated";
@@ -156,7 +156,7 @@ export const createUser = async (
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      await sendEmail(undefined, "newUser", newUser, storeId);
+      await sendEmail(undefined, "NEWUSER", newUser, storeId);
 
       res.status(200).send({
         success: "Created Successfully",
@@ -173,7 +173,7 @@ export const createUser = async (
   }
 };
 
-// ✅ Login (User/Admin)
+// ✅ Login User
 export const me = async (req: Request, res: Response): Promise<void> => {
   const parsed = meQuerySchema.safeParse(req.body);
   if (!parsed.success) {
@@ -184,16 +184,14 @@ export const me = async (req: Request, res: Response): Promise<void> => {
   const { email, password, storeId } = parsed.data;
 
   try {
-    const account =
-      (await prisma.user.findFirst({ where: { email, storeId } })) ||
-      (await prisma.admin.findFirst({ where: { email, storeId } }));
+    const account = await prisma.user.findFirst({ where: { email, storeId } });
 
     if (!account) {
       res.status(400).json({ error: "Incorrect login details" });
       return;
     }
 
-    if ("status" in account && account.status === "banned") {
+    if ("status" in account && account.status === "BANNED") {
       res.status(403).json({ error: "You’ve been banned. Contact support." });
       return;
     }

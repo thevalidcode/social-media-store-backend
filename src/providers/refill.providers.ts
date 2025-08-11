@@ -1,6 +1,6 @@
 import axios from "axios";
 import https from "https";
-import { prisma } from "../config/db";
+import { prisma } from "../config/db.config";
 import { sendEmail } from "../emails";
 import { decryptKey } from "../utils/encrypt";
 import { Prisma } from "@prisma/client";
@@ -36,10 +36,7 @@ export const sendRefillToMainServer = async (
       iv: string;
     };
 
-    const decryptedKey = decryptKey(
-      apiKeyData.encrypted_key,
-      apiKeyData.iv
-    );
+    const decryptedKey = decryptKey(apiKeyData.encrypted_key, apiKeyData.iv);
 
     const { data: res } = await axios.post(
       provider.url,
@@ -51,7 +48,7 @@ export const sendRefillToMainServer = async (
       try {
         await sendEmail(
           undefined,
-          "newFailedRefill",
+          "NEWFAILEDREFILL",
           {
             orderId: order.id,
             quantity: order.quantity,
@@ -95,7 +92,7 @@ export const sendRefillToMainServer = async (
     try {
       await sendEmail(
         undefined,
-        "newRefill",
+        "NEWREFILL",
         {
           orderId: order.id,
           number: order.quantity,
@@ -151,10 +148,7 @@ const updateRefillStatusTx = async (
     iv: string;
   };
 
-  const decryptedKey = decryptKey(
-    apiKeyData.encrypted_key,
-    apiKeyData.iv
-  );
+  const decryptedKey = decryptKey(apiKeyData.encrypted_key, apiKeyData.iv);
 
   const { data: res } = await axios.post(
     provider.url,

@@ -1,7 +1,7 @@
 import fs from "fs";
 import tls, { SecureContext } from "tls";
-import { prisma } from "../config/db";
-import { env as processENV } from "./env";
+import { prisma } from "./db.config";
+import { env as processENV } from "./env.config";
 
 const env = processENV.NODE_ENV;
 

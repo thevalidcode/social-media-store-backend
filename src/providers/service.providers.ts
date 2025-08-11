@@ -1,6 +1,6 @@
 import axios from "axios";
 import https from "https";
-import { prisma } from "../config/db";
+import { prisma } from "../config/db.config";
 import { sendEmail } from "../emails";
 import { decryptKey } from "../utils/encrypt";
 import { v4 as uuidv4 } from "uuid";
@@ -71,7 +71,7 @@ export const updateExistingServices = async (): Promise<void> => {
         if (!liveSvc) {
           await prisma.service.update({
             where: { uid: svc.uid },
-            data: { status: "disabled" },
+            data: { status: "DISABLED" },
           });
           continue;
         }
@@ -171,7 +171,7 @@ export const syncServices = async (): Promise<void> => {
               await tx.category.create({
                 data: {
                   name: s.category,
-                  status: "active",
+                  status: "ACTIVE",
                   storeScopedId: categoryCounter.categoryCounter,
                   uid: uuidv4(),
                   position: categoryCounter.categoryCounter,
@@ -208,7 +208,7 @@ export const syncServices = async (): Promise<void> => {
                 description: s.description || "",
                 providerPrice: safeFloat(s.rate),
                 storeId,
-                status: "active",
+                status: "ACTIVE",
                 syncQuantity: true,
                 syncCatAndName: true,
                 price: safeFloat(endPrice),
@@ -225,7 +225,7 @@ export const syncServices = async (): Promise<void> => {
             try {
               await sendEmail(
                 undefined,
-                "newService",
+                "NEWSERVICE",
                 {
                   ...newService,
                   providerCurrency: newService.providerCurrency,

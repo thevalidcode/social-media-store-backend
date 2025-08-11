@@ -1,3 +1,13 @@
+enum OrderStatus {
+  PENDING     @map("Pending")
+  CANCELED    @map("Canceled")
+  PARTIAL     @map("Partial")
+  FAILED      @map("Failed")
+  COMPLETED   @map("Completed")
+  ACTIVE      @map("In progress")
+  PROCESSING  @map("Processing")
+}
+
 model Order {
   id             Int     @id @default(autoincrement())
   storeScopedId   Int     @map("store_scoped_id")
@@ -6,7 +16,7 @@ model Order {
   userUid             String    @map("user_uid")
   serviceUid          String    @map("service_uid")
   currency            String    @default("USD")
-  status              String    @default("Pending")
+  status              OrderStatus    @default(PENDING)
   syncOrder           Boolean   @default(true) @map("sync_order")
   synced              Boolean   @default(false)
   providerCurrency    String?   @map("provider_currency")
