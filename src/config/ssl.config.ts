@@ -33,10 +33,14 @@ async function loadCertificates(): Promise<void> {
       if (env === "production") {
         sslOptions[domain.uid] = {
           cert: fs.readFileSync(
-            `/etc/letsencrypt/live/${domain.uid}/fullchain.pem`
+            `/etc/ssl/${
+              domain.uid.includes("validpanel.com") ? "validpanel.com" : domain
+            }/fullchain.pem`
           ),
           key: fs.readFileSync(
-            `/etc/letsencrypt/live/${domain.uid}/privkey.pem`
+            `/etc/ssl/${
+              domain.uid.includes("validpanel.com") ? "validpanel.com" : domain
+            }/privkey.pem`
           ),
         };
       }
@@ -67,8 +71,16 @@ async function SNICallback(
 
     if (result?.ssl) {
       ctx = {
-        cert: fs.readFileSync(`/etc/letsencrypt/live/${domain}/fullchain.pem`),
-        key: fs.readFileSync(`/etc/letsencrypt/live/${domain}/privkey.pem`),
+        cert: fs.readFileSync(
+          `/etc/ssl/${
+            domain.includes("validpanel.com") ? "validpanel.com" : domain
+          }/fullchain.pem`
+        ),
+        key: fs.readFileSync(
+          `/etc/ssl/${
+            domain.includes("validpanel.com") ? "validpanel.com" : domain
+          }/privkey.pem`
+        ),
       };
       sslOptions[domain] = ctx;
     }
