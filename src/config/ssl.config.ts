@@ -74,12 +74,12 @@ async function SNICallback(
         cert: fs.readFileSync(
           `/etc/ssl/${
             domain.includes("validpanel.com") ? "validpanel.com" : domain
-          }/fullchain.pem`
+          }/fullchain.crt`
         ),
         key: fs.readFileSync(
           `/etc/ssl/${
             domain.includes("validpanel.com") ? "validpanel.com" : domain
-          }/privkey.pem`
+          }/keyfile.key`
         ),
       };
       sslOptions[domain] = ctx;
