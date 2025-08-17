@@ -35,12 +35,12 @@ async function loadCertificates(): Promise<void> {
           cert: fs.readFileSync(
             `/etc/ssl/${
               domain.uid.includes("validpanel.com") ? "validpanel.com" : domain
-            }/fullchain.pem`
+            }/fullchain.crt`
           ),
           key: fs.readFileSync(
             `/etc/ssl/${
               domain.uid.includes("validpanel.com") ? "validpanel.com" : domain
-            }/privkey.pem`
+            }/keyfile.key`
           ),
         };
       }
