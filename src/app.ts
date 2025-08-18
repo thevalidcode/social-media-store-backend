@@ -29,6 +29,7 @@ import supportRouter from "./routes/support.routes";
 import paymentRouter from "./routes/payment.routes";
 import webhookRouter from "./routes/webhook.routes";
 import statisticsRouter from "./routes/statistics.routes";
+import publicApiRoutes from "./routes/api.routes";
 import swaggerRouter from "./docs/swagger";
 
 const app = express();
@@ -83,6 +84,7 @@ app.use("/api/v1/paymentGateway", cors(dynamicCors), paymentGatewayRouter);
 
 // Internal Routes
 app.use("/admin", adminRoutes);
+app.use("/api/v2", publicApiRoutes);
 app.use("/api/auth/store", authRoutes);
 
 app.use(swaggerRouter);

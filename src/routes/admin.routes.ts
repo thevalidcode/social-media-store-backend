@@ -1,5 +1,4 @@
 import express from "express";
-import cors from "cors";
 import * as admins from "../controllers/admin.controllers";
 import rateLimit from "express-rate-limit";
 import { openCors } from "../config/cors.config";

@@ -48,7 +48,7 @@ export const UpdateSuccess = {
   content: {
     "application/json": {
       schema: z.object({
-        code: z.literal("update-success"),
+        success: z.literal("Successfully updated the user"),
       }),
     },
   },

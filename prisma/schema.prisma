@@ -52,10 +52,11 @@ model Store {
   UploadLog        UploadLog[]
   Transaction      Transaction[]
   ReferralOrder    ReferralOrder[]
+  Cancel           Cancel[]
+  PaymentGateway   PaymentGateway[]
+  SupportTicket    SupportTicket[]
 
-  storeCounter   StoreCounter?
-  PaymentGateway PaymentGateway[]
-  SupportTicket  SupportTicket[]
+  storeCounter StoreCounter?
 
   @@map("stores")
 }
@@ -272,6 +273,34 @@ model Blog {
   @@map("blogs")
 }
 
+enum CancelStatus {
+  PENDING   @map("Pending")
+  CANCELED  @map("Canceled")
+  REJECTED  @map("Rejected")
+  COMPLETED @map("Completed")
+  ACTIVE    @map("In progress")
+  ERROR     @map("Error")
+}
+
+model Cancel {
+  id              Int          @id @default(autoincrement())
+  storeScopedId   Int          @map("store_scoped_id")
+  uid             String       @unique
+  timestamp       DateTime     @default(now())
+  userUid         String       @map("user_uid")
+  providerId      Int          @map("provider_id")
+  status          CancelStatus @default(PENDING)
+  providerOrderId Int          @map("provider_order_id")
+  orderUid        String       @map("order_uid")
+  provider        String
+  providerError   String?      @map("provider_error")
+  storeId         Int          @map("store_id")
+  store           Store        @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  @@unique([storeId, storeScopedId])
+  @@map("cancels")
+}
+
 enum CategoryStatus {
   ACTIVE   @map("active")
   DISABLED @map("disabled")
@@ -484,7 +513,7 @@ model Refill {
   providerId      Int          @map("provider_id")
   status          RefillStatus @default(PENDING)
   providerOrderId Int          @map("provider_order_id")
-  orderId         Int          @map("order_id")
+  orderUid        String       @map("order_uid")
   provider        String
   providerError   String?      @map("provider_error")
   storeId         Int          @map("store_id")
@@ -518,6 +547,7 @@ model StoreCounter {
   uploadLogCounter      Int @default(0) @map("upload_log_counter")
   providerCounter       Int @default(0) @map("provider_counter")
   refillCounter         Int @default(0) @map("refill_counter")
+  cancelCounter         Int @default(0) @map("cancel_counter")
   transactionCounter    Int @default(0) @map("transaction_counter")
   referralOrderCounter  Int @default(0) @map("referral_order_counter")
   paymentGatewayCounter Int @default(0) @map("payment_gateway_counter")

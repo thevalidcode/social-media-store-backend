@@ -11,6 +11,7 @@ model StoreCounter {
   uploadLogCounter Int @default(0) @map("upload_log_counter")
   providerCounter Int @default(0) @map("provider_counter")
   refillCounter Int @default(0) @map("refill_counter")
+  cancelCounter Int @default(0) @map("cancel_counter")
   transactionCounter Int @default(0) @map("transaction_counter")
   referralOrderCounter Int @default(0) @map("referral_order_counter")
   paymentGatewayCounter Int @default(0) @map("payment_gateway_counter")

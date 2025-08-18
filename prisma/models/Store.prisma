@@ -41,6 +41,9 @@ model Store {
   UploadLog        UploadLog[]
   Transaction      Transaction[]
   ReferralOrder    ReferralOrder[]
+  Cancel         Cancel[]
+  PaymentGateway PaymentGateway[]
+  SupportTicket  SupportTicket[]
   
   storeCounter     StoreCounter?
   

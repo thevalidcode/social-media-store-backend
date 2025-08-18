@@ -75,7 +75,7 @@ export const sendRefillToMainServer = async (
         data: {
           providerId: safeInt(res.refill),
           provider: order.provider || "",
-          orderId: order.id,
+          orderUid: order.uid,
           storeScopedId: counter.refillCounter,
           userUid: order.userUid,
           providerOrderId: safeInt(res.order),

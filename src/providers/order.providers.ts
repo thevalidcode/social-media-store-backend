@@ -7,6 +7,7 @@ import { placeOrderSchema } from "../schemas/order.schema";
 import { z } from "zod";
 import { decryptKey } from "../utils/encrypt";
 import { v4 as uuidv4 } from "uuid";
+import { currencies } from "../helpers/currency.helper";
 
 const agent = new https.Agent({
   keepAlive: true,
@@ -18,11 +19,6 @@ const safeFloat = (n: any, d = 0): number =>
 
 const safeInt = (n: any, d = 0): number =>
   Number.isFinite(+n) ? parseInt(n, 10) : d;
-
-const currencies = async (): Promise<Record<string, number>> => {
-  const currency = await prisma.currency.findFirst();
-  return (currency?.quotes as Record<string, number>) || { USD: 1 };
-};
 
 type ProviderOrderResult = {
   success?: string;

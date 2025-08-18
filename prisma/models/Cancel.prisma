@@ -1,4 +1,4 @@
-enum RefillStatus {
+enum CancelStatus {
   PENDING     @map("Pending")
   CANCELED    @map("Canceled")
   REJECTED    @map("Rejected")
@@ -7,14 +7,14 @@ enum RefillStatus {
   ERROR       @map("Error")
 }
 
-model Refill {
+model Cancel {
   id             Int     @id @default(autoincrement())
   storeScopedId   Int     @map("store_scoped_id")
   uid             String    @unique
   timestamp       DateTime  @default(now())
   userUid         String    @map("user_uid")
   providerId      Int       @map("provider_id")
-  status          RefillStatus    @default(PENDING)
+  status          CancelStatus    @default(PENDING)
   providerOrderId Int       @map("provider_order_id")
   orderUid         String       @map("order_uid")
   provider        String
@@ -23,5 +23,5 @@ model Refill {
   store           Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@unique([storeId, storeScopedId])
-  @@map("refills")
+  @@map("cancels")
 }

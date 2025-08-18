@@ -11,7 +11,7 @@ export const RefillPublicSchema = z
     storeScopedId: z.number(),
     status: refillStatus,
     uid: z.string(),
-    orderId: z.coerce.number(),
+    orderUid: z.string(),
     userUid: z.string(),
     timestamp: z.string().datetime(),
   })
@@ -23,7 +23,7 @@ export const RefillSchema = z
     storeScopedId: z.number(),
     status: refillStatus,
     uid: z.string(),
-    orderId: z.coerce.number(),
+    orderUid: z.string(),
     providerOrderId: z.coerce.number().optional(),
     providerId: z.coerce.number().optional(),
     providerError: z.string().optional(),
@@ -34,7 +34,7 @@ export const RefillSchema = z
   .openapi("Refill");
 
 export const placeRefillSchema = z.object({
-  orderId: z.coerce.number(),
+  orderUid: z.string(),
   userUid: z.string(),
   provider: z.string(),
 });
@@ -52,7 +52,7 @@ export const getRefillsByStatusSchema = z.object({
 export const bulkCreateRefillSchema = z.object({
   refills: z.array(
     z.object({
-      orderId: z.coerce.number(),
+      orderUid: z.string(),
       userUid: z.string(),
     })
   ),

@@ -253,7 +253,7 @@ export const getUserByUid = async (
 
   try {
     const user = await prisma.user.findUnique({
-      where: { uid },
+      where: { uid, storeId },
       select: {
         id: true,
         email: true,
@@ -348,7 +348,7 @@ export const updateUser = async (
       where: { uid: data.uid },
       data: safeUpdate,
     });
-    res.status(200).json({ code: "update-success" });
+    res.status(200).json({ success: "Successfully updated the user" });
   } catch {
     res.status(500).json({ error: "Failed to update user" });
   }
