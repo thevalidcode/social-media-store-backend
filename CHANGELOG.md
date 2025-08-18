@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.9.0](https://github.com/thevalidcode/social-media-store-backend/compare/v1.8.0...v1.9.0) (2025-08-18)
+
+
+### Features
+
+* Add support ticket management and statistics endpoints ([796e235](https://github.com/thevalidcode/social-media-store-backend/commit/796e235998cedabcc1a29852f4ff03fb4d9273a4))
+
+
+### Bug Fixes
+
+* update SSL certificate file extensions from .pem to .crt and .key ([25ea9f0](https://github.com/thevalidcode/social-media-store-backend/commit/25ea9f05701b8c4ee9a5e91f6f422d279a7024fe))
+* update SSL certificate file names to use .crt and .key extensions ([ed1fbe4](https://github.com/thevalidcode/social-media-store-backend/commit/ed1fbe4687a0406e0777ed848751ca8d54e8e8ad))
+* update SSL certificate paths to use /etc/ssl instead of /etc/letsencrypt ([cd2b8d8](https://github.com/thevalidcode/social-media-store-backend/commit/cd2b8d8be95a33c9320dce0dab0c9d315789b098))
+
 ## [1.8.0](https://github.com/thevalidcode/social-media-store-backend/compare/v1.7.0...v1.8.0) (2025-08-11)
 
 
