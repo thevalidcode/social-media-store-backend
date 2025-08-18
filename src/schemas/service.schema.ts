@@ -10,7 +10,7 @@ const serviceStatus = z.nativeEnum(ServiceStatus);
 
 export const ServiceSchema = z
   .object({
-    id: z.number(),
+    storeScopedId: z.number(),
     uid: z.string(),
     name: z.string(),
     category: z.string(),
@@ -36,7 +36,7 @@ export const ServiceSchema = z
 
 export const ServicePublicSchema = z
   .object({
-    id: z.number(),
+    storeScopedId: z.number(),
     name: z.string(),
     type: serviceType,
     min: z.number(),

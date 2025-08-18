@@ -16,5 +16,7 @@ import "./paymentGateway.paths";
 import "./payment.paths";
 import "./admin.paths";
 import "./webhook.paths";
+import "./support.paths";
+import "./statistics.paths";
 
 export { registry };

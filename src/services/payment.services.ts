@@ -4,14 +4,10 @@ import { prisma } from "../config/db.config";
 import { initFlutterwavePayment } from "../providers/flutterwave.providers";
 import { initPaystackPayment } from "../providers/paystack.providers";
 import type { CreatePaymentInput } from "../schemas/payment.schema";
+import { User } from "../../prisma/generated";
 
-export const createPayment = async (input: CreatePaymentInput) => {
-  const { apiKey, storeId, platform, currency, amount, redirect_url } = input;
-
-  const user = await prisma.user.findFirst({
-    where: { apiKey, storeId: storeId },
-  });
-  if (!user) throw new Error("Invalid API key");
+export const createPayment = async (user: User, input: CreatePaymentInput) => {
+  const { storeId, platform, currency, amount, redirect_url } = input;
 
   const gateway = await prisma.paymentGateway.findFirst({
     where: { platform, storeId },

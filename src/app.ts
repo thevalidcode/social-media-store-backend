@@ -8,6 +8,7 @@ import { env } from "./config/env.config";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { apiLimiter } from "./middleware/ratelimit";
+import { dynamicCors } from "./config/cors.config";
 
 // Routes
 import userRouter from "./routes/user.routes";
@@ -24,10 +25,11 @@ import refillRoutes from "./routes/refill.routes";
 import versionRouter from "./routes/version.routes";
 import filesRouter from "./routes/files.routes";
 import paymentGatewayRouter from "./routes/paymentGateway.routes";
+import supportRouter from "./routes/support.routes";
 import paymentRouter from "./routes/payment.routes";
 import webhookRouter from "./routes/webhook.routes";
+import statisticsRouter from "./routes/statistics.routes";
 import swaggerRouter from "./docs/swagger";
-import { dynamicCors } from "./config/cors.config";
 
 const app = express();
 
@@ -75,6 +77,8 @@ app.use("/api/v1/version", cors(dynamicCors), versionRouter);
 app.use("/api/v1/files", cors(dynamicCors), filesRouter);
 app.use("/api/v1/webhook", cors(dynamicCors), webhookRouter);
 app.use("/api/v1/payment", cors(dynamicCors), paymentRouter);
+app.use("/api/v1/support", cors(dynamicCors), supportRouter);
+app.use("/api/v1/statistics", cors(dynamicCors), statisticsRouter);
 app.use("/api/v1/paymentGateway", cors(dynamicCors), paymentGatewayRouter);
 
 // Internal Routes

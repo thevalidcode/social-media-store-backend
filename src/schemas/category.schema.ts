@@ -6,7 +6,7 @@ extendZodWithOpenApi(z);
 
 export const CategorySchema = z
   .object({
-    id: z.number(),
+    storeScopedId: z.number(),
     uid: z.string(),
     name: z.string(),
     description: z.string(),

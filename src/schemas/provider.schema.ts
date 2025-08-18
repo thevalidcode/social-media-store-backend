@@ -5,6 +5,7 @@ extendZodWithOpenApi(z);
 
 export const ProviderSchema = z
   .object({
+    storeScopedId: z.number(),
     uid: z.string(),
     name: z.string(),
     url: z.string().url(),

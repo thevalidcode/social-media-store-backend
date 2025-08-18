@@ -55,6 +55,7 @@ model Store {
 
   storeCounter   StoreCounter?
   PaymentGateway PaymentGateway[]
+  SupportTicket  SupportTicket[]
 
   @@map("stores")
 }
@@ -520,10 +521,68 @@ model StoreCounter {
   transactionCounter    Int @default(0) @map("transaction_counter")
   referralOrderCounter  Int @default(0) @map("referral_order_counter")
   paymentGatewayCounter Int @default(0) @map("payment_gateway_counter")
+  supportTicketCounter  Int @default(0) @map("support_ticket_counter")
 
   store Store @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@map("store_counters")
+}
+
+enum TicketStatus {
+  OPEN     @map("open")
+  PENDING  @map("pending")
+  RESOLVED @map("resolved")
+  CLOSED   @map("closed")
+}
+
+enum TicketPriority {
+  LOW    @map("low")
+  MEDIUM @map("medium")
+  HIGH   @map("high")
+  URGENT @map("urgent")
+}
+
+model SupportTicket {
+  id            Int            @id @default(autoincrement())
+  uid           String         @unique @default(uuid())
+  description   String?
+  storeId       Int            @map("store_id")
+  userUid       String         @map("user_uid")
+  storeScopedId Int            @map("store_scoped_id")
+  subject       String
+  status        TicketStatus   @default(OPEN)
+  priority      TicketPriority @default(MEDIUM)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  messages TicketMessage[] @relation("TicketMessages")
+  store    Store           @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  @@unique([storeId, storeScopedId])
+  @@index([storeId])
+  @@index([userUid])
+  @@map("support_tickets")
+}
+
+enum MessageSenderType {
+  USER  @map("user")
+  ADMIN @map("admin")
+}
+
+model TicketMessage {
+  id         Int               @id @default(autoincrement())
+  uid        String            @unique @default(uuid())
+  ticketUid  String            @map("ticket_uid")
+  senderUid  String            @map("sender_uid")
+  senderType MessageSenderType @map("sender_type")
+  message    String
+  createdAt  DateTime          @default(now()) @map("created_at")
+
+  ticket SupportTicket @relation("TicketMessages", fields: [ticketUid], references: [uid])
+
+  @@index([ticketUid])
+  @@index([senderUid])
+  @@map("ticket_messages")
 }
 
 enum TransactionStatus {

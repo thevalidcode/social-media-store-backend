@@ -8,7 +8,7 @@ const refillStatus = z.nativeEnum(RefillStatus);
 
 export const RefillPublicSchema = z
   .object({
-    id: z.coerce.number(),
+    storeScopedId: z.number(),
     status: refillStatus,
     uid: z.string(),
     orderId: z.coerce.number(),
@@ -20,7 +20,7 @@ export const RefillPublicSchema = z
 
 export const RefillSchema = z
   .object({
-    id: z.coerce.number(),
+    storeScopedId: z.number(),
     status: refillStatus,
     uid: z.string(),
     orderId: z.coerce.number(),

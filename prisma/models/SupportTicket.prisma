@@ -1,0 +1,35 @@
+enum TicketStatus {
+  OPEN @map("open")
+  PENDING @map("pending")
+  RESOLVED @map("resolved")
+  CLOSED @map("closed")
+}
+
+enum TicketPriority {
+  LOW @map("low")
+  MEDIUM @map("medium")
+  HIGH @map("high")
+  URGENT @map("urgent")
+}
+
+model SupportTicket {
+  id          Int             @id @default(autoincrement())
+  uid         String          @unique @default(uuid())
+  description String?
+  storeId     Int             @map("store_id")
+  userUid      String            @map("user_uid")
+  storeScopedId  Int          @map("store_scoped_id")
+  subject     String
+  status      TicketStatus    @default(OPEN)
+  priority    TicketPriority  @default(MEDIUM)
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  messages    TicketMessage[] @relation("TicketMessages")
+  store       Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  @@map("support_tickets")
+  @@unique([storeId, storeScopedId])
+  @@index([storeId])
+  @@index([userUid])
+}

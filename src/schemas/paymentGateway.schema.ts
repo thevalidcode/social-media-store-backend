@@ -9,6 +9,7 @@ extendZodWithOpenApi(z);
 
 export const PaymentGatewayAdminsSchema = z
   .object({
+    storeScopedId: z.number(),
     uid: z.string(),
     name: z.string(),
     description: z.string().optional(),

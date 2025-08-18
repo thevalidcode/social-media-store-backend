@@ -6,7 +6,7 @@ extendZodWithOpenApi(z);
 
 export const OrderPublicSchema = z
   .object({
-    id: z.coerce.number(),
+    storeScopedId: z.number(),
     price: z.coerce.number(),
     quantity: z.coerce.number(),
     start: z.coerce.number(),
@@ -29,7 +29,7 @@ export const OrderPublicSchema = z
 
 export const OrderSchema = z
   .object({
-    id: z.coerce.number(),
+    storeScopedId: z.number(),
     price: z.coerce.number(),
     quantity: z.coerce.number(),
     start: z.coerce.number(),

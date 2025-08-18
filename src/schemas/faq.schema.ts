@@ -15,7 +15,7 @@ export const createFAQSchema = z.object({
 
 export const FAQSchema = z
   .object({
-    id: z.coerce.number(),
+    storeScopedId: z.number(),
     question: z.string().min(1),
     answer: z.string().min(1),
     status: z.nativeEnum(FaqStatus),
