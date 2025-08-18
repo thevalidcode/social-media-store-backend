@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.10.0](https://github.com/thevalidcode/social-media-store-backend/compare/v1.9.0...v1.10.0) (2025-08-18)
+
+
+### Features
+
+* Add Cancel model and update Refill model with orderUid field ([680a6b9](https://github.com/thevalidcode/social-media-store-backend/commit/680a6b9325d0b6d0d03dda91bec8d7e10062f95f))
+
 ## [1.9.0](https://github.com/thevalidcode/social-media-store-backend/compare/v1.8.0...v1.9.0) (2025-08-18)
 
 
