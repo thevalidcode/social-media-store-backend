@@ -57,7 +57,7 @@ export const authenticateAdmin = async (
       storeId,
       uid,
       type: "admin",
-      admin: safeAdmin,
+      user: safeAdmin,
     };
 
     next();

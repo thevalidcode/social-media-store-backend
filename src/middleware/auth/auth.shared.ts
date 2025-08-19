@@ -22,7 +22,7 @@ declare module "express" {
             email: string;
             role: UserRole;
             status: UserStatus;
-            apiKey: JsonValue;
+            apiKey: string;
             balance: Decimal;
           };
         }
@@ -30,12 +30,12 @@ declare module "express" {
           type: "admin";
           storeId: number;
           uid: string;
-          admin: {
+          user: {
             email: string;
             id: number;
             role: AdminRole;
             uid: string;
-            apiKey: JsonValue;
+            apiKey: string;
             status: AdminStatus;
           };
         };
