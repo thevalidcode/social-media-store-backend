@@ -428,6 +428,17 @@ model General {
   @@map("general")
 }
 
+model InternalApiSession {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  data      Json
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("internal_api_sessions")
+}
+
 enum PaymentGatewayStatus {
   ACTIVE   @map("active")
   DISABLED @map("disabled")
