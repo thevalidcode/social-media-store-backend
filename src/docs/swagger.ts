@@ -3,6 +3,8 @@ import swaggerUi from "swagger-ui-express";
 import { OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi";
 import { registry } from "./paths";
 import { API_VERSION } from "../version";
+import { env } from "../config/env.config";
+import * as swaggers from "../controllers/swagger.controllers";
 
 const swaggerRouter = Router();
 
@@ -51,13 +53,16 @@ const openApiDocument = generator.generateDocument({
   ],
 });
 
+swaggerRouter.get("/login", swaggers.adminSwaggerLogin);
+swaggerRouter.post("/login", swaggers.authenticateSwaggerAdmin);
+swaggerRouter.post("/logout", swaggers.logoutSwaggerAdmin);
 swaggerRouter.use(
-  "/admin/docs",
+  "/docs",
   isAdmin,
   swaggerUi.serve,
   swaggerUi.setup(openApiDocument, {
-    customCssUrl: "/assets/swagger-custom.css",
-    customfavIcon: "/assets/validpanel-removedbg.png",
+    customCssUrl: `${env.BACKEND_PROXY_PATH}/assets/swagger-custom.css`,
+    customfavIcon: `${env.BACKEND_PROXY_PATH}/assets/validpanel.png`,
     customSiteTitle: "Social Media Store API Docs",
   })
 );

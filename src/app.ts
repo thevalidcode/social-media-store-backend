@@ -73,12 +73,11 @@ app.use("/api/v1/payment", cors(dynamicCors), paymentRouter);
 app.use("/api/v1/support", cors(dynamicCors), supportRouter);
 app.use("/api/v1/statistics", cors(dynamicCors), statisticsRouter);
 app.use("/api/v1/paymentGateway", cors(dynamicCors), paymentGatewayRouter);
+app.use("/api/v1/admin", cors(dynamicCors), adminRoutes);
 
 // Internal Routes
-app.use("/admin", adminRoutes);
 app.use("/api/v2", publicApiRoutes);
 app.use("/api/auth/store", authRoutes);
-
-app.use(swaggerRouter);
+app.use("/swagger", swaggerRouter);
 
 export default app;
