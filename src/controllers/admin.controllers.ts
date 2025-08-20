@@ -9,8 +9,8 @@ import { AuthenticateUserSchema } from "../schemas/user.schema";
 
 const URL =
   env.NODE_ENV === "production"
-    ? "/social-media-store/backend/admin/login"
-    : "/admin/login";
+    ? "/social-media-store/backend/admin"
+    : "/admin";
 
 export const adminSwaggerLogin = (req: Request, res: Response) => {
   res.send(`
@@ -103,7 +103,7 @@ export const adminSwaggerLogin = (req: Request, res: Response) => {
 </head>
 <body>
 
-  <form class="login-form" method="POST" action="${URL}">
+  <form class="login-form" method="POST" action="${URL}/login">
     <h2>Admin Login</h2>
 
     <div class="form-group">
@@ -128,7 +128,7 @@ export const authenticateSwaggerAdmin = (req: Request, res: Response) => {
 
   if (username === env.ADMIN_USERNAME && password === env.ADMIN_PASSWORD) {
     (req.session as any).isAdmin = true;
-    res.redirect(URL);
+    res.redirect(`${URL}/docs`);
   } else {
     res.status(401).send("Invalid credentials");
   }
@@ -136,7 +136,7 @@ export const authenticateSwaggerAdmin = (req: Request, res: Response) => {
 
 export const logoutSwaggerAdmin = (req: Request, res: Response) => {
   req.session.destroy(() => {
-    res.redirect(URL);
+    res.redirect(`${URL}/login`);
   });
 };
 
