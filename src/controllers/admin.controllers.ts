@@ -7,6 +7,11 @@ import crypto from "crypto";
 import type { Request, Response } from "express";
 import { AuthenticateUserSchema } from "../schemas/user.schema";
 
+const URL =
+  env.NODE_ENV === "production"
+    ? "/social-media-store/backend/admin/login"
+    : "/admin/login";
+
 export const adminSwaggerLogin = (req: Request, res: Response) => {
   res.send(`
     <!DOCTYPE html>
@@ -98,7 +103,7 @@ export const adminSwaggerLogin = (req: Request, res: Response) => {
 </head>
 <body>
 
-  <form class="login-form" method="POST" action="/admin/login">
+  <form class="login-form" method="POST" action="${URL}">
     <h2>Admin Login</h2>
 
     <div class="form-group">
@@ -123,7 +128,7 @@ export const authenticateSwaggerAdmin = (req: Request, res: Response) => {
 
   if (username === env.ADMIN_USERNAME && password === env.ADMIN_PASSWORD) {
     (req.session as any).isAdmin = true;
-    res.redirect("/admin/docs");
+    res.redirect(URL);
   } else {
     res.status(401).send("Invalid credentials");
   }
@@ -131,7 +136,7 @@ export const authenticateSwaggerAdmin = (req: Request, res: Response) => {
 
 export const logoutSwaggerAdmin = (req: Request, res: Response) => {
   req.session.destroy(() => {
-    res.redirect("/admin/login");
+    res.redirect(URL);
   });
 };
 
