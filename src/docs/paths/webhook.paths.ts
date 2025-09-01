@@ -6,10 +6,10 @@ import {
 import { BadRequest, ServerError } from "../responses/common.response";
 import { SuccessMessage } from "../responses/user.response";
 
-// POST /flutterwave/{storeId} for users
+// POST /webhooks/flutterwave/{storeId} for users
 registry.registerPath({
   method: "post",
-  path: "/flutterwave/{storeId}",
+  path: "/webhooks/flutterwave/{storeId}",
   summary: "Flutterwave webhook for users",
   tags: ["Webhooks"],
   parameters: [
@@ -36,10 +36,10 @@ registry.registerPath({
   },
 });
 
-// POST /paystack/{storeId} for users
+// POST /webhooks/paystack/{storeId} for users
 registry.registerPath({
   method: "post",
-  path: "/paystack/{storeId}",
+  path: "/webhooks/paystack/{storeId}",
   summary: "Paystack webhook for users",
   tags: ["Webhooks"],
   parameters: [

@@ -20,10 +20,10 @@ import {
   Forbidden,
 } from "../responses/common.response";
 
-// GET /paymentGateway for users
+// GET /payment-gateways for users
 registry.registerPath({
   method: "get",
-  path: "/paymentGateway",
+  path: "/payment-gateways",
   summary: "Get all Payment Gateway for users",
   tags: ["Payment Gateways"],
   security: [{ CookieAuth: [] }],
@@ -34,10 +34,10 @@ registry.registerPath({
   },
 });
 
-// GET /paymentGateway/admin for admins
+// GET /payment-gateways/admin for admins
 registry.registerPath({
   method: "get",
-  path: "/paymentGateway/admin",
+  path: "/payment-gateways/admin",
   summary: "Get all Payment Gateway for admins",
   tags: ["Payment Gateways"],
   security: [{ CookieAuth: [] }],
@@ -48,10 +48,10 @@ registry.registerPath({
   },
 });
 
-// GET /paymentGateway/admin/{paymentGatewayUid} for admins
+// GET /payment-gateways/admin/{paymentGatewayUid} for admins
 registry.registerPath({
   method: "get",
-  path: "/paymentGateway/admin/{paymentGatewayUid}",
+  path: "/payment-gateways/admin/{paymentGatewayUid}",
   summary: "Get Payment Gateway by UID for admins",
   security: [{ CookieAuth: [] }],
   tags: ["Payment Gateways"],
@@ -70,10 +70,10 @@ registry.registerPath({
   },
 });
 
-// GET /paymentGateway/{paymentGatewayUid} for users
+// GET /payment-gateways/{paymentGatewayUid} for users
 registry.registerPath({
   method: "get",
-  path: "/paymentGateway/{paymentGatewayUid}",
+  path: "/payment-gateways/{paymentGatewayUid}",
   summary: "Get Payment Gateway by UID for users",
   security: [{ CookieAuth: [] }],
   tags: ["Payment Gateways"],
@@ -92,10 +92,10 @@ registry.registerPath({
   },
 });
 
-// POST /paymentGateway
+// POST /payment-gateways
 registry.registerPath({
   method: "post",
-  path: "/paymentGateway",
+  path: "/payment-gateways",
   summary: "Create a new Payment Gateway",
   tags: ["Payment Gateways"],
   security: [{ CookieAuth: [] }],
@@ -116,10 +116,10 @@ registry.registerPath({
   },
 });
 
-// PATCH /paymentGateway
+// PATCH /payment-gateways
 registry.registerPath({
   method: "patch",
-  path: "/paymentGateway",
+  path: "/payment-gateways",
   summary: "Update a Payment Gateway",
   tags: ["Payment Gateways"],
   security: [{ CookieAuth: [] }],
@@ -140,10 +140,10 @@ registry.registerPath({
   },
 });
 
-// DELETE /paymentGateway
+// DELETE /payment-gateways
 registry.registerPath({
   method: "delete",
-  path: "/paymentGateway",
+  path: "/payment-gateways",
   summary: "Delete a Payment Gateway",
   tags: ["Payment Gateways"],
   security: [{ CookieAuth: [] }],

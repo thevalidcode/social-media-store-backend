@@ -26,7 +26,7 @@ import {
 // Public: Get all active services
 registry.registerPath({
   method: "get",
-  path: "/service",
+  path: "/services",
   summary: "Get all active services",
   tags: ["Services"],
   parameters: [
@@ -47,7 +47,7 @@ registry.registerPath({
 // Admin: Get all services
 registry.registerPath({
   method: "get",
-  path: "/service/admin",
+  path: "/services/admin",
   summary: "Get all services for admins",
   tags: ["Services"],
   security: [{ CookieAuth: [] }],
@@ -61,7 +61,7 @@ registry.registerPath({
 // Admin: Get services by provider ID
 registry.registerPath({
   method: "get",
-  path: "/service/{providerId}",
+  path: "/services/{providerId}",
   summary: "Get services by provider ID",
   tags: ["Services"],
   security: [{ CookieAuth: [] }],
@@ -83,7 +83,7 @@ registry.registerPath({
 // Public: Get single service
 registry.registerPath({
   method: "get",
-  path: "/service/{serviceId}",
+  path: "/services/{serviceId}",
   summary: "Get a service by ID (public)",
   tags: ["Services"],
   parameters: [
@@ -110,7 +110,7 @@ registry.registerPath({
 // Admin: Get service by ID
 registry.registerPath({
   method: "get",
-  path: "/service/admin/{serviceId}",
+  path: "/services/admin/{serviceId}",
   summary: "Get a service by ID (admin)",
   tags: ["Services"],
   security: [{ CookieAuth: [] }],
@@ -132,7 +132,7 @@ registry.registerPath({
 // Admin: Update a service
 registry.registerPath({
   method: "patch",
-  path: "/service",
+  path: "/services",
   summary: "Update a service",
   tags: ["Services"],
   security: [{ CookieAuth: [] }],
@@ -156,7 +156,7 @@ registry.registerPath({
 // Admin: Delete single service
 registry.registerPath({
   method: "delete",
-  path: "/service",
+  path: "/services",
   summary: "Delete a single service",
   tags: ["Services"],
   security: [{ CookieAuth: [] }],
@@ -180,7 +180,7 @@ registry.registerPath({
 // Admin: Delete multiple services
 registry.registerPath({
   method: "delete",
-  path: "/service/multiple",
+  path: "/services/multiple",
   summary: "Delete multiple services",
   tags: ["Services"],
   security: [{ CookieAuth: [] }],
@@ -204,7 +204,7 @@ registry.registerPath({
 // Admin: Create new service
 registry.registerPath({
   method: "post",
-  path: "/service",
+  path: "/services",
   summary: "Create a new service",
   tags: ["Services"],
   security: [{ CookieAuth: [] }],

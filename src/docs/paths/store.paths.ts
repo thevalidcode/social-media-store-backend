@@ -18,10 +18,10 @@ import {
   UpdateStylesRequestSchema,
 } from "../../schemas/store.schema";
 
-// GET /store/data
+// GET /stores/data
 registry.registerPath({
   method: "get",
-  path: "/store/data",
+  path: "/stores/data",
   summary: "Get the store data for a custom domain",
   tags: ["Store"],
   parameters: [
@@ -39,10 +39,10 @@ registry.registerPath({
   },
 });
 
-// GET /store/{storeId}/general-data
+// GET /stores/{storeId}/general-data
 registry.registerPath({
   method: "get",
-  path: "/store/{storeId}/general-data",
+  path: "/stores/{storeId}/general-data",
   summary: "Get the general data for a store",
   tags: ["Store"],
   parameters: [
@@ -60,10 +60,10 @@ registry.registerPath({
   },
 });
 
-// PATCH /store/general-data
+// PATCH /stores/general-data
 registry.registerPath({
   method: "patch",
-  path: "/store/general-data",
+  path: "/stores/general-data",
   summary: "Update the general data for a store",
   tags: ["Store"],
   security: [{ CookieAuth: [] }],
@@ -83,10 +83,10 @@ registry.registerPath({
   },
 });
 
-// GET /store/{storeId}/styles
+// GET /stores/{storeId}/styles
 registry.registerPath({
   method: "get",
-  path: "/store/{storeId}/styles",
+  path: "/stores/{storeId}/styles",
   summary: "Get design styles for a store",
   tags: ["Store"],
   parameters: [
@@ -103,10 +103,10 @@ registry.registerPath({
   },
 });
 
-// PATCH /store/styles
+// PATCH /stores/styles
 registry.registerPath({
   method: "patch",
-  path: "/store/styles",
+  path: "/stores/styles",
   summary: "Update the styles for a store",
   tags: ["Store"],
   security: [{ CookieAuth: [] }],
@@ -126,10 +126,10 @@ registry.registerPath({
   },
 });
 
-// GET /store/rates
+// GET /stores/rates
 registry.registerPath({
   method: "get",
-  path: "/store/rates",
+  path: "/stores/rates",
   summary: "Get latest exchange rates",
   tags: ["Store"],
   responses: {
@@ -138,10 +138,10 @@ registry.registerPath({
   },
 });
 
-// GET /store/current-user
+// GET /stores/current-user
 registry.registerPath({
   method: "get",
-  path: "/store/current-user",
+  path: "/stores/current-user",
   summary: "Get the currently authenticated user",
   tags: ["Store"],
   security: [{ CookieAuth: [] }],
@@ -152,10 +152,10 @@ registry.registerPath({
   },
 });
 
-// GET /store/current-admin
+// GET /stores/current-admin
 registry.registerPath({
   method: "get",
-  path: "/store/current-admin",
+  path: "/stores/current-admin",
   summary: "Get the currently authenticated admin",
   tags: ["Store"],
   security: [{ CookieAuth: [] }],

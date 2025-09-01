@@ -7,10 +7,10 @@ import {
 } from "../responses/payment.response";
 import { BadRequest, ServerError } from "../responses/common.response";
 
-// POST /payment for users
+// POST /payments for users
 registry.registerPath({
   method: "post",
-  path: "/payment/create",
+  path: "/payments/create",
   summary: "Create a payment for users",
   tags: ["Payments"],
   security: [{ CookieAuth: [] }],
@@ -30,10 +30,10 @@ registry.registerPath({
   },
 });
 
-// GET /payment/transactions
+// GET /payments/transactions
 registry.registerPath({
   method: "get",
-  path: "/payment/transactions",
+  path: "/payments/transactions",
   summary: "Get a user's transactions",
   tags: ["Payments"],
   security: [{ CookieAuth: [] }],
@@ -46,7 +46,7 @@ registry.registerPath({
 
 registry.registerPath({
   method: "get",
-  path: "/payment/transactions/admin",
+  path: "/payments/transactions/admin",
   summary: "Get all transactions for admins",
   tags: ["Payments"],
   security: [{ CookieAuth: [] }],

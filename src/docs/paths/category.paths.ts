@@ -17,10 +17,10 @@ import {
   SuccessResponse,
 } from "../responses/common.response";
 
-// GET /category?storeId=123
+// GET /categories?storeId=123
 registry.registerPath({
   method: "get",
-  path: "/category",
+  path: "/categories",
   summary: "Get all categories",
   tags: ["Categories"],
   parameters: [
@@ -39,10 +39,10 @@ registry.registerPath({
   },
 });
 
-// POST /category (Admin)
+// POST /categories (Admin)
 registry.registerPath({
   method: "post",
-  path: "/category",
+  path: "/categories",
   summary: "Create a new category",
   tags: ["Categories"],
   security: [{ CookieAuth: [] }],
@@ -63,10 +63,10 @@ registry.registerPath({
   },
 });
 
-// PATCH /category (Admin)
+// PATCH /categories (Admin)
 registry.registerPath({
   method: "patch",
-  path: "/category",
+  path: "/categories",
   summary: "Update a category",
   tags: ["Categories"],
   security: [{ CookieAuth: [] }],
@@ -87,10 +87,10 @@ registry.registerPath({
   },
 });
 
-// DELETE /category (Admin)
+// DELETE /categories (Admin)
 registry.registerPath({
   method: "delete",
-  path: "/category",
+  path: "/categories",
   summary: "Delete a single category",
   tags: ["Categories"],
   security: [{ CookieAuth: [] }],
@@ -111,10 +111,10 @@ registry.registerPath({
   },
 });
 
-// DELETE /category/multiple (Admin)
+// DELETE /categories/multiple (Admin)
 registry.registerPath({
   method: "delete",
-  path: "/category/multiple",
+  path: "/categories/multiple",
   summary: "Delete multiple categories",
   tags: ["Categories"],
   security: [{ CookieAuth: [] }],
@@ -135,10 +135,10 @@ registry.registerPath({
   },
 });
 
-// GET /category/{categoryId}?storeId=123
+// GET /categories/{categoryId}?storeId=123
 registry.registerPath({
   method: "get",
-  path: "/category/{categoryId}",
+  path: "/categories/{categoryId}",
   summary: "Get category by ID",
   tags: ["Categories"],
   parameters: [

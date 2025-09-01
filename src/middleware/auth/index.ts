@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { verifyAuthToken } from "./auth.shared";
+import { verifyBrowserAuth, verifyInternalAuth } from "./auth.shared";
 import { prisma } from "../../config/db.config";
 
 export const authenticateUser = async (
@@ -8,7 +8,7 @@ export const authenticateUser = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const payload = verifyAuthToken(req, res);
+    const payload = verifyBrowserAuth(req, res);
     if (!payload) return;
 
     const { email, storeId, apiKey, uid } = payload;
@@ -40,7 +40,7 @@ export const authenticateAdmin = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const payload = verifyAuthToken(req, res);
+    const payload = verifyBrowserAuth(req, res) || verifyInternalAuth(req, res);
     if (!payload) return;
 
     const { email, storeId, apiKey, uid } = payload;

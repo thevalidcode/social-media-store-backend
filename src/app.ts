@@ -57,23 +57,23 @@ app.use(
 );
 
 // --- Public Routes ---
-app.use("/api/v1/user", cors(dynamicCors), userRouter);
-app.use("/api/v1/store", cors(dynamicCors), storeRoutes);
-app.use("/api/v1/blog", cors(dynamicCors), blogRoutes);
-app.use("/api/v1/faq", cors(dynamicCors), faqRoutes);
-app.use("/api/v1/service", cors(dynamicCors), serviceRoutes);
-app.use("/api/v1/provider", cors(dynamicCors), providerRoutes);
-app.use("/api/v1/category", cors(dynamicCors), categoryRoutes);
-app.use("/api/v1/order", cors(dynamicCors), orderRoutes);
-app.use("/api/v1/refill", cors(dynamicCors), refillRoutes);
+app.use("/api/v1/users", cors(dynamicCors), userRouter);
+app.use("/api/v1/stores", cors(dynamicCors), storeRoutes);
+app.use("/api/v1/blogs", cors(dynamicCors), blogRoutes);
+app.use("/api/v1/faqs", cors(dynamicCors), faqRoutes);
+app.use("/api/v1/services", cors(dynamicCors), serviceRoutes);
+app.use("/api/v1/providers", cors(dynamicCors), providerRoutes);
+app.use("/api/v1/categories", cors(dynamicCors), categoryRoutes);
+app.use("/api/v1/orders", cors(dynamicCors), orderRoutes);
+app.use("/api/v1/refills", cors(dynamicCors), refillRoutes);
 app.use("/api/v1/version", cors(dynamicCors), versionRouter);
 app.use("/api/v1/files", cors(dynamicCors), filesRouter);
-app.use("/api/v1/webhook", cors(dynamicCors), webhookRouter);
-app.use("/api/v1/payment", cors(dynamicCors), paymentRouter);
-app.use("/api/v1/support", cors(dynamicCors), supportRouter);
+app.use("/api/v1/webhooks", cors(dynamicCors), webhookRouter);
+app.use("/api/v1/payments", cors(dynamicCors), paymentRouter);
+app.use("/api/v1/supports", cors(dynamicCors), supportRouter);
 app.use("/api/v1/statistics", cors(dynamicCors), statisticsRouter);
-app.use("/api/v1/paymentGateway", cors(dynamicCors), paymentGatewayRouter);
-app.use("/api/v1/admin", cors(dynamicCors), adminRoutes);
+app.use("/api/v1/payment-gateways", cors(dynamicCors), paymentGatewayRouter);
+app.use("/api/v1/admins", cors(dynamicCors), adminRoutes);
 
 // Internal Routes
 app.use("/api/v2", publicApiRoutes);

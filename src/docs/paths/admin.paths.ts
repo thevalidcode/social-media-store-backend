@@ -6,7 +6,7 @@ import { BadRequest, ServerError } from "../responses/common.response";
 // Authenticate admin
 registry.registerPath({
   method: "post",
-  path: "/admin/me",
+  path: "/admins/me",
   summary: "Authenticate a admin",
   tags: ["Admins"],
   request: {

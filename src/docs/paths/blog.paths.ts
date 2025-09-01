@@ -19,10 +19,10 @@ import {
   SuccessResponse,
 } from "../responses/common.response";
 
-// GET /blog?storeId=123
+// GET /blogs?storeId=123
 registry.registerPath({
   method: "get",
-  path: "/blog",
+  path: "/blogs",
   summary: "Get all blogs",
   tags: ["Blogs"],
   parameters: [
@@ -41,10 +41,10 @@ registry.registerPath({
   },
 });
 
-// GET /blog/{blogId}?storeId=123
+// GET /blogs/{blogId}?storeId=123
 registry.registerPath({
   method: "get",
-  path: "/blog/{blogId}",
+  path: "/blogs/{blogId}",
   summary: "Get blog by ID",
   tags: ["Blogs"],
   parameters: [
@@ -68,10 +68,10 @@ registry.registerPath({
   },
 });
 
-// POST /blog
+// POST /blogs
 registry.registerPath({
   method: "post",
-  path: "/blog",
+  path: "/blogs",
   summary: "Create a new blog",
   tags: ["Blogs"],
   security: [{ CookieAuth: [] }],
@@ -92,10 +92,10 @@ registry.registerPath({
   },
 });
 
-// PATCH /blog
+// PATCH /blogs
 registry.registerPath({
   method: "patch",
-  path: "/blog",
+  path: "/blogs",
   summary: "Update a blog",
   tags: ["Blogs"],
   security: [{ CookieAuth: [] }],
@@ -116,10 +116,10 @@ registry.registerPath({
   },
 });
 
-// DELETE /blog
+// DELETE /blogs
 registry.registerPath({
   method: "delete",
-  path: "/blog",
+  path: "/blogs",
   summary: "Delete a blog",
   tags: ["Blogs"],
   security: [{ CookieAuth: [] }],
@@ -140,10 +140,10 @@ registry.registerPath({
   },
 });
 
-// DELETE /blog/multiple
+// DELETE /blogs/multiple
 registry.registerPath({
   method: "delete",
-  path: "/blog/multiple",
+  path: "/blogs/multiple",
   summary: "Delete multiple blogs",
   tags: ["Blogs"],
   security: [{ CookieAuth: [] }],

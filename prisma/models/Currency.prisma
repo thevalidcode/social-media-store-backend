@@ -1,8 +1,0 @@
-model Currency {
-  id        Int      @id @default(autoincrement())
-  uid       String   @unique
-  timestamp DateTime @default(now())
-  quotes    Json
-
-  @@map("currencies")
-}

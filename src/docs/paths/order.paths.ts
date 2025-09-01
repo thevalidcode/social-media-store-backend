@@ -20,10 +20,10 @@ import {
   updateOrderSchema,
 } from "../../schemas/order.schema";
 
-// GET /order
+// GET /orders
 registry.registerPath({
   method: "get",
-  path: "/order",
+  path: "/orders",
   summary: "Get all user's orders",
   tags: ["Orders"],
   security: [{ CookieAuth: [] }],
@@ -36,7 +36,7 @@ registry.registerPath({
 
 registry.registerPath({
   method: "get",
-  path: "/order/admin",
+  path: "/orders/admin",
   summary: "Get all orders for admins",
   tags: ["Orders"],
   security: [{ CookieAuth: [] }],
@@ -47,10 +47,10 @@ registry.registerPath({
   },
 });
 
-// GET /order/:orderUid
+// GET /orders/:orderUid
 registry.registerPath({
   method: "get",
-  path: "/order/{orderUid}",
+  path: "/orders/{orderUid}",
   summary: "Get a order for admins or user orders by uid",
   tags: ["Orders"],
   security: [{ CookieAuth: [] }],
@@ -69,10 +69,10 @@ registry.registerPath({
   },
 });
 
-// POST /order (Admin)
+// POST /orders (Admin)
 registry.registerPath({
   method: "post",
-  path: "/order",
+  path: "/orders",
   summary: "Create a new order",
   tags: ["Orders"],
   security: [{ CookieAuth: [] }],
@@ -93,10 +93,10 @@ registry.registerPath({
   },
 });
 
-// PATCH /order/{orderUid} (Admin)
+// PATCH /orders/{orderUid} (Admin)
 registry.registerPath({
   method: "patch",
-  path: "/order/{orderUid}",
+  path: "/orders/{orderUid}",
   summary: "Update a order",
   tags: ["Orders"],
   security: [{ CookieAuth: [] }],
@@ -125,10 +125,10 @@ registry.registerPath({
   },
 });
 
-// DELETE /order/:orderUid (Admin)
+// DELETE /orders/:orderUid (Admin)
 registry.registerPath({
   method: "delete",
-  path: "/order",
+  path: "/orders",
   summary: "Delete a single order",
   tags: ["Orders"],
   security: [{ CookieAuth: [] }],
@@ -148,10 +148,10 @@ registry.registerPath({
   },
 });
 
-// GET /order/status/:status
+// GET /orders/status/:status
 registry.registerPath({
   method: "get",
-  path: "/order/status/{status}",
+  path: "/orders/status/{status}",
   summary: "Get all orders for admin or user orders by status",
   tags: ["Orders"],
   security: [{ CookieAuth: [] }],
@@ -170,10 +170,10 @@ registry.registerPath({
   },
 });
 
-// POST /order/bulk (Admin)
+// POST /orders/bulk (Admin)
 registry.registerPath({
   method: "post",
-  path: "/order/bulk",
+  path: "/orders/bulk",
   summary: "Create bulk orders",
   tags: ["Orders"],
   security: [{ CookieAuth: [] }],
@@ -194,10 +194,10 @@ registry.registerPath({
   },
 });
 
-// PATCH /order/bulk/status (Admin)
+// PATCH /orders/bulk/status (Admin)
 registry.registerPath({
   method: "patch",
-  path: "/order/bulk/status",
+  path: "/orders/bulk/status",
   summary: "Update bulk order status",
   tags: ["Orders"],
   security: [{ CookieAuth: [] }],

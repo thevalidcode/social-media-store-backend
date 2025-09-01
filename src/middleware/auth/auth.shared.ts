@@ -2,13 +2,14 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../../config/env.config";
 import { tokenPayloadSchema } from "../../schemas/user.schema";
-import { Decimal, JsonValue } from "@prisma/client/runtime/library";
+import { Decimal } from "@prisma/client/runtime/library";
 import {
   UserRole,
   UserStatus,
   AdminRole,
   AdminStatus,
 } from "../../../prisma/generated";
+import { internalTokenPayloadSchema } from "../../schemas/admin.schema";
 
 declare module "express" {
   interface Request {
@@ -42,13 +43,13 @@ declare module "express" {
   }
 }
 
-export const verifyAuthToken = (req: Request, res: Response) => {
+export const verifyBrowserAuth = (req: Request, res: Response) => {
   const token = req.cookies.auth_token;
   const csrfCookie = req.cookies.csrf_token;
-  const csrfHeader = req.headers["x-csrf-token"];
+  const csrfHeader = req.headers["x-csrf-token"] as string;
 
   if (!token || !csrfCookie) {
-    res.status(401).json({ error: "Missing auth or CSRF token" });
+    res.status(401).json({ error: "Missing authentication or CSRF token" });
     return null;
   }
 
@@ -66,7 +67,33 @@ export const verifyAuthToken = (req: Request, res: Response) => {
       return null;
     }
 
-    return parsed.data;
+    return parsed.data; // { email, storeId, apiKey, role }
+  } catch {
+    res.status(401).json({ error: "Invalid or expired token" });
+    return null;
+  }
+};
+
+export const verifyInternalAuth = (req: Request, res: Response) => {
+  const authHeader = req.headers["authorization"] as string;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    res.status(401).json({ error: "Missing or invalid Authorization header" });
+    return null;
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, env.INTERNAL_JWT_SECRET); // Use separate secret for internal
+    const parsed = internalTokenPayloadSchema.safeParse(decoded);
+
+    if (!parsed.success) {
+      res.status(401).json({ error: parsed.error.flatten() });
+      return null;
+    }
+
+    return parsed.data; // { service: 'core-platform', type: 'system', email, storeId, apiKey, role }
   } catch {
     res.status(401).json({ error: "Invalid or expired token" });
     return null;

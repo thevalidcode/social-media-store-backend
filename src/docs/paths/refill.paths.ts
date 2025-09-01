@@ -20,10 +20,10 @@ import {
   updateRefillSchema,
 } from "../../schemas/refill.schema";
 
-// GET /refill
+// GET /refills
 registry.registerPath({
   method: "get",
-  path: "/refill",
+  path: "/refills",
   summary: "Get all user's refills",
   tags: ["Refills"],
   security: [{ CookieAuth: [] }],
@@ -36,7 +36,7 @@ registry.registerPath({
 
 registry.registerPath({
   method: "get",
-  path: "/refill/admin",
+  path: "/refills/admin",
   summary: "Get all refills for admins",
   tags: ["Refills"],
   security: [{ CookieAuth: [] }],
@@ -47,10 +47,10 @@ registry.registerPath({
   },
 });
 
-// GET /refill/{refillUid}
+// GET /refills/{refillUid}
 registry.registerPath({
   method: "get",
-  path: "/refill/{refillUid}",
+  path: "/refills/{refillUid}",
   summary: "Get a refill by UID (admin or user)",
   tags: ["Refills"],
   security: [{ CookieAuth: [] }],
@@ -69,10 +69,10 @@ registry.registerPath({
   },
 });
 
-// POST /refill (User)
+// POST /refills (User)
 registry.registerPath({
   method: "post",
-  path: "/refill",
+  path: "/refills",
   summary: "Create a new refill",
   tags: ["Refills"],
   security: [{ CookieAuth: [] }],
@@ -93,10 +93,10 @@ registry.registerPath({
   },
 });
 
-// PATCH /refill/{refillUid} (Admin)
+// PATCH /refills/{refillUid} (Admin)
 registry.registerPath({
   method: "patch",
-  path: "/refill/{refillUid}",
+  path: "/refills/{refillUid}",
   summary: "Update a refill",
   tags: ["Refills"],
   security: [{ CookieAuth: [] }],
@@ -125,10 +125,10 @@ registry.registerPath({
   },
 });
 
-// DELETE /refill/{refillUid} (Admin)
+// DELETE /refills/{refillUid} (Admin)
 registry.registerPath({
   method: "delete",
-  path: "/refill/{refillUid}",
+  path: "/refills/{refillUid}",
   summary: "Delete a single refill",
   tags: ["Refills"],
   security: [{ CookieAuth: [] }],
@@ -148,10 +148,10 @@ registry.registerPath({
   },
 });
 
-// GET /refill/status/{status}
+// GET /refills/status/{status}
 registry.registerPath({
   method: "get",
-  path: "/refill/status/{status}",
+  path: "/refills/status/{status}",
   summary: "Get refills by status for user or admin",
   tags: ["Refills"],
   security: [{ CookieAuth: [] }],
@@ -170,10 +170,10 @@ registry.registerPath({
   },
 });
 
-// POST /refill/bulk (User)
+// POST /refills/bulk (User)
 registry.registerPath({
   method: "post",
-  path: "/refill/bulk",
+  path: "/refills/bulk",
   summary: "Create bulk refills",
   tags: ["Refills"],
   security: [{ CookieAuth: [] }],
@@ -194,10 +194,10 @@ registry.registerPath({
   },
 });
 
-// PATCH /refill/bulk/status (Admin)
+// PATCH /refills/bulk/status (Admin)
 registry.registerPath({
   method: "patch",
-  path: "/refill/bulk/status",
+  path: "/refills/bulk/status",
   summary: "Update bulk refill status",
   tags: ["Refills"],
   security: [{ CookieAuth: [] }],

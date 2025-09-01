@@ -17,10 +17,10 @@ import {
   successWithProvider,
 } from "../responses/provider.response";
 
-// POST /provider
+// POST /providers
 registry.registerPath({
   method: "post",
-  path: "/provider",
+  path: "/providers",
   summary: "Add a new provider",
   tags: ["Providers"],
   security: [{ CookieAuth: [] }],
@@ -41,10 +41,10 @@ registry.registerPath({
   },
 });
 
-// GET /provider
+// GET /providers
 registry.registerPath({
   method: "get",
-  path: "/provider",
+  path: "/providers",
   summary: "Get all providers",
   tags: ["Providers"],
   security: [{ CookieAuth: [] }],
@@ -56,10 +56,10 @@ registry.registerPath({
   },
 });
 
-// PATCH /provider
+// PATCH /providers
 registry.registerPath({
   method: "patch",
-  path: "/provider",
+  path: "/providers",
   summary: "Update provider details",
   tags: ["Providers"],
   security: [{ CookieAuth: [] }],
@@ -80,10 +80,10 @@ registry.registerPath({
   },
 });
 
-// DELETE /provider
+// DELETE /providers
 registry.registerPath({
   method: "delete",
-  path: "/provider",
+  path: "/providers",
   summary: "Delete a provider",
   tags: ["Providers"],
   security: [{ CookieAuth: [] }],
@@ -110,10 +110,10 @@ registry.registerPath({
   },
 });
 
-// DELETE /provider/multiple
+// DELETE /providers/multiple
 registry.registerPath({
   method: "delete",
-  path: "/provider/multiple",
+  path: "/providers/multiple",
   summary: "Delete multiple providers",
   tags: ["Providers"],
   security: [{ CookieAuth: [] }],
@@ -143,10 +143,10 @@ registry.registerPath({
   },
 });
 
-// POST /provider/services/import
+// POST /providers/services/import
 registry.registerPath({
   method: "post",
-  path: "/provider/services/import",
+  path: "/providers/services/import",
   summary: "Import provider services",
   tags: ["Providers"],
   security: [{ CookieAuth: [] }],
@@ -169,7 +169,7 @@ registry.registerPath({
 
 registry.registerPath({
   method: "post",
-  path: "/provider/services/",
+  path: "/providers/services/",
   summary: "Get provider services",
   tags: ["Providers"],
   security: [{ CookieAuth: [] }],

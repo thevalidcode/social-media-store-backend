@@ -19,10 +19,10 @@ import {
   SuccessResponse,
 } from "../responses/common.response";
 
-// GET /faq?storeId=123
+// GET /faqs?storeId=123
 registry.registerPath({
   method: "get",
-  path: "/faq",
+  path: "/faqs",
   summary: "Get all FAQs",
   tags: ["FAQs"],
   parameters: [
@@ -41,10 +41,10 @@ registry.registerPath({
   },
 });
 
-// GET /faq/{faqId}?storeId=123
+// GET /faqs/{faqId}?storeId=123
 registry.registerPath({
   method: "get",
-  path: "/faq/{faqId}",
+  path: "/faqs/{faqId}",
   summary: "Get FAQ by ID",
   tags: ["FAQs"],
   parameters: [
@@ -68,10 +68,10 @@ registry.registerPath({
   },
 });
 
-// POST /faq
+// POST /faqs
 registry.registerPath({
   method: "post",
-  path: "/faq",
+  path: "/faqs",
   summary: "Create a new FAQ",
   tags: ["FAQs"],
   security: [{ CookieAuth: [] }],
@@ -92,10 +92,10 @@ registry.registerPath({
   },
 });
 
-// PATCH /faq
+// PATCH /faqs
 registry.registerPath({
   method: "patch",
-  path: "/faq",
+  path: "/faqs",
   summary: "Update an FAQ",
   tags: ["FAQs"],
   security: [{ CookieAuth: [] }],
@@ -116,10 +116,10 @@ registry.registerPath({
   },
 });
 
-// DELETE /faq
+// DELETE /faqs
 registry.registerPath({
   method: "delete",
-  path: "/faq",
+  path: "/faqs",
   summary: "Delete an FAQ",
   tags: ["FAQs"],
   security: [{ CookieAuth: [] }],
@@ -140,10 +140,10 @@ registry.registerPath({
   },
 });
 
-// DELETE /faq/multiple
+// DELETE /faqs/multiple
 registry.registerPath({
   method: "delete",
-  path: "/faq/multiple",
+  path: "/faqs/multiple",
   summary: "Delete multiple FAQs",
   tags: ["FAQs"],
   security: [{ CookieAuth: [] }],

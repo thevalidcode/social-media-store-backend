@@ -24,10 +24,10 @@ import {
   Forbidden,
 } from "../responses/common.response";
 
-// GET /support/tickets for users
+// GET /supports/tickets for users
 registry.registerPath({
   method: "get",
-  path: "/support/tickets",
+  path: "/supports/tickets",
   summary: "Get all Support Tickets for users",
   tags: ["Support Tickets"],
   security: [{ CookieAuth: [] }],
@@ -38,10 +38,10 @@ registry.registerPath({
   },
 });
 
-// GET /support/tickets/admin for admins
+// GET /supports/tickets/admin for admins
 registry.registerPath({
   method: "get",
-  path: "/support/tickets/admin",
+  path: "/supports/tickets/admin",
   summary: "Get all Support Tickets for admins",
   tags: ["Support Tickets"],
   security: [{ CookieAuth: [] }],
@@ -52,10 +52,10 @@ registry.registerPath({
   },
 });
 
-// GET /support/tickets/admin/{uid} for admins
+// GET /supports/tickets/admin/{uid} for admins
 registry.registerPath({
   method: "get",
-  path: "/support/tickets/{uid}/admin",
+  path: "/supports/tickets/{uid}/admin",
   summary: "Get Support Ticket by UID for admins",
   security: [{ CookieAuth: [] }],
   tags: ["Support Tickets"],
@@ -74,10 +74,10 @@ registry.registerPath({
   },
 });
 
-// GET /support/tickets/{uid} for users
+// GET /supports/tickets/{uid} for users
 registry.registerPath({
   method: "get",
-  path: "/support/tickets/{uid}",
+  path: "/supports/tickets/{uid}",
   summary: "Get Support Ticket by UID for users",
   security: [{ CookieAuth: [] }],
   tags: ["Support Tickets"],
@@ -96,10 +96,10 @@ registry.registerPath({
   },
 });
 
-// POST /support/tickets
+// POST /supports/tickets
 registry.registerPath({
   method: "post",
-  path: "/support/tickets",
+  path: "/supports/tickets",
   summary: "Create a new Support Ticket",
   tags: ["Support Tickets"],
   security: [{ CookieAuth: [] }],
@@ -120,10 +120,10 @@ registry.registerPath({
   },
 });
 
-// PATCH /support/tickets/{uid}
+// PATCH /supports/tickets/{uid}
 registry.registerPath({
   method: "patch",
-  path: "/support/tickets/{uid}",
+  path: "/supports/tickets/{uid}",
   summary: "Update a Support Ticket",
   tags: ["Support Tickets"],
   security: [{ CookieAuth: [] }],
@@ -152,10 +152,10 @@ registry.registerPath({
   },
 });
 
-// DELETE /support/tickets/{uid}
+// DELETE /supports/tickets/{uid}
 registry.registerPath({
   method: "delete",
-  path: "/support/tickets/{uid}",
+  path: "/supports/tickets/{uid}",
   summary: "Delete a Support Ticket",
   tags: ["Support Tickets"],
   security: [{ CookieAuth: [] }],
@@ -175,10 +175,10 @@ registry.registerPath({
   },
 });
 
-// POST /support/{uid}/messages for user
+// POST /supports/{uid}/messages for user
 registry.registerPath({
   method: "post",
-  path: "/support/{uid}/messages",
+  path: "/supports/{uid}/messages",
   summary: "Create a new Ticket Message for user",
   tags: ["Ticket Messages"],
   security: [{ CookieAuth: [] }],
@@ -208,10 +208,10 @@ registry.registerPath({
   },
 });
 
-// POST /support/{uid}/messages/admin for admin
+// POST /supports/{uid}/messages/admin for admin
 registry.registerPath({
   method: "post",
-  path: "/support/{uid}/messages/admin",
+  path: "/supports/{uid}/messages/admin",
   summary: "Create a new Ticket Message for admin",
   tags: ["Ticket Messages"],
   security: [{ CookieAuth: [] }],
@@ -241,10 +241,10 @@ registry.registerPath({
   },
 });
 
-// DELETE /support/messages/{uid}
+// DELETE /supports/messages/{uid}
 registry.registerPath({
   method: "delete",
-  path: "/support/messages/{uid}",
+  path: "/supports/messages/{uid}",
   summary: "Delete a Ticket Message",
   tags: ["Ticket Messages"],
   security: [{ CookieAuth: [] }],

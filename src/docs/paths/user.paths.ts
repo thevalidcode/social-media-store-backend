@@ -26,7 +26,7 @@ import {
 // Authenticate user
 registry.registerPath({
   method: "post",
-  path: "/user/me",
+  path: "/users/me",
   summary: "Authenticate a user",
   tags: ["Users"],
   request: {
@@ -48,7 +48,7 @@ registry.registerPath({
 // Verify User's Session
 registry.registerPath({
   method: "post",
-  path: "/user/verify-session",
+  path: "/users/verify-session",
   summary: "Verify the session of an authenticated user",
   tags: ["Users"],
   responses: {
@@ -61,7 +61,7 @@ registry.registerPath({
 // Get all users (admin)
 registry.registerPath({
   method: "get",
-  path: "/user",
+  path: "/users",
   summary: "Get all users",
   tags: ["Users"],
   security: [{ CookieAuth: [] }],
@@ -75,7 +75,7 @@ registry.registerPath({
 // Get single user by UID
 registry.registerPath({
   method: "get",
-  path: "/user/{uid}",
+  path: "/users/{uid}",
   summary: "Get user by UID",
   tags: ["Users"],
   security: [{ CookieAuth: [] }],
@@ -97,7 +97,7 @@ registry.registerPath({
 // Create user
 registry.registerPath({
   method: "post",
-  path: "/user",
+  path: "/users",
   summary: "Create a new user",
   tags: ["Users"],
   request: {
@@ -119,7 +119,7 @@ registry.registerPath({
 // Update user
 registry.registerPath({
   method: "patch",
-  path: "/user",
+  path: "/users",
   summary: "Update user info",
   tags: ["Users"],
   request: {
@@ -141,7 +141,7 @@ registry.registerPath({
 // Delete single user
 registry.registerPath({
   method: "delete",
-  path: "/user",
+  path: "/users",
   summary: "Delete a single user",
   tags: ["Users"],
   security: [{ CookieAuth: [] }],
@@ -167,7 +167,7 @@ registry.registerPath({
 // Delete multiple users
 registry.registerPath({
   method: "delete",
-  path: "/user/multiple",
+  path: "/users/multiple",
   summary: "Delete multiple users",
   tags: ["Users"],
   security: [{ CookieAuth: [] }],

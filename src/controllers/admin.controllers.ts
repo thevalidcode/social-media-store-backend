@@ -5,13 +5,13 @@ import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
 import type { Request, Response } from "express";
-import { AuthenticateUserSchema } from "../schemas/user.schema";
+import { AuthenticateAdminSchema } from "../schemas/admin.schema";
 
 export const authenticateAdmin = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const parsed = AuthenticateUserSchema.safeParse(req.body);
+  const parsed = AuthenticateAdminSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -20,7 +20,7 @@ export const authenticateAdmin = async (
   const { email, password, storeId } = parsed.data;
 
   try {
-    const account = await prisma.user.findFirst({ where: { email, storeId } });
+    const account = await prisma.admin.findFirst({ where: { email, storeId } });
 
     if (!account) {
       res.status(400).json({ error: "Incorrect login details" });
@@ -46,6 +46,7 @@ export const authenticateAdmin = async (
     });
     const csrfToken = crypto.randomBytes(32).toString("hex");
 
+    // Set cookies for browser-based clients
     res.cookie("csrf_token", csrfToken, {
       httpOnly: false,
       secure: env.NODE_ENV === "production",
@@ -59,6 +60,25 @@ export const authenticateAdmin = async (
       sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+
+    // Internal token for backend-to-backend communication
+    const internalToken = jwt.sign(
+      {
+        service: "core-platform",
+        type: "system",
+        email,
+        storeId,
+        apiKey,
+        role,
+      },
+      env.INTERNAL_JWT_SECRET,
+      {
+        expiresIn: "15m", // short-lived for security
+      }
+    );
+
+    // Send internal token in response headers for the core platform
+    res.setHeader("X-Internal-Auth", internalToken);
 
     res.status(200).json({
       success: "Logged in successfully",

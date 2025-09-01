@@ -1,10 +1,11 @@
+import { AdminSchema } from "../../schemas/admin.schema";
 import {
   StoreDataSchema,
   DesignStylesSchema,
   ExchangeRatesSchema,
   StoreGeneralDataResponseSchema,
 } from "../../schemas/store.schema";
-import { UserPublicSchema, AdminPublicSchema } from "../../schemas/user.schema";
+import { UserPublicSchema } from "../../schemas/user.schema";
 import { z } from "zod";
 
 export const StoreDataResponse = {
@@ -56,7 +57,7 @@ export const CurrentAdminResponse = {
   description: "Current admin record",
   content: {
     "application/json": {
-      schema: AdminPublicSchema,
+      schema: AdminSchema,
     },
   },
 };

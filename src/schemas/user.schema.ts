@@ -9,6 +9,7 @@ import {
   UserStatus,
 } from "../../prisma/generated";
 import { Decimal } from "@prisma/client/runtime/library";
+import { AdminSchema } from "./admin.schema";
 
 extendZodWithOpenApi(z);
 
@@ -34,24 +35,6 @@ export const UserSchema: z.ZodType<User> = z
     ref: z.number().nullable(),
   })
   .openapi("User");
-
-export const AdminSchema: z.ZodType<Admin> = z
-  .object({
-    id: z.number(),
-    uid: z.string(),
-    email: z.string(),
-    image: z.string().nullable(),
-    password: z.string(),
-    username: z.string(),
-    apiKey: z.string(),
-    role: z.nativeEnum(AdminRole),
-    status: z.nativeEnum(AdminStatus),
-    storeId: z.number(),
-    currency: z.string(),
-    timestamp: z.date(),
-    lastSeen: z.date(),
-  })
-  .openapi("Admin");
 
 export const AuthSchema = z.object({
   storeId: z.coerce.number(),
@@ -100,13 +83,6 @@ export const CreateUserInputSchema = z.object({
   ref: z.number().optional().describe("Optional referral ID"),
 });
 
-export const AdminPublicSchema = z.object({
-  id: z.string(),
-  email: z.string().email(),
-  username: z.string(),
-  role: z.string(),
-});
-
 export const GoogleAuthRequestSchema = z
   .object({
     idToken: z.string().describe("Google OAuth ID token"),
@@ -115,7 +91,7 @@ export const GoogleAuthRequestSchema = z
   .openapi("GoogleAuthResponse");
 
 export const VerifySessionResponseSchema = z.object({
-  role: z.enum(["user", "admin"]),
+  role: z.nativeEnum(UserRole),
 });
 
 export const CreateUserSchema = z.object({

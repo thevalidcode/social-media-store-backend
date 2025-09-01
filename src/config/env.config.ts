@@ -7,6 +7,7 @@ export const env = {
   DB_HOST: process.env.DB_HOST || "localhost",
   MASTER_KEY: process.env.MASTER_KEY || "",
   JWT_SECRET: process.env.JWT_SECRET || "",
+  INTERNAL_JWT_SECRET: process.env.INTERNAL_JWT_SECRET || "",
   DATABASE_URL: process.env.DATABASE_URL || "",
   SESSION_SECRET: process.env.SESSION_SECRET || "",
   ADMIN_USERNAME: process.env.ADMIN_USERNAME || "",
