@@ -43,6 +43,8 @@ app.use(
   express.static(path.join(__dirname, "..", "public", "assets"))
 );
 
+app.set("trust proxy", 1);
+
 app.use(
   session({
     store: new PrismaSessionStore(),
