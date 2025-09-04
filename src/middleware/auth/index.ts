@@ -43,11 +43,11 @@ export const authenticateAdmin = async (
     const payload = verifyBrowserAuth(req, res) || verifyInternalAuth(req, res);
     if (!payload) return;
 
-    const { email, storeId, apiKey, uid } = payload;
+    const { storeId, uid } = payload;
 
-    const admin = await prisma.admin.findFirst({ where: { storeId, email } });
-    if (!admin || admin.apiKey !== apiKey) {
-      res.status(401).json({ error: "Invalid admin API key or not found" });
+    const admin = await prisma.admin.findFirst({ where: { storeId, uid } });
+    if (!admin) {
+      res.status(401).json({ error: "Invalid or expired token" });
       return;
     }
 

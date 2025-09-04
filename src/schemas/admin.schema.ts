@@ -39,14 +39,10 @@ export const AuthenticateAdminResponseSchema = z.object({
 });
 
 export const internalTokenPayloadSchema = z.object({
-  service: z.literal("core-platform", {
-    errorMap: () => ({ message: "Invalid value provided" }),
-  }),
+  serviceKey: z.string(),
   type: z.literal("system", {
     errorMap: () => ({ message: "Invalid value provided" }),
   }),
-  email: z.string().email(),
+  uid: z.string().uuid(),
   storeId: z.number(),
-  apiKey: z.string(),
-  uid: z.string(),
 });

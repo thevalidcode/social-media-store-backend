@@ -2,7 +2,6 @@ import { prisma } from "../config/db.config";
 import { env } from "../config/env.config";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
 import type { Request, Response } from "express";
 import { AuthenticateAdminSchema } from "../schemas/admin.schema";
@@ -21,13 +20,12 @@ export const authenticateAdmin = async (
 
   try {
     const account = await prisma.admin.findFirst({ where: { email, storeId } });
-
     if (!account) {
       res.status(400).json({ error: "Incorrect login details" });
       return;
     }
 
-    if ("status" in account && account.status === "BANNED") {
+    if (account.status === "BANNED") {
       res.status(403).json({ error: "You’ve been banned. Contact support." });
       return;
     }
@@ -38,15 +36,13 @@ export const authenticateAdmin = async (
       return;
     }
 
-    const apiKey = account.apiKey || uuidv4();
     const role = account.role;
 
-    const token = jwt.sign({ email, storeId, apiKey, role }, env.JWT_SECRET, {
+    const token = jwt.sign({ email, storeId, role }, env.JWT_SECRET, {
       expiresIn: "7d",
     });
     const csrfToken = crypto.randomBytes(32).toString("hex");
 
-    // Set cookies for browser-based clients
     res.cookie("csrf_token", csrfToken, {
       httpOnly: false,
       secure: env.NODE_ENV === "production",
@@ -60,25 +56,6 @@ export const authenticateAdmin = async (
       sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-
-    // Internal token for backend-to-backend communication
-    const internalToken = jwt.sign(
-      {
-        service: "core-platform",
-        type: "system",
-        email,
-        storeId,
-        apiKey,
-        role,
-      },
-      env.INTERNAL_JWT_SECRET,
-      {
-        expiresIn: "15m", // short-lived for security
-      }
-    );
-
-    // Send internal token in response headers for the core platform
-    res.setHeader("X-Internal-Auth", internalToken);
 
     res.status(200).json({
       success: "Logged in successfully",

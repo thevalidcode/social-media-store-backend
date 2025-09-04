@@ -8,18 +8,15 @@ let allowedOrigins: string[] = [];
 
 export async function updateAllowedOrigins(): Promise<void> {
   try {
-    const shops = await prisma.store.findMany({
+    const stores = await prisma.store.findMany({
       where: { ssl: true },
     });
 
-    const domains = shops.map((shop: any) => shop.uid);
+    const domains = stores.map((shop: any) => shop.uid);
     allowedOrigins = [
       "http://localhost:3000",
-      "http://localhost:6060",
-      ...domains.flatMap((domain: string) => [
-        `https://${domain}`,
-        `https://${domain}:6060`,
-      ]),
+      `http://localhost:5173`,
+      ...domains.flatMap((domain: string) => [`https://${domain}`]),
     ];
   } catch (error) {
     console.error("Failed to update allowed origins:", error);

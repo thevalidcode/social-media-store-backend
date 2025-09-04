@@ -22,19 +22,25 @@ async function startServer() {
 
     mainServer = https.createServer(serverOptions, app);
 
-    mainServer.listen(6060, () => {
-      console.log("HTTPS server running on https://validpanel.com:6060/");
+    mainServer.listen(env.PRIMARY_PORT, () => {
+      console.log(
+        `HTTPS server running on https://validpanel.com:${env.PRIMARY_PORT}/`
+      );
     });
 
     const secondaryHttpServer = http.createServer(app);
-    secondaryHttpServer.listen(4040, () => {
-      console.log("HTTP fallback running on http://validpanel.com:4040/");
+    secondaryHttpServer.listen(env.SECONDARY_PORT, () => {
+      console.log(
+        `HTTP fallback running on http://validpanel.com:${env.SECONDARY_PORT}/`
+      );
     });
   } else {
     mainServer = http.createServer(app);
 
-    mainServer.listen(6060, () => {
-      console.log("Development server running on http://localhost:6060/");
+    mainServer.listen(env.PRIMARY_PORT, () => {
+      console.log(
+        `Development server running on http://localhost:${env.PRIMARY_PORT}/`
+      );
     });
   }
 

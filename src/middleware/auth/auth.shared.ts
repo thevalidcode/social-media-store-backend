@@ -74,6 +74,11 @@ export const verifyBrowserAuth = (req: Request, res: Response) => {
   }
 };
 
+const serviceSecrets: Record<string, string> = {
+  "core-platform": env.CORE_SERVICE_SECRET,
+  // "analytics": env.ANALYTICS_SERVICE_SECRET,
+};
+
 export const verifyInternalAuth = (req: Request, res: Response) => {
   const authHeader = req.headers["authorization"] as string;
 
@@ -85,7 +90,23 @@ export const verifyInternalAuth = (req: Request, res: Response) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, env.INTERNAL_JWT_SECRET); // Use separate secret for internal
+    // Decode without verifying first (to extract serviceKey)
+    const decodedUnverified = jwt.decode(token) as any;
+    if (!decodedUnverified || !decodedUnverified.serviceKey) {
+      res.status(401).json({ error: "Invalid token payload" });
+      return null;
+    }
+
+    const serviceKey = decodedUnverified.serviceKey;
+    const serviceSecret = serviceSecrets[serviceKey];
+
+    if (!serviceSecret) {
+      res.status(401).json({ error: "Unknown service key" });
+      return null;
+    }
+
+    // Verify with the correct secret
+    const decoded = jwt.verify(token, serviceSecret);
     const parsed = internalTokenPayloadSchema.safeParse(decoded);
 
     if (!parsed.success) {
@@ -93,7 +114,7 @@ export const verifyInternalAuth = (req: Request, res: Response) => {
       return null;
     }
 
-    return parsed.data; // { service: 'core-platform', type: 'system', email, storeId, apiKey, role }
+    return parsed.data; // { serviceKey, type, uid, storeId }
   } catch {
     res.status(401).json({ error: "Invalid or expired token" });
     return null;

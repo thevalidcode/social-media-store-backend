@@ -61,7 +61,7 @@ To start the development server, use the following command:
 npm start
 ```
 
-This will launch the server, and you can access it via `http://localhost:6060/`.
+This will launch the server, and you can access it via `http://localhost:PORT/`.
 
 ### How to commit with version change
 
