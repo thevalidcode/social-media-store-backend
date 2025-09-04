@@ -11,11 +11,11 @@ export const authenticateUser = async (
     const payload = verifyBrowserAuth(req, res);
     if (!payload) return;
 
-    const { email, storeId, apiKey, uid } = payload;
+    const { storeId, uid } = payload;
 
-    const user = await prisma.user.findFirst({ where: { storeId, email } });
-    if (!user || user.apiKey !== apiKey) {
-      res.status(401).json({ error: "Invalid user API key or not found" });
+    const user = await prisma.user.findFirst({ where: { storeId, uid } });
+    if (!user) {
+      res.status(401).json({ error: "Invalid or expired token" });
       return;
     }
 
@@ -59,6 +59,65 @@ export const authenticateAdmin = async (
       type: "admin",
       user: safeAdmin,
     };
+
+    next();
+  } catch (err: any) {
+    res.status(401).json({ error: "Invalid or expired token" });
+  }
+};
+
+export const authenticateAnyone = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const payload = verifyBrowserAuth(req, res) || verifyInternalAuth(req, res);
+  if (!payload) return;
+
+  const { storeId, uid } = payload;
+
+  try {
+    const [user, admin] = await Promise.all([
+      prisma.user.findFirst({ where: { storeId, uid } }),
+      prisma.admin.findFirst({ where: { storeId, uid } }),
+    ]);
+
+    const account = admin || user;
+
+    if (!account) {
+      res.status(401).json({ error: "Invalid or expired token" });
+      return;
+    }
+
+    if (admin) {
+      req.auth = {
+        type: "admin",
+        storeId,
+        uid,
+        user: {
+          id: admin.id,
+          email: admin.email,
+          role: admin.role,
+          uid: admin.uid,
+          apiKey: admin.apiKey,
+          status: admin.status,
+        },
+      };
+    } else if (user) {
+      req.auth = {
+        type: "user",
+        storeId,
+        uid,
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          status: user.status,
+          apiKey: user.apiKey,
+          balance: user.balance,
+        },
+      };
+    }
 
     next();
   } catch (err: any) {

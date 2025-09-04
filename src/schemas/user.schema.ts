@@ -104,8 +104,6 @@ export const CreateUserSchema = z.object({
 });
 
 export const tokenPayloadSchema = z.object({
-  email: z.string().email(),
   storeId: z.number(),
-  apiKey: z.string(),
   uid: z.string(),
 });
