@@ -8,7 +8,6 @@ import {
 extendZodWithOpenApi(z);
 
 export const CreatePaymentSchema = z.object({
-  apiKey: z.string(),
   storeId: z.coerce.number(),
   platform: z.nativeEnum(PaymentGatewayPlatform),
   currency: z.string().length(3),

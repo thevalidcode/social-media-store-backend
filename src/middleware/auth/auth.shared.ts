@@ -9,7 +9,10 @@ import {
   AdminRole,
   AdminStatus,
 } from "../../../prisma/generated";
-import { internalTokenPayloadSchema } from "../../schemas/admin.schema";
+import {
+  internalTokenPayloadSchema, // for users
+  internalAdminTokenPayloadSchema, // for admins
+} from "../../schemas/admin.schema";
 
 declare module "express" {
   interface Request {
@@ -32,10 +35,10 @@ declare module "express" {
           storeId: number;
           uid: string;
           user: {
-            email: string;
             id: number;
-            role: AdminRole;
+            email: string;
             uid: string;
+            role: AdminRole;
             apiKey: string;
             status: AdminStatus;
           };
@@ -43,6 +46,9 @@ declare module "express" {
   }
 }
 
+// -----------------
+// Browser auth (normal users logging in from browser)
+// -----------------
 export const verifyBrowserAuth = (req: Request, res: Response) => {
   const token = req.cookies.auth_token;
   const csrfCookie = req.cookies.csrf_token;
@@ -67,21 +73,33 @@ export const verifyBrowserAuth = (req: Request, res: Response) => {
       return null;
     }
 
-    return parsed.data; // { email, storeId, apiKey, role }
+    return parsed.data;
   } catch {
     res.status(401).json({ error: "Invalid or expired token" });
     return null;
   }
 };
 
+// -----------------
+// Shared secrets map for services
+// -----------------
 const serviceSecrets: Record<string, string> = {
   "core-platform": env.CORE_SERVICE_SECRET,
   // "analytics": env.ANALYTICS_SERVICE_SECRET,
 };
 
-export const verifyInternalAuth = (req: Request, res: Response) => {
+/**
+ * 🔒 Internal User Authentication
+ *
+ * Used when the **core platform** or another service
+ * makes requests on behalf of a specific **user** to a specific **store**.
+ *
+ * That user on the core platform is an admin to a specific store.
+ *
+ * Payload requires: `{ serviceKey, type: "system", uid, storeId }`
+ */
+export const verifyInternalUserAuth = (req: Request, res: Response) => {
   const authHeader = req.headers["authorization"] as string;
-
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     res.status(401).json({ error: "Missing or invalid Authorization header" });
     return null;
@@ -90,22 +108,18 @@ export const verifyInternalAuth = (req: Request, res: Response) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    // Decode without verifying first (to extract serviceKey)
     const decodedUnverified = jwt.decode(token) as any;
-    if (!decodedUnverified || !decodedUnverified.serviceKey) {
+    if (!decodedUnverified?.serviceKey) {
       res.status(401).json({ error: "Invalid token payload" });
       return null;
     }
 
-    const serviceKey = decodedUnverified.serviceKey;
-    const serviceSecret = serviceSecrets[serviceKey];
-
+    const serviceSecret = serviceSecrets[decodedUnverified.serviceKey];
     if (!serviceSecret) {
       res.status(401).json({ error: "Unknown service key" });
       return null;
     }
 
-    // Verify with the correct secret
     const decoded = jwt.verify(token, serviceSecret);
     const parsed = internalTokenPayloadSchema.safeParse(decoded);
 
@@ -115,6 +129,52 @@ export const verifyInternalAuth = (req: Request, res: Response) => {
     }
 
     return parsed.data; // { serviceKey, type, uid, storeId }
+  } catch {
+    res.status(401).json({ error: "Invalid or expired token" });
+    return null;
+  }
+};
+
+/**
+ * 🔑 Internal Admin Authentication
+ *
+ * Used when **admins** of the core platform
+ * need to fetch or manage **all stores** at once.
+ *
+ * Payload requires: `{ serviceKey, type: "system" }`
+ * No `uid` or `storeId` is needed.
+ */
+export const verifyInternalAdminAuth = (req: Request, res: Response) => {
+  const authHeader = req.headers["authorization"] as string;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    res.status(401).json({ error: "Missing or invalid Authorization header" });
+    return null;
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decodedUnverified = jwt.decode(token) as any;
+    if (!decodedUnverified?.serviceKey) {
+      res.status(401).json({ error: "Invalid token payload" });
+      return null;
+    }
+
+    const serviceSecret = serviceSecrets[decodedUnverified.serviceKey];
+    if (!serviceSecret) {
+      res.status(401).json({ error: "Unknown service key" });
+      return null;
+    }
+
+    const decoded = jwt.verify(token, serviceSecret);
+    const parsed = internalAdminTokenPayloadSchema.safeParse(decoded);
+
+    if (!parsed.success) {
+      res.status(401).json({ error: parsed.error.flatten() });
+      return null;
+    }
+
+    return parsed.data; // { serviceKey, type }
   } catch {
     res.status(401).json({ error: "Invalid or expired token" });
     return null;

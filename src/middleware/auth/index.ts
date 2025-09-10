@@ -1,5 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import { verifyBrowserAuth, verifyInternalAuth } from "./auth.shared";
+import {
+  verifyBrowserAuth,
+  verifyInternalUserAuth,
+  verifyInternalAdminAuth,
+} from "./auth.shared";
 import { prisma } from "../../config/db.config";
 
 export const authenticateUser = async (
@@ -40,7 +44,8 @@ export const authenticateAdmin = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const payload = verifyBrowserAuth(req, res) || verifyInternalAuth(req, res);
+    const payload =
+      verifyBrowserAuth(req, res) || verifyInternalUserAuth(req, res);
     if (!payload) return;
 
     const { storeId, uid } = payload;
@@ -66,12 +71,34 @@ export const authenticateAdmin = async (
   }
 };
 
+export const authenticateInternalAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const payload = verifyInternalAdminAuth(req, res);
+    if (!payload) return;
+
+    const store = await prisma.store.findFirst({ where: { uid: "validpanel.com" } });
+    if (!store) {
+      res.status(401).json({ error: "The main store (validpanel.com) can't be found" });
+      return;
+    }
+
+    next();
+  } catch (err: any) {
+    res.status(401).json({ error: "Invalid or expired token" });
+  }
+};
+
 export const authenticateAnyone = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const payload = verifyBrowserAuth(req, res) || verifyInternalAuth(req, res);
+  const payload =
+    verifyBrowserAuth(req, res) || verifyInternalUserAuth(req, res);
   if (!payload) return;
 
   const { storeId, uid } = payload;

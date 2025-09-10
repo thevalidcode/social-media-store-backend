@@ -1,9 +1,6 @@
 import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import {
-  Admin,
-  AdminRole,
-  AdminStatus,
   User,
   UserRole,
   UserStatus,
@@ -24,6 +21,7 @@ export const UserSchema: z.ZodType<User> = z
     password: z.string(),
     username: z.string(),
     apiKey: z.string(),
+    fullName: z.string(),
     role: z.nativeEnum(UserRole),
     status: z.nativeEnum(UserStatus),
     storeId: z.number(),

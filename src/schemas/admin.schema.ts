@@ -46,3 +46,10 @@ export const internalTokenPayloadSchema = z.object({
   uid: z.string().uuid(),
   storeId: z.number(),
 });
+
+export const internalAdminTokenPayloadSchema = z.object({
+  serviceKey: z.string(),
+  type: z.literal("system", {
+    errorMap: () => ({ message: "Invalid value provided" }),
+  }),
+});

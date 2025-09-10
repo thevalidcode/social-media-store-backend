@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
+import { StoreStatus } from "../../prisma/generated";
 
 extendZodWithOpenApi(z);
 
@@ -7,7 +8,7 @@ export const StoreDataSchema = z
   .object({
     storeId: z.number().describe("Unique identifier for the store"),
     plan: z.string().describe("The plan associated with the store"),
-    status: z.enum(["active", "disabled"]).describe("The status of the store"),
+    status: z.nativeEnum(StoreStatus).describe("The status of the store"),
     timestamp: z.string().describe("Timestamp when the store was created"),
   })
   .openapi("StoreData");

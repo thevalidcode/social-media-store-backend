@@ -28,6 +28,7 @@ import supportRouter from "./routes/support.routes";
 import paymentRouter from "./routes/payment.routes";
 import webhookRouter from "./routes/webhook.routes";
 import statisticsRouter from "./routes/statistics.routes";
+import internalRouter from "./routes/internal.routes";
 import publicApiRoutes from "./routes/api.routes";
 import swaggerRouter from "./docs/swagger";
 
@@ -78,6 +79,7 @@ app.use("/api/v1/payment-gateways", cors(dynamicCors), paymentGatewayRouter);
 app.use("/api/v1/admins", cors(dynamicCors), adminRoutes);
 
 // Internal Routes
+app.use("/internal", internalRouter);
 app.use("/api/v2", publicApiRoutes);
 app.use("/api/auth/store", authRoutes);
 app.use("/swagger", swaggerRouter);

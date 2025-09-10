@@ -1,11 +1,8 @@
 import express from "express";
-import cors from "cors";
 import * as auth from "../controllers/auth.controllers";
+import { openCors } from "../config/cors.config";
 
 const router = express.Router();
-
-// Allow all origins per route
-const openCors = cors({ origin: true, credentials: true });
 
 router.get("/google", openCors, auth.redirectToGoogle);
 router.get("/callback/google", openCors, auth.googleCallback);

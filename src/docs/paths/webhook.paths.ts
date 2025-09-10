@@ -3,8 +3,11 @@ import {
   FlutterwaveWebhookSchema,
   PaystackWebhookSchema,
 } from "../../schemas/webhook.schema";
-import { BadRequest, ServerError } from "../responses/common.response";
-import { SuccessMessage } from "../responses/user.response";
+import {
+  BadRequest,
+  ServerError,
+  SuccessResponse,
+} from "../responses/common.response";
 
 // POST /webhooks/flutterwave/{storeId} for users
 registry.registerPath({
@@ -30,7 +33,7 @@ registry.registerPath({
     },
   },
   responses: {
-    200: SuccessMessage,
+    200: SuccessResponse,
     400: BadRequest,
     500: ServerError,
   },
@@ -60,7 +63,7 @@ registry.registerPath({
     },
   },
   responses: {
-    200: SuccessMessage,
+    200: SuccessResponse,
     400: BadRequest,
     500: ServerError,
   },
