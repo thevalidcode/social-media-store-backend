@@ -43,7 +43,7 @@ model Store {
   EmailLog         EmailLog[]
   EmailTemplate    EmailTemplate[]
   Faq              Faq[]
-  General          General[]
+  Setting          Setting[]
   SessionCode      SessionCode[]
   Provider         Provider[]
   Refill           Refill[]
@@ -326,15 +326,6 @@ model Category {
   @@map("categories")
 }
 
-model Currency {
-  id        Int      @id @default(autoincrement())
-  uid       String   @unique
-  timestamp DateTime @default(now())
-  quotes    Json
-
-  @@map("currencies")
-}
-
 model DesignStyle {
   id            Int    @id @default(autoincrement())
   storeScopedId Int    @map("store_scoped_id")
@@ -417,19 +408,20 @@ model Faq {
   @@map("faqs")
 }
 
-model General {
+model Setting {
   id                    Int     @id @default(autoincrement())
   storeScopedId         Int     @map("store_scoped_id")
   uid                   String  @unique
   storeId               Int     @map("store_id")
   store                 Store   @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
-  title                 String  @default("Store")
+  storeName             String  @default("My Store") @map("store_name")
+  storeDescription      String? @map("store_description")
   logoUrl               String? @map("logo_url")
   faviconUrl            String? @map("favicon_url")
   defaultClientCurrency String? @map("default_client_currency")
 
   @@unique([storeId, storeScopedId])
-  @@map("general")
+  @@map("settings")
 }
 
 model InternalApiSession {

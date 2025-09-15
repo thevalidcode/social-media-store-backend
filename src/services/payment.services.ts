@@ -17,9 +17,9 @@ export const createPayment = async (user: User, input: CreatePaymentInput) => {
     throw new Error("Payment gateway not configured");
   }
 
-  const general = await prisma.general.findFirst({
+  const general = await prisma.setting.findFirst({
     where: { storeId },
-    select: { title: true, logoUrl: true },
+    select: { storeName: true, logoUrl: true },
   });
   if (!general) throw new Error("Store general settings missing");
 
@@ -33,7 +33,7 @@ export const createPayment = async (user: User, input: CreatePaymentInput) => {
       name: user.username,
     },
     customizations: {
-      title: general.title,
+      title: general.storeName,
       description: gateway.description,
       logo: general.logoUrl,
     },

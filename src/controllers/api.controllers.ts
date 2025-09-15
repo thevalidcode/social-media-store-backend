@@ -1,5 +1,5 @@
 import { prisma } from "../config/db.config";
-import { currencies } from "../helpers/currency.helper";
+import { exchangeRates } from "../helpers/currency.helper";
 import { v4 as uuidv4 } from "uuid";
 import { sendOrderToProvider } from "../providers/order.providers";
 import {
@@ -54,7 +54,7 @@ export const apiRequests = async (req: Request, res: Response) => {
     case "services": {
       const [services, rates] = await Promise.all([
         prisma.service.findMany({ where: { storeId } }),
-        currencies(),
+        exchangeRates(),
       ]);
 
       const formattedServices = services.map((data) => ({
@@ -170,7 +170,7 @@ export const apiRequests = async (req: Request, res: Response) => {
         OrderActionSchema.parse(req.body);
 
       const [rates, serviceData] = await Promise.all([
-        currencies(),
+        exchangeRates(),
         prisma.service.findFirst({ where: { storeScopedId: service } }),
       ]);
 

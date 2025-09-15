@@ -20,7 +20,6 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string(),
   GOOGLE_CLIENT_ID: z.string(),
   ADMIN_PASSWORD: z.string(),
-  RATE_KEY: z.string(),
   AWS_S3_BUCKET: z.string(),
   AWS_REGION: z.string(),
   AWS_SECRET_ACCESS_KEY: z.string(),

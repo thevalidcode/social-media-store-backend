@@ -1,5 +1,4 @@
 import cron from "node-cron";
-import { saveRates } from "../utils/currency";
 import {
   processDripFeedOrders,
   sendUnsyncedOrders,
@@ -20,10 +19,6 @@ function startCronJobs() {
 
   cron.schedule("*/20 * * * *", () => {
     processDripFeedOrders();
-  });
-
-  cron.schedule("0 0,8,16 * * *", () => {
-    saveRates();
   });
 
   cron.schedule("0 0,8,16 * * *", () => {

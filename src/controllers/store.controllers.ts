@@ -58,7 +58,7 @@ export const getStoreGeneralData = async (
   const { storeId } = parsed.data;
 
   try {
-    const generalData = await prisma.general.findFirst({
+    const generalData = await prisma.setting.findFirst({
       where: { storeId },
     });
 
@@ -73,7 +73,7 @@ export const getStoreGeneralData = async (
       logoUrl: generalData.logoUrl,
       storeId: generalData.storeId,
       faviconUrl: generalData.faviconUrl,
-      title: generalData.title,
+      storeName: generalData.storeName,
       defaultClientCurrency: generalData.defaultClientCurrency,
     });
 
@@ -110,14 +110,14 @@ export const updateStoreGeneralData = async (
   }
 
   try {
-    const existing = await prisma.general.findFirst({ where: { storeId } });
+    const existing = await prisma.setting.findFirst({ where: { storeId } });
 
     if (!existing) {
-      await prisma.general.create({
+      await prisma.setting.create({
         data: { ...bodyData, storeId, uid: uuidv4(), storeScopedId: 1 },
       });
     } else {
-      await prisma.general.update({
+      await prisma.setting.update({
         where: { id: existing.id },
         data: bodyData,
       });
@@ -210,22 +210,11 @@ export const getSiteData = async (
   const { storeId } = parsed.data;
 
   try {
-    const general = await prisma.general.findFirst({ where: { storeId } });
+    const general = await prisma.setting.findFirst({ where: { storeId } });
     res.json(general || {});
   } catch (err: any) {
     console.error("Error fetching site data:", err);
     res.status(500).json({ error: "Failed to fetch site data." });
-  }
-};
-
-// ✅ Get currency rates
-export const getRates = async (_req: Request, res: Response): Promise<void> => {
-  try {
-    const currency = await prisma.currency.findFirst();
-    res.json(currency?.quotes || {});
-  } catch (err: any) {
-    console.error("Error fetching rates:", err);
-    res.status(500).json({ error: "Failed to fetch rates." });
   }
 };
 

@@ -7,7 +7,7 @@ import { placeOrderSchema } from "../schemas/order.schema";
 import { z } from "zod";
 import { decryptKey } from "../utils/encrypt";
 import { v4 as uuidv4 } from "uuid";
-import { currencies } from "../helpers/currency.helper";
+import { exchangeRates } from "../helpers/currency.helper";
 
 const agent = new https.Agent({
   keepAlive: true,
@@ -41,7 +41,7 @@ export const sendOrderToProvider = async (
       prisma.service.findUnique({ where: { uid: orderData.serviceUid } }),
       prisma.provider.findFirst({ where: { storeId, url: order.provider } }),
       prisma.affiliateSetting.findFirst({ where: { storeId } }),
-      currencies(),
+      exchangeRates(),
     ]);
 
     if (!user || !service || !provider)
@@ -239,7 +239,7 @@ export const updateOrderStatus = async (
       order: order.providerOrderId,
     };
     const { data: resp } = await axios.post(url, data, { httpsAgent: agent });
-    const rates = await currencies();
+    const rates = await exchangeRates();
 
     await prisma.order.update({
       where: { uid: order.uid },
@@ -331,7 +331,7 @@ export const syncOrderDetails = async (
     const service = await prisma.service.findUnique({
       where: { id: orderData.serviceId },
     });
-    const rates = await currencies();
+    const rates = await exchangeRates();
 
     if (resp.status === "Canceled" && orderData.status !== "Canceled") {
       const newBalance = safeFloat(user.balance) + safeFloat(orderData.price);

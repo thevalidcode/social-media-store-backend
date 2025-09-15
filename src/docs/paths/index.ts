@@ -18,5 +18,6 @@ import "./admin.paths";
 import "./webhook.paths";
 import "./support.paths";
 import "./statistics.paths";
+import "./rate.paths";
 
 export { registry };

@@ -22,7 +22,8 @@ export const StoreGeneralDataResponseSchema = z
     storeId: z.coerce.number(),
     logoUrl: z.string().url(),
     faviconUrl: z.string().url(),
-    title: z.string(),
+    storeName: z.string(),
+    storeDescription: z.string(),
     defaultClientCurrency: z.string().length(3).toUpperCase(),
   })
   .strict()
@@ -31,7 +32,8 @@ export const StoreGeneralDataResponseSchema = z
 export const UpdateGeneralDataRequestSchema = z.object({
   logoUrl: z.string().url().optional(),
   faviconUrl: z.string().url().optional(),
-  title: z.string().optional(),
+  storeName: z.string().optional(),
+  storeDescription: z.string().optional(),
   defaultClientCurrency: z.string().length(3).toUpperCase().optional(),
 });
 

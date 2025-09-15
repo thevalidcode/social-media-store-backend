@@ -10,6 +10,9 @@ import PrismaSessionStore from "./utils/PrismaSessionStore";
 import { dynamicCors } from "./config/cors.config";
 
 // Routes
+import swaggerRouter from "./docs/swagger";
+import internalRouter from "./routes/internal.routes";
+import publicApiRoutes from "./routes/api.routes";
 import userRouter from "./routes/user.routes";
 import authRoutes from "./routes/auth.routes";
 import storeRoutes from "./routes/store.routes";
@@ -28,9 +31,7 @@ import supportRouter from "./routes/support.routes";
 import paymentRouter from "./routes/payment.routes";
 import webhookRouter from "./routes/webhook.routes";
 import statisticsRouter from "./routes/statistics.routes";
-import internalRouter from "./routes/internal.routes";
-import publicApiRoutes from "./routes/api.routes";
-import swaggerRouter from "./docs/swagger";
+import ratesRouter from "./routes/rate.routes";
 
 const app = express();
 
@@ -77,6 +78,7 @@ app.use("/api/v1/supports", cors(dynamicCors), supportRouter);
 app.use("/api/v1/statistics", cors(dynamicCors), statisticsRouter);
 app.use("/api/v1/payment-gateways", cors(dynamicCors), paymentGatewayRouter);
 app.use("/api/v1/admins", cors(dynamicCors), adminRoutes);
+app.use("/api/v1/rates", cors(dynamicCors), ratesRouter);
 
 // Internal Routes
 app.use("/internal", internalRouter);

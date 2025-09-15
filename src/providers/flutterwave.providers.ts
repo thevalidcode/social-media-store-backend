@@ -3,6 +3,7 @@ import convertCurrency from "../utils/ConvertCurrency";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import { decryptKey } from "../utils/encrypt";
+import { exchangeRates } from "../helpers/currency.helper";
 
 export const initFlutterwavePayment = async (
   paymentData: any,
@@ -28,9 +29,7 @@ const processSuccess = async (data: any, customer: any, storeId: number) => {
     where: { email: customer.email, storeId },
   });
 
-  const exchangeRates = await prisma.currency.findFirst({
-    select: { quotes: true },
-  });
+  const rates = await exchangeRates();
 
   if (!user) throw new Error("User not found");
 
@@ -54,7 +53,7 @@ const processSuccess = async (data: any, customer: any, storeId: number) => {
     });
   });
 
-  if (!exchangeRates || !exchangeRates.quotes) {
+  if (!rates || !rates) {
     throw new Error("Exchange rates not available");
   }
 
@@ -62,7 +61,7 @@ const processSuccess = async (data: any, customer: any, storeId: number) => {
     data.charged_amount,
     data.currency,
     "USD",
-    exchangeRates.quotes
+    rates
   );
   const newBalance = Number(user.balance) + Number(converted);
 
