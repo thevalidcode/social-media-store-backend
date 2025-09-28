@@ -9,6 +9,7 @@ import {
 } from "../schemas/store.schema";
 import { AuthSchema } from "../schemas/user.schema";
 import { v4 as uuidv4 } from "uuid";
+import { Prisma } from "../../prisma/generated";
 
 const storeIdQuerySchema = z.object({ domain: z.string().min(1) });
 const storeIdSchema = z.object({ storeId: z.coerce.number() });
@@ -233,7 +234,21 @@ export const getCurrentUser = async (
   try {
     const user = await prisma.user.findFirst({
       where: { storeId, uid },
-      select: { password: false, apiKey: false },
+      select: {
+        password: false,
+        apiKey: false,
+        fullName: true,
+        storeScopedId: true,
+        ref: true,
+        balance: true,
+        spent: true,
+        timestamp: true,
+        username: true,
+        currency: true,
+        role: true,
+        image: true,
+        lastSeen: true,
+      } as Prisma.UserSelect,
     });
 
     if (!user) {
@@ -263,7 +278,15 @@ export const getCurrentAdmin = async (
   try {
     const admin = await prisma.admin.findFirst({
       where: { storeId, uid },
-      select: { password: false, apiKey: false },
+      select: {
+        password: false,
+        apiKey: false,
+        timestamp: true,
+        username: true,
+        role: true,
+        image: true,
+        lastSeen: true,
+      },
     });
 
     if (!admin) {
