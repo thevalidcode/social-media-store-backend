@@ -135,7 +135,7 @@ export const createUser = async (
       }
 
       const token = jwt.sign(
-        { email, storeId, apiKey: newUser.apiKey, role: "user" },
+        { uid: newUser.uid, storeId, apiKey: newUser.apiKey },
         env.JWT_SECRET,
         { expiresIn: "7d" }
       );
@@ -205,9 +205,13 @@ export const me = async (req: Request, res: Response): Promise<void> => {
     const apiKey = account.apiKey || uuidv4();
     const role = account.role;
 
-    const token = jwt.sign({ email, storeId, apiKey, role }, env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign(
+      { uid: account.uid, storeId, apiKey },
+      env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
     const csrfToken = crypto.randomBytes(32).toString("hex");
 
     res.cookie("csrf_token", csrfToken, {
