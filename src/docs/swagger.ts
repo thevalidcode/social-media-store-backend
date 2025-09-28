@@ -21,13 +21,12 @@ const openApiDocument = generator.generateDocument({
     version: API_VERSION,
     description: `Comprehensive API documentation for the Social Media Store feature of Valid Panel. This includes detailed endpoints for user authentication, wallet operations, service ordering, referrals, and store management for both users and admins.
     
-    All API requests must include a valid 'Origin' header. Requests without an 'Origin', or with an unregistered one, will result in a CORS error. The 'Origin' must match a registered store domain.
-    Already registered and allowed Origins include:
-    - http://localhost:3000
-    - http://localhost:${env.PRIMARY_PORT}
-    - https://validpanel.com
+    All API requests must include a valid 'Host' header. Requests without an 'Host', or with an unregistered one, will result in a CORS error (Internal Server Error). The 'Host' must match a registered store domain.
+    Already registered and allowed Hosts include:
+    - localhost:3000
+    - validpanel.com
     
-    We recommend using Postman for testing especially if it's a 'GET' request. Ensure your requests simulate a browser-like environment by setting a valid 'Origin' header to one of the domains listed above.`,
+    We recommend using Postman for testing especially if it's a 'GET' request. Ensure your requests simulate a browser-like environment by setting a valid 'Host' header to one of the domains listed above.`,
     contact: {
       name: "Valid Code",
       url: "https://linkedin.com/in/thevalidcode",
