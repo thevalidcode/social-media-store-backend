@@ -2,7 +2,7 @@ import http from "http";
 import https from "https";
 import { Server } from "socket.io";
 import app from "./app";
-import { updateAllowedOrigins } from "./config/cors.config";
+import { updateAllowedHosts } from "./config/cors.config";
 import { SNICallback } from "./config/ssl.config";
 import { startCronJobs } from "./cronJobs/index";
 import { setupSocket } from "./socket/index";
@@ -10,10 +10,10 @@ import { env } from "./config/env.config";
 
 let mainServer: http.Server | https.Server;
 
-setInterval(updateAllowedOrigins, 5 * 60 * 1000);
+setInterval(updateAllowedHosts, 5 * 60 * 1000);
 
 async function startServer() {
-  await updateAllowedOrigins();
+  await updateAllowedHosts();
 
   if (env.NODE_ENV === "production") {
     const serverOptions: https.ServerOptions = {
