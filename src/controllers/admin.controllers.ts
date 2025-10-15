@@ -38,9 +38,13 @@ export const authenticateAdmin = async (
 
     const role = account.role;
 
-    const token = jwt.sign({ email, storeId, role }, env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign(
+      { uid: account.uid, storeId, apiKey: account.apiKey },
+      env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
     const csrfToken = crypto.randomBytes(32).toString("hex");
 
     res.cookie("csrf_token", csrfToken, {
