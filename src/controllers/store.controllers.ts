@@ -247,6 +247,8 @@ export const getCurrentUser = async (
         currency: true,
         role: true,
         image: true,
+        uid: true,
+        id: true,
         lastSeen: true,
       } as Prisma.UserSelect,
     });
@@ -284,6 +286,8 @@ export const getCurrentAdmin = async (
         timestamp: true,
         username: true,
         role: true,
+        uid: true,
+        id: true,
         image: true,
         lastSeen: true,
       },
