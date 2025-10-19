@@ -11,7 +11,7 @@ import {
   AdminPaymentStatsResponse,
   AdminUserStatsResponse,
   AdminServiceStatsResponse,
-  UserOverviewResponse,
+  UserDashboardResponse,
   UserOrderStatsResponse,
   UserPaymentStatsResponse,
   UserServiceStatsResponse,
@@ -93,12 +93,12 @@ registry.registerPath({
 
 registry.registerPath({
   method: "get",
-  path: "/statistics/user/overview",
-  summary: "Get user overview statistics",
+  path: "/statistics/user/dashboard",
+  summary: "Get user dashboard statistics",
   tags: ["Statistics"],
   security: [{ CookieAuth: [] }],
   responses: {
-    200: UserOverviewResponse,
+    200: UserDashboardResponse,
     400: BadRequest,
     403: Forbidden,
     500: ServerError,

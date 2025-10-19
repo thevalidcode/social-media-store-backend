@@ -1,31 +1,34 @@
 import express from "express";
 const router = express.Router();
-import * as services from "../controllers/service.controllers"
-  ;
-import { authenticateAdmin,authenticateUser } from "../middleware/auth";
+import * as services from "../controllers/service.controllers";
+import { authenticateAdmin } from "../middleware/auth";
 import {
   limitServiceAdd,
   limitServiceDelete,
 } from "../middleware/ratelimit/service.ratelimit";
 
-
 router.get("/", services.getServices);
-router.post("/", limitServiceAdd,  services.addService);
-router.get("/admin", authenticateAdmin,  services.getServicesForAdmins);
-router.get("/:providerId", authenticateAdmin,  services.getServicesByProviderId);
+router.post("/", limitServiceAdd, services.addService);
+router.get("/admin", authenticateAdmin, services.getServicesForAdmins);
+router.get("/:providerId", authenticateAdmin, services.getServicesByProviderId);
 router.get("/:serviceId", services.getServiceByID);
 router.get(
   "/admin/:serviceId",
-  authenticateAdmin, 
+  authenticateAdmin,
   services.getServiceByIDFromAdmin
 );
 
-router.patch("/", authenticateAdmin,  services.updateService);
-router.delete("/", authenticateAdmin, limitServiceDelete,  services.deleteService);
+router.patch("/", authenticateAdmin, services.updateService);
+router.delete(
+  "/",
+  authenticateAdmin,
+  limitServiceDelete,
+  services.deleteService
+);
 router.delete(
   "/multiple",
   authenticateAdmin,
-  limitServiceDelete, 
+  limitServiceDelete,
   services.deleteMultipleService
 );
 

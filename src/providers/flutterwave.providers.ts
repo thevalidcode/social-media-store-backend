@@ -36,19 +36,19 @@ const processSuccess = async (data: any, customer: any, storeId: number) => {
   await prisma.$transaction(async (tx) => {
     const counter = await tx.storeCounter.update({
       where: { storeId },
-      data: { transactionCounter: { increment: 1 } },
+      data: { paymentCounter: { increment: 1 } },
     });
-    await prisma.transaction.create({
+    await prisma.payment.create({
       data: {
         uid: uuidv4(),
         status: "SUCCESS",
         amount: data.charged_amount,
-        paymentGateway: "FLUTTERWAVE",
+        method: "FLUTTERWAVE",
         currency: data.currency,
         chargedAmount: data.charged_amount,
         userUid: user.uid,
         storeId,
-        storeScopedId: counter.transactionCounter,
+        storeScopedId: counter.paymentCounter,
       },
     });
   });
@@ -83,15 +83,15 @@ const processFailure = async (data: any, customer: any, storeId: number) => {
   await prisma.$transaction(async (tx) => {
     const counter = await tx.storeCounter.update({
       where: { storeId },
-      data: { transactionCounter: { increment: 1 } },
+      data: { paymentCounter: { increment: 1 } },
     });
-    await tx.transaction.create({
+    await tx.payment.create({
       data: {
         uid: uuidv4(),
         status: data.status.toUppercase(),
         amount: data.charged_amount,
-        paymentGateway: "FLUTTERWAVE",
-        storeScopedId: counter.transactionCounter,
+        method: "FLUTTERWAVE",
+        storeScopedId: counter.paymentCounter,
         currency: data.currency,
         chargedAmount: data.charged_amount,
         userUid: user.uid,

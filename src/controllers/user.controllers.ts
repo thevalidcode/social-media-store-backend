@@ -272,6 +272,83 @@ export const getUserByUid = async (
   }
 };
 
+// ✅ Get user affiliate data
+export const getAffiliateData = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { uid } = req.params;
+  const parsed = AuthSchema.safeParse(req.auth);
+
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const { storeId } = parsed.data;
+
+  try {
+    // Fetch user with referrals
+    const user = await prisma.user.findUnique({
+      where: { uid, storeId },
+      include: { referrals: true },
+    });
+
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    // Total referrals
+    const totalReferrals = user.referrals.length;
+
+    // Active referrals (status = ACTIVE)
+    const activeReferrals = user.referrals.filter(
+      (ref) => ref.status === "ACTIVE"
+    ).length;
+
+    // Total earnings from referral credits
+    const totalEarningsData = await prisma.transaction.aggregate({
+      _sum: { amount: true },
+      where: {
+        userUid: uid,
+        storeId,
+        type: "REFERRAL_CREDIT",
+      },
+    });
+
+    const totalEarnings = Number(totalEarningsData._sum.amount || 0);
+
+    // Earnings for current month
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const thisMonthEarningsData = await prisma.transaction.aggregate({
+      _sum: { amount: true },
+      where: {
+        userUid: uid,
+        storeId,
+        type: "REFERRAL_CREDIT",
+        timestamp: { gte: startOfMonth },
+      },
+    });
+
+    const thisMonthEarnings = Number(thisMonthEarningsData._sum.amount || 0);
+
+    // Return summary
+    res.status(200).json({
+      totalReferrals,
+      activeReferrals,
+      totalEarnings,
+      thisMonthEarnings,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch affiliate data" });
+  }
+};
+
 // ✅ Verify Session
 export const verifySession = async (
   req: Request,

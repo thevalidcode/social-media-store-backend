@@ -106,6 +106,7 @@ export const addBlog = async (req: Request, res: Response): Promise<void> => {
       const blog = await tx.blog.create({
         data: {
           title: parsed.data.title,
+          excerpt: parsed.data.excerpt,
           content: parsed.data.content,
           coverImage: parsed.data.coverImage,
           description: parsed.data.description || "",

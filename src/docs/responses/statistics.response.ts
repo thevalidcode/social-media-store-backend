@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ServicePublicSchema } from "../../schemas/service.schema";
 
 // ======================= SHARED SCHEMAS =======================
 
@@ -86,13 +87,29 @@ export const AdminServiceStatsResponse = {
 
 // ======================= USER RESPONSES =======================
 
-export const UserOverviewResponse = {
+export const UserDashboardResponse = {
   description: "User overview statistics",
   content: {
     "application/json": {
       schema: z.object({
-        totalOrders: z.number(),
-        totalSpent: z.number(),
+        yourOrders: z.number(),
+        yourSpent: z.number(),
+        storeOrders: z.number(),
+        ordersData: z.array(
+          z.object({
+            month: z.string(),
+            orders: z.number(),
+            completed: z.number(),
+          })
+        ),
+        recentlyAddedServices: ServicePublicSchema,
+        paymentsData: z.array(
+          z.object({
+            month: z.string(),
+            successful: z.number(),
+            failed: z.number(),
+          })
+        ),
       }),
     },
   },

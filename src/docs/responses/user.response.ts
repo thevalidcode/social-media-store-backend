@@ -25,6 +25,20 @@ export const GetUserByUidResponse = {
   },
 };
 
+export const GetUserAffiliateDataResponse = {
+  description: "User affiliate data",
+  content: {
+    "application/json": {
+      schema: z.object({
+        totalReferrals: z.number(),
+        activeReferrals: z.number(),
+        totalEarnings: z.number(),
+        thisMonthEarnings: z.number(),
+      }),
+    },
+  },
+};
+
 export const CreateUserResponse = {
   description: "User created successfully",
   content: {

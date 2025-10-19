@@ -179,12 +179,11 @@ export const sendOrderToProvider = async (
 
           await tx.transaction.create({
             data: {
-              status: "SUCCESS",
+              description: "Referral commission earned",
+              type: "REFERRAL_CREDIT",
               amount: earned,
               currency: "USD",
-              paymentGateway: "REFERRAL",
               storeScopedId: counter.transactionCounter,
-              chargedAmount: earned,
               uid: uuidv4(),
               userUid: user.uid,
               storeId,
@@ -567,12 +566,11 @@ export const processDripFeedOrders = async (): Promise<void> => {
 
                 await tx.transaction.create({
                   data: {
-                    status: "SUCCESS",
+                    description: "Referral commission earned",
+                    type: "REFERRAL_CREDIT",
                     amount: earned,
                     currency: "USD",
-                    paymentGateway: "REFERRAL",
                     userUid: user.uid,
-                    chargedAmount: earned,
                     uid: uuidv4(),
                     storeScopedId: counter.transactionCounter,
                     storeId,

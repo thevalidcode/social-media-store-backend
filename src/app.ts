@@ -31,6 +31,7 @@ import supportRouter from "./routes/support.routes";
 import paymentRouter from "./routes/payment.routes";
 import webhookRouter from "./routes/webhook.routes";
 import statisticsRouter from "./routes/statistics.routes";
+import transactionRouter from "./routes/transaction.routes";
 import ratesRouter from "./routes/rate.routes";
 
 const app = express();
@@ -79,6 +80,7 @@ app.use("/api/v1/statistics", cors(dynamicCors), statisticsRouter);
 app.use("/api/v1/payment-gateways", cors(dynamicCors), paymentGatewayRouter);
 app.use("/api/v1/admins", cors(dynamicCors), adminRoutes);
 app.use("/api/v1/rates", cors(dynamicCors), ratesRouter);
+app.use("/api/v1/transactions", cors(dynamicCors), transactionRouter);
 
 // Internal Routes
 app.use("/internal", internalRouter);

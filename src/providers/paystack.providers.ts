@@ -42,15 +42,15 @@ const processSuccess = async (data: any, customer: any, storeId: number) => {
   await prisma.$transaction(async (tx) => {
     const counter = await tx.storeCounter.update({
       where: { storeId },
-      data: { transactionCounter: { increment: 1 } },
+      data: { paymentCounter: { increment: 1 } },
     });
-    await tx.transaction.create({
+    await tx.payment.create({
       data: {
         uid: uuidv4(),
         status: "SUCCESS",
         amount,
-        paymentGateway: "PAYSTACK",
-        storeScopedId: counter.transactionCounter,
+        method: "PAYSTACK",
+        storeScopedId: counter.paymentCounter,
         currency: data.currency,
         chargedAmount: amount,
         userUid: user.uid,
@@ -81,18 +81,18 @@ const processFailure = async (data: any, customer: any, storeId: number) => {
   await prisma.$transaction(async (tx) => {
     const counter = await tx.storeCounter.update({
       where: { storeId },
-      data: { transactionCounter: { increment: 1 } },
+      data: { paymentCounter: { increment: 1 } },
     });
-    await tx.transaction.create({
+    await tx.payment.create({
       data: {
         uid: crypto.randomUUID(),
         status: data.status.toUppercase(),
         amount: data.amount / 100,
-        paymentGateway: "PAYSTACK",
+        method: "PAYSTACK",
         currency: data.currency,
         chargedAmount: data.amount / 100,
         userUid: user.uid,
-        storeScopedId: counter.transactionCounter,
+        storeScopedId: counter.paymentCounter,
         storeId,
       },
     });

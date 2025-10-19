@@ -20,7 +20,7 @@ router.get(
 );
 
 // User Routes
-router.get("/user/overview", authenticateUser, statistics.getUserOverview);
+router.get("/user/dashboard", authenticateUser, statistics.getUserDashboardData);
 router.get("/user/orders", authenticateUser, statistics.getUserOrderStats);
 router.get("/user/payments", authenticateUser, statistics.getUserPaymentStats);
 router.get("/user/services", authenticateUser, statistics.getUserServiceStats);

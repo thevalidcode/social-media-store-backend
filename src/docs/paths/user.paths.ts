@@ -14,6 +14,7 @@ import {
   VerifySessionResponse,
   GetUserByUidResponse,
   CreateUserResponse,
+  GetUserAffiliateDataResponse,
 } from "../responses/user.response";
 
 import {
@@ -89,6 +90,20 @@ registry.registerPath({
   ],
   responses: {
     200: GetUserByUidResponse,
+    403: Forbidden,
+    500: ServerError,
+  },
+});
+
+// Get user affiliate data
+registry.registerPath({
+  method: "get",
+  path: "/users/affiliate",
+  summary: "Get user affiliate data",
+  tags: ["Users"],
+  security: [{ CookieAuth: [] }],
+  responses: {
+    200: GetUserAffiliateDataResponse,
     403: Forbidden,
     500: ServerError,
   },

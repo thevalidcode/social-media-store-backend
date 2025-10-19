@@ -8,6 +8,7 @@ export const ProviderSchema = z
     storeScopedId: z.number(),
     uid: z.string(),
     name: z.string(),
+    image: z.string().url(),
     url: z.string().url(),
     percentage: z.number(),
     sync: z.boolean(),
@@ -18,6 +19,7 @@ export const ProviderCreateRequestSchema = z.object({
   name: z.string(),
   url: z.string().url(),
   percentage: z.number(),
+  image: z.string().url(),
   apiKey: z.string(),
   sync: z.boolean(),
 });
@@ -26,9 +28,18 @@ export const ProviderUpdateRequestSchema = z.object({
   uid: z.string(),
   name: z.string().optional(),
   url: z.string().url().optional(),
+  image: z.string().url(),
   percentage: z.number().optional(),
   apiKey: z.string(),
   sync: z.boolean().optional(),
+});
+
+export const deleteMultipleProviderSchema = z.object({
+  uids: z.array(z.string()),
+});
+
+export const deleteProviderSchema = z.object({
+  uid: z.string(),
 });
 
 export const ImportProviderServicesRequestSchema = z.object({

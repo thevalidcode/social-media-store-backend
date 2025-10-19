@@ -53,6 +53,7 @@ model Store {
   Cancel           Cancel[]
   PaymentGateway   PaymentGateway[]
   SupportTicket    SupportTicket[]
+  Payment          Payment[]
 
   storeCounter StoreCounter?
 
@@ -93,12 +94,16 @@ model User {
   lastSeen      DateTime   @default(now()) @map("last_seen")
   currency      String     @default("USD")
 
-  ref        Int?
-  referredBy User?   @relation("Referral", fields: [ref], references: [refCode], onDelete: SetNull)
-  referrals  User[]  @relation("Referral")
-  Order      Order[]
+  ref          Int?
+  referredBy   User?         @relation("Referral", fields: [ref], references: [refCode], onDelete: SetNull)
+  referrals    User[]        @relation("Referral")
+  Order        Order[]
+  Payment      Payment[]
+  transactions Transaction[]
 
   @@unique([storeId, storeScopedId])
+  @@unique([email, storeId])
+  @@unique([username, storeId])
   @@map("users")
 }
 
@@ -152,6 +157,7 @@ model Service {
   storeScopedId    Int           @map("store_scoped_id")
   uid              String        @unique
   name             String
+  icon             String?
   description      String?
   category         String
   type             ServiceType   @default(DEFAULT)
@@ -262,6 +268,7 @@ model Blog {
   id            Int        @id @default(autoincrement())
   storeScopedId Int        @map("store_scoped_id")
   title         String
+  excerpt       String
   content       String
   description   String     @default("")
   coverImage    String     @default("") @map("cover_image")
@@ -313,6 +320,7 @@ enum CategoryStatus {
 model Category {
   id            Int            @id @default(autoincrement())
   storeScopedId Int            @map("store_scoped_id")
+  icon          String?
   name          String
   timestamp     DateTime       @default(now())
   status        CategoryStatus @default(ACTIVE)
@@ -474,6 +482,7 @@ model Provider {
   storeScopedId Int      @map("store_scoped_id")
   uid           String   @unique
   name          String
+  image         String
   apiKey        Json     @map("api_key")
   url           String
   sync          Boolean  @default(false)
@@ -556,6 +565,7 @@ model StoreCounter {
   refillCounter         Int @default(0) @map("refill_counter")
   cancelCounter         Int @default(0) @map("cancel_counter")
   transactionCounter    Int @default(0) @map("transaction_counter")
+  paymentCounter        Int @default(0) @map("payment_counter")
   referralOrderCounter  Int @default(0) @map("referral_order_counter")
   paymentGatewayCounter Int @default(0) @map("payment_gateway_counter")
   supportTicketCounter  Int @default(0) @map("support_ticket_counter")
@@ -622,30 +632,55 @@ model TicketMessage {
   @@map("ticket_messages")
 }
 
-enum TransactionStatus {
-  SUCCESS   @map("success")
-  FAILED    @map("failed")
-  COMPLETED @map("completed")
-  REVERSED  @map("reversed")
-  CANCELLED @map("cancelled")
+enum TransactionType {
+  WALLET_CREDIT   @map("wallet_credit")
+  REFERRAL_CREDIT @map("referral_credit")
+  WALLET_DEBIT    @map("wallet_debit")
 }
 
 model Transaction {
-  id             Int                    @id @default(autoincrement())
-  storeScopedId  Int                    @map("store_scoped_id")
-  uid            String                 @unique
-  amount         Decimal                @db.Decimal(10, 2)
-  timestamp      DateTime               @default(now())
-  status         TransactionStatus
-  currency       String                 @default("USD")
-  paymentGateway PaymentGatewayPlatform @default(MANUAL) @map("payment_gateway")
-  chargedAmount  Decimal                @map("charged_amount")
-  userUid        String                 @map("user_uid")
-  storeId        Int                    @map("store_id")
-  store          Store                  @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  id            Int             @id @default(autoincrement())
+  storeScopedId Int             @map("store_scoped_id")
+  uid           String          @unique
+  amount        Decimal         @db.Decimal(10, 2)
+  timestamp     DateTime        @default(now())
+  currency      String          @default("USD")
+  userUid       String          @map("user_uid")
+  type          TransactionType
+  description   String
+  storeId       Int             @map("store_id")
+  store         Store           @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  user User @relation(fields: [userUid], references: [uid], onDelete: Cascade)
 
   @@unique([storeId, storeScopedId])
   @@map("transactions")
+}
+
+enum PaymentStatus {
+  PENDING @map("pending")
+  SUCCESS @map("success")
+  FAILED  @map("failed")
+}
+
+model Payment {
+  id            Int                    @id @default(autoincrement())
+  uid           String                 @unique @default(uuid())
+  userUid       String                 @map("user_id")
+  currency      String
+  amount        Decimal                @db.Decimal(10, 2)
+  chargedAmount Decimal                @map("charged_amount") @db.Decimal(10, 2)
+  status        PaymentStatus
+  method        PaymentGatewayPlatform
+  createdAt     DateTime               @default(now()) @map("created_at")
+  storeId       Int                    @map("store_id")
+  storeScopedId Int
+
+  user  User  @relation(fields: [userUid], references: [uid])
+  store Store @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  @@unique([storeId, storeScopedId])
+  @@map("payments")
 }
 
 model UploadLog {

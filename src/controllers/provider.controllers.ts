@@ -1,12 +1,15 @@
-import { z } from "zod";
 import axios from "axios";
 import type { Request, Response } from "express";
 import { prisma } from "../config/db.config";
 import { decryptKey, encryptKey } from "../utils/encrypt";
 import { AuthSchema } from "../schemas/user.schema";
 import {
+  ProviderCreateRequestSchema,
+  deleteMultipleProviderSchema,
+  deleteProviderSchema,
   ImportProviderServicesRequestSchema,
   ProviderServicesSchema,
+  ProviderUpdateRequestSchema,
 } from "../schemas/provider.schema";
 import { v4 as uuidv4 } from "uuid";
 
@@ -218,20 +221,12 @@ export const importServices = async (
   }
 };
 
-const addProviderSchema = z.object({
-  percentage: z.coerce.number(),
-  name: z.string(),
-  apiKey: z.string().trim(),
-  url: z.string(),
-  sync: z.boolean(),
-});
-
 export const addProvider = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
-  const bodyParsed = addProviderSchema.safeParse(req.body);
+  const bodyParsed = ProviderCreateRequestSchema.safeParse(req.body);
 
   if (!authParsed.success || !bodyParsed.success) {
     res.status(400).json({
@@ -272,6 +267,7 @@ export const addProvider = async (
           name: reqData.name,
           url: reqData.url,
           sync: reqData.sync,
+          image: reqData.image,
           percentage: reqData.percentage,
           apiKey: JSON.parse(JSON.stringify(encrypted_key)),
         },
@@ -327,21 +323,12 @@ export const getProviders = async (
   }
 };
 
-const updateProviderSchema = z.object({
-  percentage: z.coerce.number().optional(),
-  name: z.string().optional(),
-  apiKey: z.string().trim(),
-  url: z.string().optional(),
-  sync: z.boolean().optional(),
-  uid: z.string(),
-});
-
 export const updateProvider = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
-  const parsed = updateProviderSchema.safeParse(req.body);
+  const parsed = ProviderUpdateRequestSchema.safeParse(req.body);
 
   if (!parsed.success || !authParsed.success) {
     res.status(400).json({
@@ -380,10 +367,6 @@ export const updateProvider = async (
   }
 };
 
-const deleteProviderSchema = z.object({
-  uid: z.string(),
-});
-
 export const deleteProvider = async (
   req: Request,
   res: Response
@@ -414,10 +397,6 @@ export const deleteProvider = async (
     res.status(500).json({ error: err.message });
   }
 };
-
-const deleteMultipleProviderSchema = z.object({
-  uids: z.array(z.string()),
-});
 
 export const deleteMultipleProviders = async (
   req: Request,

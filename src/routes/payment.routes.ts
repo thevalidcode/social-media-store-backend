@@ -1,5 +1,5 @@
 import express from "express";
-import { authenticateAdmin, authenticateUser } from "../middleware/auth";
+import { authenticateUser } from "../middleware/auth";
 import { limitPaymentAdd } from "../middleware/ratelimit/paymentGateway.ratelimit";
 import * as payments from "../controllers/payment.controllers";
 
@@ -10,12 +10,6 @@ router.post(
   limitPaymentAdd,
   authenticateUser,
   payments.createPayment
-);
-router.get("/transactions", authenticateUser, payments.getTransactionsForUser);
-router.get(
-  "/transactions/admin",
-  authenticateAdmin,
-  payments.getTransactionsForAdmin
 );
 
 export default router;

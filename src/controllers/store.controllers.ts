@@ -66,7 +66,7 @@ export const getStoreGeneralData = async (
     if (!generalData) {
       res
         .status(404)
-        .json({ error: "General Data not found for the given store" });
+        .json({ error: "General Settings not found for the given store" });
       return;
     }
 

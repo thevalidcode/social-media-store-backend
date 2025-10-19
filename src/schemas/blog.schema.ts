@@ -10,6 +10,7 @@ export const blogIdSchema = z.object({
 
 export const createBlogSchema = z.object({
   title: z.string().min(1),
+  excerpt: z.string().min(1),
   coverImage: z.string().url(),
   content: z.string().min(1),
   description: z.string().optional(),
@@ -19,6 +20,7 @@ export const BlogSchema = z
   .object({
     storeScopedId: z.number(),
     title: z.string().min(1),
+    excerpt: z.string().min(1),
     coverImage: z.string().url(),
     content: z.string().min(1),
     status: z.nativeEnum(BlogStatus),
@@ -29,6 +31,7 @@ export const BlogSchema = z
 
 export const updateBlogSchema = z.object({
   uid: z.string(),
+  excerpt: z.string().min(1),
   title: z.string().min(1),
   content: z.string().min(1),
   description: z.string().optional(),

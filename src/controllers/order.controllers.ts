@@ -143,6 +143,50 @@ export const placeOrder = async (
     res.status(500).json({ error: error.message });
   }
 };
+export const bulkCreateOrders = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authParsed = AuthSchema.safeParse(req.auth);
+  const parsed = bulkCreateSchema.safeParse(req.body);
+
+  if (!parsed.success || !authParsed.success) {
+    res.status(400).json({
+      error: {
+        ...parsed.error?.flatten(),
+        ...authParsed.error?.flatten(),
+      },
+    });
+    return;
+  }
+
+  const { storeId } = authParsed.data;
+
+  try {
+    const results = await Promise.all(
+      parsed.data.orders.map(async (order) => {
+        const counter = await prisma.storeCounter.update({
+          where: { storeId },
+          data: { orderCounter: { increment: 1 } },
+        });
+
+        return prisma.order.create({
+          data: {
+            ...order,
+            uid: uuidv4(),
+            storeId,
+            storeScopedId: counter.orderCounter,
+          },
+        });
+      })
+    );
+
+    const uids = results.map((r) => r.uid);
+    res.status(200).json({ success: "Bulk orders created", uids });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
 export const updateOrder = async (
   req: Request,
@@ -242,50 +286,7 @@ export const getOrdersByStatus = async (
   }
 };
 
-export const bulkCreateOrders = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
-  const parsed = bulkCreateSchema.safeParse(req.body);
 
-  if (!parsed.success || !authParsed.success) {
-    res.status(400).json({
-      error: {
-        ...parsed.error?.flatten(),
-        ...authParsed.error?.flatten(),
-      },
-    });
-    return;
-  }
-
-  const { storeId } = authParsed.data;
-
-  try {
-    const results = await Promise.all(
-      parsed.data.orders.map(async (order) => {
-        const counter = await prisma.storeCounter.update({
-          where: { storeId },
-          data: { orderCounter: { increment: 1 } },
-        });
-
-        return prisma.order.create({
-          data: {
-            ...order,
-            uid: uuidv4(),
-            storeId,
-            storeScopedId: counter.orderCounter,
-          },
-        });
-      })
-    );
-
-    const uids = results.map((r) => r.uid);
-    res.status(200).json({ success: "Bulk orders created", uids });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-};
 
 export const bulkUpdateOrderStatus = async (
   req: Request,
