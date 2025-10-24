@@ -6,6 +6,7 @@ import {
   OrderSingleResponse,
   OrderCreatedListResponse,
   OrderPublicListResponse,
+  OrderPublicSingleResponse,
 } from "../responses/order.response";
 import {
   BadRequest,
@@ -52,7 +53,28 @@ registry.registerPath({
 registry.registerPath({
   method: "get",
   path: "/orders/{orderUid}",
-  summary: "Get a order for admins or user orders by uid",
+  summary: "Get a order for a specific user by uid",
+  tags: ["Orders"],
+  security: [{ CookieAuth: [] }],
+  parameters: [
+    {
+      name: "orderUid",
+      in: "path",
+      required: true,
+      schema: { type: "string" },
+    },
+  ],
+  responses: {
+    200: OrderPublicSingleResponse,
+    400: BadRequest,
+    500: ServerError,
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/orders/admin/{orderUid}",
+  summary: "Get a order for admins by uid",
   tags: ["Orders"],
   security: [{ CookieAuth: [] }],
   parameters: [

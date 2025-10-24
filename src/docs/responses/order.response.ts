@@ -1,11 +1,17 @@
 import { z } from "zod";
 import { OrderPublicSchema, OrderSchema } from "../../schemas/order.schema";
+import {
+  ServicePublicSchema,
+  ServiceSchema,
+} from "../../schemas/service.schema";
 
 export const OrderPublicListResponse = {
   description: "List of all user's orders.",
   content: {
     "application/json": {
-      schema: z.array(OrderPublicSchema),
+      schema: z.array(
+        OrderPublicSchema.extend({ service: ServicePublicSchema })
+      ),
     },
   },
 };
@@ -14,17 +20,25 @@ export const OrderListResponse = {
   description: "List of all orders.",
   content: {
     "application/json": {
-      schema: z.array(OrderSchema),
+      schema: z.array(OrderSchema.extend({ service: ServiceSchema })),
     },
   },
 };
 
 export const OrderSingleResponse = {
-  description:
-    "Single order object (shown schema is for admins). Regular users will receive a restricted version — see `OrderPublic` for the limited fields returned to users.",
+  description: "Single order object.",
   content: {
     "application/json": {
-      schema: OrderSchema,
+      schema: OrderSchema.extend({ service: ServiceSchema }),
+    },
+  },
+};
+
+export const OrderPublicSingleResponse = {
+  description: "Single order object (public view).",
+  content: {
+    "application/json": {
+      schema: OrderPublicSchema.extend({ service: ServicePublicSchema }),
     },
   },
 };

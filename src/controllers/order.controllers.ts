@@ -7,10 +7,43 @@ import {
   bulkCreateSchema,
   bulkStatusUpdateSchema,
   getOrdersByStatusSchema,
-  OrderPublicSchema,
-  OrderSchema,
 } from "../schemas/order.schema";
 import { AuthSchema } from "../schemas/user.schema";
+
+const publicFields = {
+  storeScopedId: true,
+  price: true,
+  quantity: true,
+  start: true,
+  remains: true,
+  userInitialBalance: true,
+  userFinalBalance: true,
+  currency: true,
+  status: true,
+  url: true,
+  uid: true,
+  serviceUid: true,
+  comments: true,
+  dripFeed: true,
+  interval: true,
+  userUid: true,
+  timestamp: true,
+  service: {
+    select: {
+      storeScopedId: true,
+      name: true,
+      type: true,
+      min: true,
+      max: true,
+      price: true,
+      icon: true,
+      category: true,
+      description: true,
+      network: true,
+      dripFeed: true,
+    },
+  },
+};
 
 export const getOrders = async (req: Request, res: Response): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
@@ -25,10 +58,10 @@ export const getOrders = async (req: Request, res: Response): Promise<void> => {
     const orders = await prisma.order.findMany({
       where: { storeId, userUid: user.uid },
       orderBy: { id: "desc" },
+      select: publicFields,
     });
 
-    const parsedOrders = orders.map((o) => OrderPublicSchema.safeParse(o).data);
-    res.status(200).json(parsedOrders);
+    res.status(200).json(orders);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -50,16 +83,89 @@ export const getOrdersForAdmins = async (
     const orders = await prisma.order.findMany({
       where: { storeId },
       orderBy: { id: "desc" },
+      include: { service: true },
     });
 
-    const parsedOrders = orders.map((o) => OrderSchema.safeParse(o).data);
-    res.status(200).json(parsedOrders);
+    res.status(200).json(orders);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
 
-export const getOrderByID = async (
+export const getOrdersByStatus = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authParsed = AuthSchema.safeParse(req.auth);
+  const parsed = getOrdersByStatusSchema.safeParse(req.params);
+
+  if (!parsed.success || !authParsed.success) {
+    res.status(400).json({
+      error: {
+        ...parsed.error?.flatten(),
+        ...authParsed.error?.flatten(),
+      },
+    });
+    return;
+  }
+
+  const { storeId } = authParsed.data;
+  const { status } = parsed.data;
+
+  try {
+    const orders = await prisma.order.findMany({
+      where: {
+        storeId,
+        status,
+      },
+      orderBy: { id: "desc" },
+      include: { service: true },
+    });
+
+    res.status(200).json(orders);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getUserOrdersByStatus = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authParsed = AuthSchema.safeParse(req.auth);
+  const parsed = getOrdersByStatusSchema.safeParse(req.params);
+
+  if (!parsed.success || !authParsed.success) {
+    res.status(400).json({
+      error: {
+        ...parsed.error?.flatten(),
+        ...authParsed.error?.flatten(),
+      },
+    });
+    return;
+  }
+
+  const { storeId, user } = authParsed.data;
+  const { status } = parsed.data;
+
+  try {
+    const orders = await prisma.order.findMany({
+      where: {
+        storeId,
+        userUid: user.uid,
+        status,
+      },
+      orderBy: { id: "desc" },
+      select: publicFields,
+    });
+
+    res.status(200).json(orders);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getUserOrderByUid = async (
   req: Request,
   res: Response
 ): Promise<void> => {
@@ -77,8 +183,10 @@ export const getOrderByID = async (
     const order = await prisma.order.findFirst({
       where: {
         uid: orderUid,
+        userUid: user.uid,
         storeId,
       },
+      select: publicFields,
     });
 
     if (!order) {
@@ -86,12 +194,41 @@ export const getOrderByID = async (
       return;
     }
 
-    const parsedOrder =
-      order.userUid === user.uid
-        ? OrderPublicSchema.safeParse(order)
-        : OrderSchema.safeParse(order);
+    res.status(200).json(order);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
-    res.status(200).json(parsedOrder.data);
+export const getOrderByUid = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authParsed = AuthSchema.safeParse(req.auth);
+  const { orderUid } = req.params;
+
+  if (!authParsed.success) {
+    res.status(400).json({ error: authParsed.error.flatten() });
+    return;
+  }
+
+  const { storeId } = authParsed.data;
+
+  try {
+    const order = await prisma.order.findFirst({
+      where: {
+        uid: orderUid,
+        storeId,
+      },
+      select: publicFields,
+    });
+
+    if (!order) {
+      res.status(404).json({ error: "Order not found" });
+      return;
+    }
+
+    res.status(200).json(order);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -143,6 +280,7 @@ export const placeOrder = async (
     res.status(500).json({ error: error.message });
   }
 };
+
 export const bulkCreateOrders = async (
   req: Request,
   res: Response
@@ -240,79 +378,6 @@ export const deleteOrder = async (
     });
 
     res.status(200).json({ success: "Order deleted successfully" });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-export const getOrdersByStatus = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
-  const parsed = getOrdersByStatusSchema.safeParse(req.params);
-
-  if (!parsed.success || !authParsed.success) {
-    res.status(400).json({
-      error: {
-        ...parsed.error?.flatten(),
-        ...authParsed.error?.flatten(),
-      },
-    });
-    return;
-  }
-
-  const { storeId } = authParsed.data;
-  const { status } = parsed.data;
-
-  try {
-    const orders = await prisma.order.findMany({
-      where: {
-        storeId,
-        status,
-      },
-      orderBy: { id: "desc" },
-    });
-
-    res.status(200).json(orders);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-export const getUserOrdersByStatus = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
-  const parsed = getOrdersByStatusSchema.safeParse(req.params);
-
-  if (!parsed.success || !authParsed.success) {
-    res.status(400).json({
-      error: {
-        ...parsed.error?.flatten(),
-        ...authParsed.error?.flatten(),
-      },
-    });
-    return;
-  }
-
-  const { storeId, user } = authParsed.data;
-  const { status } = parsed.data;
-
-  try {
-    const orders = await prisma.order.findMany({
-      where: {
-        storeId,
-        userUid: user.uid,
-        status,
-      },
-      orderBy: { id: "desc" },
-    });
-
-    const parsedOrders = orders.map((o) => OrderPublicSchema.safeParse(o).data);
-
-    res.status(200).json(parsedOrders);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

@@ -9,7 +9,8 @@ import {
 
 router.get("/", authenticateUser, orders.getOrders);
 router.get("/admin", authenticateAdmin, orders.getOrdersForAdmins);
-router.get("/:orderUid", authenticateUser, orders.getOrderByID);
+router.get("/:orderUid", authenticateUser, orders.getUserOrderByUid);
+router.get("/admin/:orderUid", authenticateAdmin, orders.getOrderByUid);
 
 router.post("/", authenticateUser, limitOrderActions, orders.placeOrder);
 router.patch(
