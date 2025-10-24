@@ -25,7 +25,13 @@ router.delete(
   orders.deleteOrder
 );
 
-router.get("/status/:status", authenticateUser, orders.getOrdersByStatus);
+router.get("/status/:status", authenticateUser, orders.getUserOrdersByStatus);
+
+router.get(
+  "/admin/status/:status",
+  authenticateAdmin,
+  orders.getOrdersByStatus
+);
 
 router.post(
   "/bulk",

@@ -16,6 +16,7 @@ import {
 import {
   bulkCreateSchema,
   bulkStatusUpdateSchema,
+  getOrdersByStatusSchema,
   placeOrderSchema,
   updateOrderSchema,
 } from "../../schemas/order.schema";
@@ -152,17 +153,29 @@ registry.registerPath({
 registry.registerPath({
   method: "get",
   path: "/orders/status/{status}",
-  summary: "Get all orders for admin or user orders by status",
+  summary: "Get all orders for user orders by status",
   tags: ["Orders"],
   security: [{ CookieAuth: [] }],
-  parameters: [
-    {
-      name: "status",
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-    },
-  ],
+  request: {
+    params: getOrdersByStatusSchema,
+  },
+  responses: {
+    200: OrderListResponse,
+    400: BadRequest,
+    500: ServerError,
+  },
+});
+
+// GET /orders/admin/status/:status
+registry.registerPath({
+  method: "get",
+  path: "/orders/admin/status/{status}",
+  summary: "Get all orders for admin orders by status",
+  tags: ["Orders"],
+  security: [{ CookieAuth: [] }],
+  request: {
+    params: getOrdersByStatusSchema,
+  },
   responses: {
     200: OrderListResponse,
     400: BadRequest,
