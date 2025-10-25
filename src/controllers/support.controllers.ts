@@ -25,25 +25,6 @@ export const getAllTickets = async (
   try {
     const tickets = await prisma.supportTicket.findMany({
       orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        status: true,
-        subject: true,
-        priority: true,
-        createdAt: true,
-        updatedAt: true,
-        userUid: true,
-        messages: {
-          select: {
-            uid: true,
-            message: true,
-            senderType: true,
-            createdAt: true,
-            ticketUid: true,
-            senderUid: true,
-          },
-        },
-      },
     });
 
     res.status(200).json(tickets);
@@ -81,8 +62,6 @@ export const getAllTicketsForUser = async (
             message: true,
             senderType: true,
             createdAt: true,
-            ticketUid: true,
-            senderUid: true,
           },
         },
       },
@@ -130,6 +109,14 @@ export const createTicket = async (
           status: "OPEN",
           subject: reqData.subject,
           priority: reqData.priority,
+          messages: {
+            create: {
+              uid: uuidv4(),
+              senderUid: uid,
+              message: reqData.message,
+              senderType: "USER",
+            },
+          },
         },
       });
 
@@ -211,16 +198,6 @@ export const getTicketByUidForAdmin = async (
   try {
     const ticket = await prisma.supportTicket.findUnique({
       where: { uid },
-      select: {
-        uid: true,
-        subject: true,
-        description: true,
-        status: true,
-        priority: true,
-        createdAt: true,
-        updatedAt: true,
-        userUid: true,
-      },
     });
 
     res.status(200).json(ticket);

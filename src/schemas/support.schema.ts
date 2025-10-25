@@ -46,6 +46,7 @@ export const CreateSupportTicketSchema = z.object({
   storeId: z.number(),
   userUid: z.number(),
   subject: z.string(),
+  message: z.string(),
   description: z.string().optional(),
   priority: z.nativeEnum(TicketPriority),
 });
