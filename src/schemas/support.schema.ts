@@ -48,7 +48,7 @@ export const CreateSupportTicketSchema = z.object({
   subject: z.string(),
   message: z.string(),
   description: z.string().optional(),
-  priority: z.nativeEnum(TicketPriority),
+  priority: z.nativeEnum(TicketPriority).optional(),
 });
 
 export const UpdateSupportTicketSchema = z.object({
