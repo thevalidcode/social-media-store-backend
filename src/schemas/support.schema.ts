@@ -23,7 +23,7 @@ export const SupportTicketAdminSchema = z
   .object({
     uid: z.string(),
     storeId: z.number(),
-    userUid: z.number(),
+    userUid: z.string(),
     storeScopedId: z.number(),
     subject: z.string(),
     status: z.nativeEnum(TicketStatus),
@@ -44,7 +44,7 @@ export const SupportTicketUserSchema = z.object({
 
 export const CreateSupportTicketSchema = z.object({
   storeId: z.number(),
-  userUid: z.number(),
+  userUid: z.string(),
   subject: z.string(),
   message: z.string(),
   description: z.string().optional(),
