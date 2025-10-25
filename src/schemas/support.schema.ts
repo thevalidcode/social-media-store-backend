@@ -68,7 +68,6 @@ export const GetSupportTicketByUidSchema = z.object({
 
 export const CreateTicketMessageSchema = z.object({
   senderUid: z.number(),
-  senderType: z.nativeEnum(MessageSenderType),
   message: z.string(),
 });
 
