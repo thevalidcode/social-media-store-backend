@@ -1,10 +1,6 @@
 import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
-import {
-  User,
-  UserRole,
-  UserStatus,
-} from "../../prisma/generated";
+import { User, UserRole, UserStatus } from "../../prisma/generated";
 import { Decimal } from "@prisma/client/runtime/library";
 import { AdminSchema } from "./admin.schema";
 
@@ -52,10 +48,10 @@ export const UserPublicSchema = z
   .openapi("UserPublic");
 
 export const UserUpdateRequestSchema = z.object({
-  uid: z.string().describe("User UID"),
-  username: z.string().describe("Username"),
-  fullName: z.string().describe("Full name"),
-  balance: z.number().describe("User balance"),
+  username: z.string().describe("Username").optional(),
+  fullName: z.string().describe("Full name").optional(),
+  email: z.string().email().describe("User email").optional(),
+  apiKey: z.string().describe("User api key").optional(),
 });
 
 export const AuthenticateUserSchema = z.object({
@@ -105,3 +101,6 @@ export const tokenPayloadSchema = z.object({
   storeId: z.number(),
   uid: z.string(),
 });
+
+export const DeleteUserSchema = z.object({ uid: z.string() });
+export const DeleteUsersSchema = z.object({ uids: z.array(z.string()) });

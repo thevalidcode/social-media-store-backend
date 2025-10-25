@@ -6,34 +6,16 @@ import { Request, Response } from "express";
 import { prisma } from "../config/db.config";
 import { sendEmail } from "../emails";
 import { env } from "../config/env.config";
-import { AuthSchema } from "../schemas/user.schema";
+import {
+  AuthenticateUserSchema,
+  AuthSchema,
+  CreateUserInputSchema,
+  DeleteUserSchema,
+  DeleteUsersSchema,
+  UserUpdateRequestSchema,
+} from "../schemas/user.schema";
 import crypto from "crypto";
 import { Prisma } from "../../prisma/generated";
-
-const createUserSchema = z.object({
-  storeId: z.coerce.number(),
-  email: z.string().email(),
-  username: z.string(),
-  password: z.string().min(6),
-  ref: z.union([z.string(), z.number()]).optional(),
-});
-
-const meQuerySchema = z.object({
-  email: z.string().email(),
-  password: z.string(),
-  storeId: z.coerce.number(),
-});
-
-const deleteUserSchema = z.object({ uid: z.string() });
-const deleteUsersSchema = z.object({ uids: z.array(z.string()) });
-const updateUserSchema = z.object({
-  data: z.object({
-    uid: z.string(),
-    username: z.string().optional(),
-    fullName: z.string().optional(),
-    balance: z.number().optional(),
-  }),
-});
 
 // ✅ Get all users
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
@@ -85,7 +67,7 @@ export const createUser = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const parsed = createUserSchema.safeParse(req.body);
+  const parsed = CreateUserInputSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -123,13 +105,13 @@ export const createUser = async (
           password: hashedPassword,
           uid: uuidv4(),
           apiKey: uuidv4(),
-          ref: ref ? parseInt(ref as string) : null,
+          ref,
         },
       });
 
       if (ref) {
         await tx.user.update({
-          where: { refCode: parseInt(ref as string) },
+          where: { refCode: ref },
           data: { referrals: { connect: { id: newUser.id } } },
         });
       }
@@ -175,7 +157,7 @@ export const createUser = async (
 
 // ✅ Login User
 export const me = async (req: Request, res: Response): Promise<void> => {
-  const parsed = meQuerySchema.safeParse(req.body);
+  const parsed = AuthenticateUserSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -367,7 +349,7 @@ export const deleteUser = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const parsed = deleteUserSchema.safeParse(req.body);
+  const parsed = DeleteUserSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -385,7 +367,7 @@ export const deleteUsers = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const parsed = deleteUsersSchema.safeParse(req.body);
+  const parsed = DeleteUsersSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -403,33 +385,19 @@ export const updateUser = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const parsed = updateUserSchema.safeParse(req.body);
+  const parsed = UserUpdateRequestSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { data } = parsed.data;
-
-  const allowedFields = ["username", "full_name", "balance"];
-  const safeUpdate: any = {};
-
-  for (const field of allowedFields) {
-    if (data[field as keyof typeof data] !== undefined) {
-      safeUpdate[field] = data[field as keyof typeof data];
-    }
-  }
-
-  if (Object.keys(safeUpdate).length === 0) {
-    res.status(400).json({ error: "No valid fields to update" });
-    return;
-  }
+  const { uid } = req.auth!;
 
   try {
     await prisma.user.update({
-      where: { uid: data.uid },
-      data: safeUpdate,
+      where: { uid: uid },
+      data: parsed.data,
     });
-    res.status(200).json({ success: "Successfully updated the user" });
+    res.status(200).json({ success: "Successfully updated user" });
   } catch {
     res.status(500).json({ error: "Failed to update user" });
   }
