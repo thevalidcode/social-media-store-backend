@@ -25,6 +25,9 @@ export const getAllTickets = async (
   try {
     const tickets = await prisma.supportTicket.findMany({
       orderBy: { createdAt: "desc" },
+      include: {
+        messages: true,
+      },
     });
 
     res.status(200).json(tickets);
@@ -165,6 +168,14 @@ export const getTicketByUid = async (
         priority: true,
         createdAt: true,
         updatedAt: true,
+        messages: {
+          select: {
+            uid: true,
+            message: true,
+            senderType: true,
+            createdAt: true,
+          },
+        },
       },
     });
 
@@ -198,6 +209,7 @@ export const getTicketByUidForAdmin = async (
   try {
     const ticket = await prisma.supportTicket.findUnique({
       where: { uid },
+      include: { messages: true },
     });
 
     res.status(200).json(ticket);

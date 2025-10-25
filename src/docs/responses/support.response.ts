@@ -9,7 +9,11 @@ export const SupportTicketsForAdminsListResponse = {
   description: "List of all support tickets for admins",
   content: {
     "application/json": {
-      schema: z.array(SupportTicketAdminSchema),
+      schema: z.array(
+        SupportTicketAdminSchema.extend({
+          messages: SupportMessageSchema,
+        })
+      ),
     },
   },
 };
@@ -18,7 +22,11 @@ export const SupportTicketsForUsersListResponse = {
   description: "List of all support tickets for users",
   content: {
     "application/json": {
-      schema: z.array(SupportTicketUserSchema),
+      schema: z.array(
+        SupportTicketUserSchema.extend({
+          messages: SupportMessageSchema,
+        })
+      ),
     },
   },
 };
@@ -27,7 +35,9 @@ export const SupportTicketAdminObject = {
   description: "Single support ticket object for admin",
   content: {
     "application/json": {
-      schema: SupportTicketAdminSchema,
+      schema: SupportTicketAdminSchema.extend({
+        messages: SupportMessageSchema,
+      }),
     },
   },
 };
@@ -36,7 +46,9 @@ export const SupportTicketUserObject = {
   description: "Single support ticket object for user",
   content: {
     "application/json": {
-      schema: SupportTicketUserSchema,
+      schema: SupportTicketUserSchema.extend({
+        messages: SupportMessageSchema,
+      }),
     },
   },
 };
@@ -45,7 +57,11 @@ export const SupportMessagesListResponse = {
   description: "List of all messages for a specific ticket",
   content: {
     "application/json": {
-      schema: z.array(SupportMessageSchema),
+      schema: z.array(
+        SupportMessageSchema.extend({
+          messages: SupportMessageSchema,
+        })
+      ),
     },
   },
 };
