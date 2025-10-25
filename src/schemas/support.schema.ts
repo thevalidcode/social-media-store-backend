@@ -43,8 +43,6 @@ export const SupportTicketUserSchema = z.object({
 });
 
 export const CreateSupportTicketSchema = z.object({
-  storeId: z.number(),
-  userUid: z.string(),
   subject: z.string(),
   message: z.string(),
   description: z.string().optional(),
@@ -67,7 +65,6 @@ export const GetSupportTicketByUidSchema = z.object({
 });
 
 export const CreateTicketMessageSchema = z.object({
-  senderUid: z.number(),
   message: z.string(),
 });
 
