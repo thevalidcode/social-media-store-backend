@@ -463,6 +463,7 @@ model PaymentGateway {
   name          String
   description   String?
   signature     String?
+  feePercent    Int?                   @default(0)
   secretKey     Json?                  @map("secret_key")
   image         String
   status        PaymentGatewayStatus   @default(ACTIVE)

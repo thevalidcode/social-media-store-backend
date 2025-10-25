@@ -2,7 +2,7 @@ import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import {
   PaymentGatewayPlatform,
-  PaymentGatewayStatus
+  PaymentGatewayStatus,
 } from "../../prisma/generated";
 
 extendZodWithOpenApi(z);
@@ -15,6 +15,7 @@ export const PaymentGatewayAdminsSchema = z
     description: z.string().optional(),
     min: z.number(),
     max: z.number(),
+    feePercent: z.number(),
     position: z.number(),
     secretKey: z.any().optional(),
     createdAt: z.coerce.date(),
@@ -28,6 +29,7 @@ export const PaymentGatewayUsersSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
   min: z.number(),
+  feePercent: z.number().optional(),
   max: z.number(),
   position: z.number(),
   platform: z.nativeEnum(PaymentGatewayPlatform),
@@ -38,6 +40,7 @@ export const PaymentCreateRequestSchema = z.object({
   name: z.string(),
   min: z.coerce.number(),
   max: z.coerce.number(),
+  feePercent: z.number().optional(),
   secretKey: z.string().optional(),
   description: z.string().optional(),
   image: z.string(),
@@ -49,6 +52,7 @@ export const PaymentUpdateRequestSchema = z.object({
   name: z.string(),
   min: z.coerce.number(),
   max: z.coerce.number(),
+  feePercent: z.number().optional(),
   secretKey: z.string().optional(),
   description: z.string().optional(),
   image: z.string(),
