@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   AuthenticateUserSchema,
   CreateUserInputSchema,
+  UpdateUserByAdminRequestSchema,
   UserUpdateRequestSchema,
 } from "../../schemas/user.schema";
 
@@ -142,6 +143,28 @@ registry.registerPath({
       content: {
         "application/json": {
           schema: UserUpdateRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: UpdateSuccess,
+    400: InvalidData,
+    500: ServerError,
+  },
+});
+
+// Update user for admins
+registry.registerPath({
+  method: "patch",
+  path: "/users/admin",
+  summary: "Update user info",
+  tags: ["Users"],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: UpdateUserByAdminRequestSchema,
         },
       },
     },

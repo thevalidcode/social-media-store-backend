@@ -54,6 +54,12 @@ export const UserUpdateRequestSchema = z.object({
   apiKey: z.string().describe("User api key").optional(),
 });
 
+export const UpdateUserByAdminRequestSchema = UserUpdateRequestSchema.extend({
+  balance: z
+    .string()
+    .refine((val) => !isNaN(Number(val)), "Balance must be numeric").optional(),
+});
+
 export const AuthenticateUserSchema = z.object({
   storeId: z.coerce.number().describe("Associated store ID"),
   email: z.string().email().describe("User email"),

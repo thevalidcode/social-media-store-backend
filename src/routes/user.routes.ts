@@ -11,6 +11,7 @@ router.post("/", strictLimiter, users.createUser);
 router.get("/:uid", authenticateAdmin, users.getUserByUid);
 router.get("/affiliate", authenticateUser, users.getAffiliateData);
 router.patch("/", authenticateUser, users.updateUser);
+router.patch("/admin", authenticateAdmin, users.updateUserByAdmin);
 router.delete("/", authenticateAdmin, users.deleteUser);
 router.delete("/multiple", authenticateAdmin, users.deleteUsers);
 

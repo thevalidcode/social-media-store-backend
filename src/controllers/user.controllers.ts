@@ -12,10 +12,12 @@ import {
   CreateUserInputSchema,
   DeleteUserSchema,
   DeleteUsersSchema,
+  UpdateUserByAdminRequestSchema,
   UserUpdateRequestSchema,
 } from "../schemas/user.schema";
 import crypto from "crypto";
 import { Prisma } from "../../prisma/generated";
+import { Decimal } from "@prisma/client/runtime/library";
 
 // ✅ Get all users
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
@@ -397,6 +399,32 @@ export const updateUser = async (
       where: { uid: uid },
       data: parsed.data,
     });
+    res.status(200).json({ success: "Successfully updated user" });
+  } catch {
+    res.status(500).json({ error: "Failed to update user" });
+  }
+};
+
+export const updateUserByAdmin = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const parsed = UpdateUserByAdminRequestSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+  const { uid } = req.auth!;
+
+  const { balance } = parsed.data;
+
+  try {
+    const parsedBalance = new Decimal(balance || 0);
+    await prisma.user.update({
+      where: { uid: uid },
+      data: { ...parsed.data, balance: parsedBalance },
+    });
+
     res.status(200).json({ success: "Successfully updated user" });
   } catch {
     res.status(500).json({ error: "Failed to update user" });
