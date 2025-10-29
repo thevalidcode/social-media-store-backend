@@ -146,6 +146,7 @@ enum ServiceStatus {
 }
 
 enum ServiceType {
+  MANUAL         @map("Manual")
   DEFAULT        @map("Default")
   PACKAGE        @map("Package")
   SUBSCRIPTION   @map("Subscription")
