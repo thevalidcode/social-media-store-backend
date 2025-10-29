@@ -28,4 +28,5 @@ export const CategoryUpdateRequestSchema = z.object({
   icon: z.string().optional(),
   position: z.number().optional(),
   description: z.string().optional(),
+  status: z.nativeEnum(CategoryStatus).optional(),
 });
