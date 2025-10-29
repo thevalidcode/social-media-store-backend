@@ -49,7 +49,7 @@ export const getProviderServices = async (
 
     const decryptedKey = decryptKey(apiKeyData.encrypted_key, apiKeyData.iv);
 
-    const providerResponse = await axios.post(`${provider}`, {
+    const providerResponse = await axios.post(`https://${provider}`, {
       action: "services",
       key: decryptedKey,
     });
@@ -100,8 +100,14 @@ export const importServices = async (
 
     const [{ data: balanceData }, { data: providerServices }] =
       await Promise.all([
-        axios.post(provider, { action: "balance", key: decryptedKey }),
-        axios.post(provider, { action: "services", key: decryptedKey }),
+        axios.post(`https://${provider}`, {
+          action: "balance",
+          key: decryptedKey,
+        }),
+        axios.post(`https://${provider}`, {
+          action: "services",
+          key: decryptedKey,
+        }),
       ]);
 
     const providerCurrency = balanceData.currency.toUpperCase();
@@ -252,6 +258,9 @@ export const addProvider = async (
       res.status(400).json({ error: "Provider already exists." });
       return;
     }
+    const parsedUrl = reqData.url
+      .replace(/^https?:\/\//, "") // remove http:// or https://
+      .replace(/\/$/, "");
 
     await prisma.$transaction(async (tx) => {
       const counter = await tx.storeCounter.update({
@@ -265,7 +274,7 @@ export const addProvider = async (
           storeId,
           storeScopedId: counter.providerCounter,
           name: reqData.name,
-          url: reqData.url,
+          url: parsedUrl,
           sync: reqData.sync,
           image: reqData.image,
           percentage: reqData.percentage,

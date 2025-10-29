@@ -46,12 +46,12 @@ export const updateExistingServices = async (): Promise<void> => {
           const baseURL = `${prov.url}`;
           const [balanceRes, servicesRes] = await Promise.all([
             axios.post(
-              baseURL,
+              `https://${baseURL}`,
               { action: "balance", key: decryptedKey },
               { httpsAgent: agent }
             ),
             axios.post(
-              baseURL,
+              `https://${baseURL}`,
               { action: "services", key: decryptedKey },
               { httpsAgent: agent }
             ),
@@ -143,12 +143,12 @@ export const syncServices = async (): Promise<void> => {
 
         const [{ data: balance }, { data: svcList }] = await Promise.all([
           axios.post(
-            baseURL,
+            `https://${baseURL}`,
             { action: "balance", key: decryptedKey },
             { httpsAgent: agent }
           ),
           axios.post(
-            baseURL,
+            `https://${baseURL}`,
             { action: "services", key: decryptedKey },
             { httpsAgent: agent }
           ),

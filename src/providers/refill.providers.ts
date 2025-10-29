@@ -39,7 +39,7 @@ export const sendRefillToMainServer = async (
     const decryptedKey = decryptKey(apiKeyData.encrypted_key, apiKeyData.iv);
 
     const { data: res } = await axios.post(
-      provider.url,
+      `https://${provider.url}`,
       { key: decryptedKey, action: "refill", order: order.providerOrderId },
       { httpsAgent: agent }
     );
@@ -151,7 +151,7 @@ const updateRefillStatusTx = async (
   const decryptedKey = decryptKey(apiKeyData.encrypted_key, apiKeyData.iv);
 
   const { data: res } = await axios.post(
-    provider.url,
+    `https://${provider.url}`,
     { key: decryptedKey, action: "refill_status", refill: refill.providerId },
     { httpsAgent: agent }
   );

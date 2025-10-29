@@ -93,7 +93,9 @@ export const sendOrderToProvider = async (
     }
 
     const url = `${service.provider}`;
-    const { data: res } = await axios.post(url, payload, { httpsAgent: agent });
+    const { data: res } = await axios.post(`https://${url}`, payload, {
+      httpsAgent: agent,
+    });
 
     if (res.error) {
       await prisma.user.update({
@@ -237,7 +239,9 @@ export const updateOrderStatus = async (
       action: "status",
       order: order.providerOrderId,
     };
-    const { data: resp } = await axios.post(url, data, { httpsAgent: agent });
+    const { data: resp } = await axios.post(`https://${url}`, data, {
+      httpsAgent: agent,
+    });
     const rates = await exchangeRates();
 
     await prisma.order.update({
@@ -325,7 +329,9 @@ export const syncOrderDetails = async (
       action: "status",
       order: orderData.providerOrderId,
     };
-    const { data: resp } = await axios.post(url, data, { httpsAgent: agent });
+    const { data: resp } = await axios.post(`https://${url}`, data, {
+      httpsAgent: agent,
+    });
 
     const service = await prisma.service.findUnique({
       where: { id: orderData.serviceId },
