@@ -18,7 +18,7 @@ export const getProviderServices = async (
   res: Response
 ): Promise<void> => {
   const authParsed = AuthSchema.safeParse(req.auth);
-  const bodyParsed = ProviderServicesSchema.safeParse(req.body);
+  const bodyParsed = ProviderServicesSchema.safeParse(req.params);
 
   if (!authParsed.success || !bodyParsed.success) {
     res.status(400).json({

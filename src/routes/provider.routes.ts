@@ -13,8 +13,8 @@ router.post(
   limitProviderImport,
   providers.importServices
 );
-router.post(
-  "/services",
+router.get(
+  "/services/:provider",
   authenticateAdmin,
   limitProviderActions,
   providers.getProviderServices

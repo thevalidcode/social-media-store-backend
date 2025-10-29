@@ -168,19 +168,13 @@ registry.registerPath({
 });
 
 registry.registerPath({
-  method: "post",
-  path: "/providers/services/",
+  method: "get",
+  path: "/providers/services/{provider}",
   summary: "Get provider services",
   tags: ["Providers"],
   security: [{ CookieAuth: [] }],
   request: {
-    body: {
-      content: {
-        "application/json": {
-          schema: ProviderServicesSchema,
-        },
-      },
-    },
+    params: ProviderServicesSchema,
   },
   responses: {
     200: ProviderServicesListResponse,
