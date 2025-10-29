@@ -49,12 +49,26 @@ export const getProviderServices = async (
 
     const decryptedKey = decryptKey(apiKeyData.encrypted_key, apiKeyData.iv);
 
-    const providerResponse = await axios.post(`https://${provider}`, {
-      action: "services",
-      key: decryptedKey,
-    });
+    const [{ data: balanceData }, { data: providerServicesResponse }] =
+      await Promise.all([
+        axios.post(`https://${provider}`, {
+          action: "balance",
+          key: decryptedKey,
+        }),
+        axios.post(`https://${provider}`, {
+          action: "services",
+          key: decryptedKey,
+        }),
+      ]);
 
-    res.status(200).json(providerResponse.data);
+    const providerCurrency = balanceData.currency.toUpperCase();
+
+    const providerServices = providerServicesResponse.map((service: any) => ({
+      ...service,
+      currency: providerCurrency,
+    }));
+
+    res.status(200).json(providerServices);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

@@ -89,6 +89,7 @@ export const ProviderServiceSchema = z
     type: z.string(),
     min: z.coerce.number(),
     max: z.coerce.number(),
+    currency: z.string(),
     price: z.number(),
     category: z.string(),
     description: z.string().optional(),
