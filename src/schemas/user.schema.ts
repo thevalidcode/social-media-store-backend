@@ -5,7 +5,7 @@ import { Decimal } from "@prisma/client/runtime/library";
 
 extendZodWithOpenApi(z);
 
-export const UserSchema: z.ZodType<User> = z
+export const UserSchema = z
   .object({
     id: z.number(),
     storeScopedId: z.number(),
@@ -23,8 +23,8 @@ export const UserSchema: z.ZodType<User> = z
     currency: z.string(),
     balance: z.custom<Decimal>(),
     spent: z.custom<Decimal>(),
-    timestamp: z.date(),
-    lastSeen: z.date(),
+    timestamp: z.union([z.date(), z.string()]),
+    lastSeen: z.union([z.date(), z.string()]),
     ref: z.number().nullable(),
   })
   .openapi("User");
