@@ -2,13 +2,13 @@ import { z } from "zod";
 import type { Request, Response } from "express";
 import { prisma } from "../config/db.config";
 import { v4 as uuidv4 } from "uuid";
-import { AuthSchema } from "../schemas/user.schema";
 import {
   DeleteServiceInputSchema,
   DeleteMultipleServicesInputSchema,
   ServiceUpdateInputSchema,
   ServiceCreateInputSchema,
 } from "../schemas/service.schema";
+import { AdminAuthSchema } from "../schemas/admin.schema";
 
 const getServicesSchema = z.object({
   storeId: z.coerce.number(),
@@ -20,7 +20,10 @@ const serviceIdSchema = z.object({
 });
 
 // ✅ Get all active services for a store
-export const getServices = async (req: Request, res: Response): Promise<void> => {
+export const getServices = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const parsed = getServicesSchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -62,8 +65,11 @@ export const getServices = async (req: Request, res: Response): Promise<void> =>
 };
 
 // ✅ Get all services for admins
-export const getServicesForAdmins = async (req: Request, res: Response): Promise<void> => {
-  const parsed = AuthSchema.safeParse(req.auth);
+export const getServicesForAdmins = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const parsed = AdminAuthSchema.safeParse(req.auth);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -84,7 +90,10 @@ export const getServicesForAdmins = async (req: Request, res: Response): Promise
 };
 
 // ✅ Get service by ID (public)
-export const getServiceByID = async (req: Request, res: Response): Promise<void> => {
+export const getServiceByID = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const parsed = serviceIdSchema.safeParse(req.params);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -123,8 +132,11 @@ export const getServiceByID = async (req: Request, res: Response): Promise<void>
 };
 
 // ✅ Get service by ID (admin)
-export const getServiceByIDFromAdmin = async (req: Request, res: Response): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+export const getServiceByIDFromAdmin = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = serviceIdSchema.safeParse(req.params);
 
   if (!parsed.success) {
@@ -152,8 +164,11 @@ export const getServiceByIDFromAdmin = async (req: Request, res: Response): Prom
 };
 
 // ✅ Update service
-export const updateService = async (req: Request, res: Response): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+export const updateService = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = ServiceUpdateInputSchema.safeParse(req.body);
 
   if (!parsed.success) {
@@ -184,8 +199,11 @@ export const updateService = async (req: Request, res: Response): Promise<void> 
 };
 
 // ✅ Delete single service
-export const deleteService = async (req: Request, res: Response): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+export const deleteService = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = DeleteServiceInputSchema.safeParse(req.body);
 
   if (!parsed.success) {
@@ -210,8 +228,11 @@ export const deleteService = async (req: Request, res: Response): Promise<void> 
 };
 
 // ✅ Delete multiple services
-export const deleteMultipleService = async (req: Request, res: Response): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+export const deleteMultipleService = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = DeleteMultipleServicesInputSchema.safeParse(req.body);
 
   if (!parsed.success) {
@@ -238,9 +259,14 @@ export const deleteMultipleService = async (req: Request, res: Response): Promis
 };
 
 // ✅ Get services by provider ID
-export const getServicesByProviderId = async (req: Request, res: Response): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
-  const parsed = z.object({ providerId: z.coerce.number() }).safeParse(req.params);
+export const getServicesByProviderId = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
+  const parsed = z
+    .object({ providerId: z.coerce.number() })
+    .safeParse(req.params);
 
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -267,8 +293,11 @@ export const getServicesByProviderId = async (req: Request, res: Response): Prom
 };
 
 // ✅ Add a new service
-export const addService = async (req: Request, res: Response): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+export const addService = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = ServiceCreateInputSchema.safeParse(req.body);
 
   if (!parsed.success) {
@@ -309,7 +338,9 @@ export const addService = async (req: Request, res: Response): Promise<void> => 
       });
     });
 
-    res.status(201).json({ success: "Service added successfully.", service: newService });
+    res
+      .status(201)
+      .json({ success: "Service added successfully.", service: newService });
   } catch (error: any) {
     console.error("Error adding service:", error);
     res.status(500).json({ error: "Failed to add service." });

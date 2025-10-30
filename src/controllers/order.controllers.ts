@@ -8,7 +8,8 @@ import {
   bulkStatusUpdateSchema,
   getOrdersByStatusSchema,
 } from "../schemas/order.schema";
-import { AuthSchema } from "../schemas/user.schema";
+import { UserAuthSchema } from "../schemas/user.schema";
+import { AdminAuthSchema } from "../schemas/admin.schema";
 
 const publicFields = {
   storeScopedId: true,
@@ -46,7 +47,7 @@ const publicFields = {
 };
 
 export const getOrders = async (req: Request, res: Response): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = UserAuthSchema.safeParse(req.auth);
   if (!authParsed.success) {
     res.status(400).json({ error: authParsed.error.flatten() });
     return;
@@ -71,7 +72,7 @@ export const getOrdersForAdmins = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   if (!authParsed.success) {
     res.status(400).json({ error: authParsed.error.flatten() });
     return;
@@ -96,7 +97,7 @@ export const getOrdersByStatus = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = getOrdersByStatusSchema.safeParse(req.params);
 
   if (!parsed.success || !authParsed.success) {
@@ -132,7 +133,7 @@ export const getUserOrdersByStatus = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = UserAuthSchema.safeParse(req.auth);
   const parsed = getOrdersByStatusSchema.safeParse(req.params);
 
   if (!parsed.success || !authParsed.success) {
@@ -169,7 +170,7 @@ export const getUserOrderByUid = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = UserAuthSchema.safeParse(req.auth);
   const { orderUid } = req.params;
 
   if (!authParsed.success) {
@@ -204,7 +205,7 @@ export const getOrderByUid = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const { orderUid } = req.params;
 
   if (!authParsed.success) {
@@ -238,7 +239,7 @@ export const placeOrder = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = UserAuthSchema.safeParse(req.auth);
   const parsed = placeOrderSchema.safeParse(req.body);
 
   if (!parsed.success || !authParsed.success) {
@@ -285,7 +286,7 @@ export const bulkCreateOrders = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = UserAuthSchema.safeParse(req.auth);
   const parsed = bulkCreateSchema.safeParse(req.body);
 
   if (!parsed.success || !authParsed.success) {
@@ -330,7 +331,7 @@ export const updateOrder = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = updateOrderSchema.safeParse(req.body);
   const { orderUid } = req.params;
 
@@ -362,7 +363,7 @@ export const deleteOrder = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const { orderUid } = req.params;
 
   if (!authParsed.success) {
@@ -387,7 +388,7 @@ export const bulkUpdateOrderStatus = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = bulkStatusUpdateSchema.safeParse(req.body);
 
   if (!parsed.success || !authParsed.success) {

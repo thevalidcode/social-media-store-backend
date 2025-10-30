@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { prisma } from "../config/db.config";
-import { AuthSchema } from "../schemas/user.schema";
+import { UserAuthSchema } from "../schemas/user.schema";
 import {
   CreateSupportTicketSchema,
   GetSupportTicketByUidSchema,
@@ -10,12 +10,13 @@ import {
   DeleteTicketMessageSchema,
 } from "../schemas/support.schema";
 import { v4 as uuidv4 } from "uuid";
+import { AdminAuthSchema } from "../schemas/admin.schema";
 
 export const getAllTickets = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
 
   if (!authParsed.success) {
     res.status(400).json({ error: authParsed.error.flatten() });
@@ -40,7 +41,7 @@ export const getAllTicketsForUser = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = UserAuthSchema.safeParse(req.auth);
 
   if (!authParsed.success) {
     res.status(400).json({ error: authParsed.error.flatten() });
@@ -80,7 +81,7 @@ export const createTicket = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = UserAuthSchema.safeParse(req.auth);
   const bodyParsed = CreateSupportTicketSchema.safeParse(req.body);
 
   if (!authParsed.success || !bodyParsed.success) {
@@ -139,7 +140,7 @@ export const getTicketByUid = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = UserAuthSchema.safeParse(req.auth);
   const paramsParsed = GetSupportTicketByUidSchema.safeParse(req.params);
 
   if (!authParsed.success || !paramsParsed.success) {
@@ -189,7 +190,7 @@ export const getTicketByUidForAdmin = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const paramsParsed = GetSupportTicketByUidSchema.safeParse(req.params);
 
   if (!authParsed.success || !paramsParsed.success) {
@@ -222,7 +223,7 @@ export const updateTicket = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const bodyParsed = UpdateSupportTicketSchema.safeParse(req.body);
   const paramsParsed = GetSupportTicketByUidSchema.safeParse(req.params);
 
@@ -259,7 +260,7 @@ export const deleteTicket = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const paramsParsed = DeleteSupportTicketSchema.safeParse(req.params);
 
   if (!authParsed.success || !paramsParsed.success) {
@@ -289,7 +290,7 @@ export const addMessage = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = UserAuthSchema.safeParse(req.auth);
   const paramsParsed = GetSupportTicketByUidSchema.safeParse(req.params);
   const bodyParsed = CreateTicketMessageSchema.safeParse(req.body);
 
@@ -331,7 +332,7 @@ export const addMessageForAdmin = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const paramsParsed = GetSupportTicketByUidSchema.safeParse(req.params);
   const bodyParsed = CreateTicketMessageSchema.safeParse(req.body);
 

@@ -1,11 +1,11 @@
 import type { Request, Response } from "express";
 import { CreatePaymentSchema } from "../schemas/payment.schema";
 import * as paymentService from "../services/payment.services";
-import { AuthSchema } from "../schemas/user.schema";
+import { UserAuthSchema } from "../schemas/user.schema";
 
 export const createPayment = async (req: Request, res: Response) => {
   const parsed = CreatePaymentSchema.safeParse(req.body);
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = UserAuthSchema.safeParse(req.auth);
   if (!authParsed.success) {
     res.status(400).json({ error: authParsed.error.flatten() });
     return;

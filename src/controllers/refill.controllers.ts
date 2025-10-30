@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { prisma } from "../config/db.config";
 import { v4 as uuidv4 } from "uuid";
-import { AuthSchema } from "../schemas/user.schema";
+import { UserAuthSchema } from "../schemas/user.schema";
 import {
   placeRefillSchema,
   updateRefillSchema,
@@ -11,12 +11,13 @@ import {
   RefillPublicSchema,
   RefillSchema,
 } from "../schemas/refill.schema";
+import { AdminAuthSchema } from "../schemas/admin.schema";
 
 export const getRefills = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = UserAuthSchema.safeParse(req.auth);
   if (!authParsed.success) {
     res.status(400).json({ error: authParsed.error.flatten() });
     return;
@@ -43,7 +44,7 @@ export const getRefillsForAdmins = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   if (!authParsed.success) {
     res.status(400).json({ error: authParsed.error.flatten() });
     return;
@@ -68,7 +69,7 @@ export const getRefillById = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = UserAuthSchema.safeParse(req.auth);
   const { refillUid } = req.params;
 
   if (!authParsed.success) {
@@ -107,7 +108,7 @@ export const placeRefill = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = UserAuthSchema.safeParse(req.auth);
   const parsed = placeRefillSchema.safeParse(req.body);
 
   if (!authParsed.success || !parsed.success) {
@@ -159,7 +160,7 @@ export const updateRefill = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = updateRefillSchema.safeParse(req.body);
   const { refillUid } = req.params;
 
@@ -191,7 +192,7 @@ export const deleteRefill = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const { refillUid } = req.params;
 
   if (!authParsed.success) {
@@ -216,7 +217,7 @@ export const getRefillsByStatus = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = UserAuthSchema.safeParse(req.auth);
   const parsed = getRefillsByStatusSchema.safeParse(req.params);
 
   if (!authParsed.success || !parsed.success) {
@@ -257,7 +258,7 @@ export const bulkCreateRefills = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = UserAuthSchema.safeParse(req.auth);
   const parsed = bulkCreateRefillSchema.safeParse(req.body);
 
   if (!authParsed.success || !parsed.success) {
@@ -305,7 +306,7 @@ export const bulkUpdateRefillStatus = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = bulkStatusUpdateRefillSchema.safeParse(req.body);
 
   if (!authParsed.success || !parsed.success) {

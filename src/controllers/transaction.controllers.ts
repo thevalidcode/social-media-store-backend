@@ -3,14 +3,15 @@ import {
   TransactionPublicSchema,
   TransactionSchema,
 } from "../schemas/transaction.schema";
-import { AuthSchema } from "../schemas/user.schema";
+import { UserAuthSchema } from "../schemas/user.schema";
 import { prisma } from "../config/db.config";
+import { AdminAuthSchema } from "../schemas/admin.schema";
 
 export const getTransactionsForUser = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = UserAuthSchema.safeParse(req.auth);
   if (!authParsed.success) {
     res.status(400).json({ error: authParsed.error.flatten() });
     return;
@@ -37,7 +38,7 @@ export const getTransactionsForAdmin = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   if (!authParsed.success) {
     res.status(400).json({ error: authParsed.error.flatten() });
     return;

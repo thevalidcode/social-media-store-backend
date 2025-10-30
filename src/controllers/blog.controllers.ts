@@ -1,5 +1,4 @@
 import { prisma } from "../config/db.config";
-import { AuthSchema } from "../schemas/user.schema";
 import {
   blogIdSchema,
   createBlogSchema,
@@ -10,6 +9,7 @@ import {
 import { StoreIdSchema } from "../schemas/common.schema";
 import type { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
+import { AdminAuthSchema } from "../schemas/admin.schema";
 
 export const getBlogs = async (req: Request, res: Response): Promise<void> => {
   const parsed = StoreIdSchema.safeParse(req.query);
@@ -63,7 +63,7 @@ export const getBlogByID = async (
 };
 
 export const addBlog = async (req: Request, res: Response): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = createBlogSchema.safeParse(req.body);
 
   if (!parsed.success) {
@@ -135,7 +135,7 @@ export const updateBlog = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = updateBlogSchema.safeParse(req.body);
 
   if (!parsed.success) {
@@ -170,7 +170,7 @@ export const deleteBlog = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = deleteBlogSchema.safeParse(req.body);
 
   if (!parsed.success) {
@@ -200,7 +200,7 @@ export const deleteMultipleBlogs = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = deleteMultipleBlogsSchema.safeParse(req.body);
 
   if (!parsed.success) {

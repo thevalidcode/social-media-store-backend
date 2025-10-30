@@ -4,17 +4,14 @@ import { prisma } from "../config/db.config";
 import { initFlutterwavePayment } from "../providers/flutterwave.providers";
 import { initPaystackPayment } from "../providers/paystack.providers";
 import type { CreatePaymentInput } from "../schemas/payment.schema";
-import { Admin, TransactionType, User } from "../../prisma/generated";
+import { TransactionType, User } from "../../prisma/generated";
 import {
   FlutterwaveWebhookData,
   PaystackWebhookData,
 } from "../schemas/webhook.schema";
 import type { Request } from "express";
 
-export const createPayment = async (
-  user: User | Admin,
-  input: CreatePaymentInput
-) => {
+export const createPayment = async (user: User, input: CreatePaymentInput) => {
   const { storeId, platform, currency, amount, redirect_url } = input;
 
   const gateway = await prisma.paymentGateway.findFirst({

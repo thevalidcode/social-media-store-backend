@@ -7,9 +7,9 @@ import {
   deleteMultipleFAQsSchema,
 } from "../schemas/faq.schema";
 import { StoreIdSchema } from "../schemas/common.schema";
-import { AuthSchema } from "../schemas/user.schema";
 import { prisma } from "../config/db.config";
 import { v4 as uuidv4 } from "uuid";
+import { AdminAuthSchema } from "../schemas/admin.schema";
 
 export const getFAQs = async (req: Request, res: Response): Promise<void> => {
   const parsed = StoreIdSchema.safeParse(req.query);
@@ -65,7 +65,7 @@ export const getFAQByID = async (
 
 export const addFAQ = async (req: Request, res: Response): Promise<void> => {
   const parsed = createFAQSchema.safeParse(req.body);
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
 
   if (!parsed.success || !authParsed.success) {
     res.status(400).json({
@@ -135,7 +135,7 @@ export const addFAQ = async (req: Request, res: Response): Promise<void> => {
 
 export const updateFAQ = async (req: Request, res: Response): Promise<void> => {
   const parsed = updateFAQSchema.safeParse(req.body);
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
 
   if (!parsed.success || !authParsed.success) {
     res.status(400).json({
@@ -175,7 +175,7 @@ export const updateFAQ = async (req: Request, res: Response): Promise<void> => {
 
 export const deleteFAQ = async (req: Request, res: Response): Promise<void> => {
   const parsed = deleteFAQSchema.safeParse(req.body);
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
 
   if (!parsed.success || !authParsed.success) {
     res.status(400).json({
@@ -206,7 +206,7 @@ export const deleteMultipleFAQs = async (
   res: Response
 ): Promise<void> => {
   const parsed = deleteMultipleFAQsSchema.safeParse(req.body);
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
 
   if (!parsed.success || !authParsed.success) {
     res.status(400).json({

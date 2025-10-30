@@ -7,9 +7,9 @@ import {
   UpdateGeneralDataRequestSchema,
   UpdateStylesRequestSchema,
 } from "../schemas/store.schema";
-import { AuthSchema } from "../schemas/user.schema";
 import { v4 as uuidv4 } from "uuid";
 import { Prisma } from "../../prisma/generated";
+import { AdminAuthSchema } from "../schemas/admin.schema";
 
 const storeIdQuerySchema = z.object({ domain: z.string().min(1) });
 const storeIdSchema = z.object({ storeId: z.coerce.number() });
@@ -90,7 +90,7 @@ export const updateStoreGeneralData = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const bodyParsed = UpdateGeneralDataRequestSchema.safeParse(req.body);
 
   if (!authParsed.success) {
@@ -102,13 +102,8 @@ export const updateStoreGeneralData = async (
     return;
   }
 
-  const { storeId, type } = authParsed.data;
+  const { storeId } = authParsed.data;
   const bodyData = bodyParsed.data;
-
-  if (type !== "admin") {
-    res.status(403).json({ error: "Access denied. Admins only." });
-    return;
-  }
 
   try {
     const existing = await prisma.setting.findFirst({ where: { storeId } });
@@ -156,7 +151,7 @@ export const updateStoreStyles = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const bodyParsed = UpdateStylesRequestSchema.safeParse(req.body);
 
   if (!authParsed.success) {
@@ -168,13 +163,8 @@ export const updateStoreStyles = async (
     return;
   }
 
-  const { storeId, type } = authParsed.data;
+  const { storeId } = authParsed.data;
   const bodyData = bodyParsed.data;
-
-  if (type !== "admin") {
-    res.status(403).json({ error: "Access denied. Admins only." });
-    return;
-  }
 
   try {
     const existing = await prisma.designStyle.findFirst({ where: { storeId } });

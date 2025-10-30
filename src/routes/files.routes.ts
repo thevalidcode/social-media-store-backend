@@ -3,9 +3,8 @@ import multer from "multer";
 const router = express.Router();
 
 import * as uploads from "../controllers/files.controllers";
-import { authenticateAdmin } from "../middleware/auth";
+import { authenticateAnyone } from "../middleware/auth";
 import { limitUploads } from "../middleware/ratelimit/files.ratelimit";
-
 
 // Using memory storage for direct S3 uploads
 const upload = multer({
@@ -15,7 +14,7 @@ const upload = multer({
 
 router.post(
   "/image",
-  authenticateAdmin,
+  authenticateAnyone,
   limitUploads,
   upload.single("image"),
   uploads.uploadImage

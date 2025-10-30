@@ -8,7 +8,7 @@ import { sendEmail } from "../emails";
 import { env } from "../config/env.config";
 import {
   AuthenticateUserSchema,
-  AuthSchema,
+  UserAuthSchema,
   CreateUserInputSchema,
   DeleteUserSchema,
   DeleteUsersSchema,
@@ -18,10 +18,11 @@ import {
 import crypto from "crypto";
 import { Prisma } from "../../prisma/generated";
 import { Decimal } from "@prisma/client/runtime/library";
+import { AdminAuthSchema } from "../schemas/admin.schema";
 
 // ✅ Get all users
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
-  const parsed = AuthSchema.safeParse(req.auth);
+  const parsed = AdminAuthSchema.safeParse(req.auth);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -232,7 +233,7 @@ export const getUserByUid = async (
   res: Response
 ): Promise<void> => {
   const { uid } = req.params;
-  const parsed = AuthSchema.safeParse(req.auth);
+  const parsed = AdminAuthSchema.safeParse(req.auth);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -262,7 +263,7 @@ export const getAffiliateData = async (
   res: Response
 ): Promise<void> => {
   const { uid } = req.params;
-  const parsed = AuthSchema.safeParse(req.auth);
+  const parsed = UserAuthSchema.safeParse(req.auth);
 
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -338,7 +339,7 @@ export const verifySession = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = UserAuthSchema.safeParse(req.auth);
   if (!authParsed.success) {
     res.status(400).json({ error: authParsed.error.flatten() });
     return;

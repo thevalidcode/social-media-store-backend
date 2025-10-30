@@ -22,6 +22,12 @@ export const AdminSchema: z.ZodType<Admin> = z
   })
   .openapi("Admin");
 
+export const AdminAuthSchema = z.object({
+  storeId: z.coerce.number(),
+  uid: z.string(),
+  type: z.literal("admin"),
+  user: AdminSchema,
+});
 export const AuthenticateAdminSchema = z.object({
   storeId: z.coerce.number().describe("Associated store ID"),
   email: z.string().email().describe("Admin email"),

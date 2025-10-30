@@ -1,9 +1,9 @@
 import type { Request, Response } from "express";
 import { prisma } from "../config/db.config";
-import { AuthSchema } from "../schemas/user.schema";
+import { AdminAuthSchema } from "../schemas/admin.schema";
 
 // Utility: Parse and validate auth
-const parseAuth = (req: Request) => AuthSchema.safeParse(req.auth);
+const parseAuth = (req: Request) => AdminAuthSchema.safeParse(req.auth);
 function mNamesToIdx(m: string): number {
   const months = [
     "Jan",

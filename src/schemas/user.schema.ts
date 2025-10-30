@@ -2,7 +2,6 @@ import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import { User, UserRole, UserStatus } from "../../prisma/generated";
 import { Decimal } from "@prisma/client/runtime/library";
-import { AdminSchema } from "./admin.schema";
 
 extendZodWithOpenApi(z);
 
@@ -30,11 +29,11 @@ export const UserSchema: z.ZodType<User> = z
   })
   .openapi("User");
 
-export const AuthSchema = z.object({
+export const UserAuthSchema = z.object({
   storeId: z.coerce.number(),
   uid: z.string(),
-  type: z.enum(["admin", "user"]),
-  user: z.union([UserSchema, AdminSchema]),
+  type: z.literal("user"),
+  user: UserSchema,
 });
 
 export const UserPublicSchema = z

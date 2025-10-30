@@ -1,11 +1,13 @@
 import type { Request, Response } from "express";
 import { UploadImageRequest, FileSchema } from "../schemas/files.schema";
-import { AuthSchema } from "../schemas/user.schema";
 import { uploadToS3 } from "../services/s3.services";
 import { prisma } from "../config/db.config";
 import { v4 as uuidv4 } from "uuid";
 
-export const uploadImage = async (req: Request, res: Response): Promise<void> => {
+export const uploadImage = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     if (!req.file) {
       res.status(400).json({ error: "No file uploaded" });
@@ -18,11 +20,7 @@ export const uploadImage = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const authResult = AuthSchema.safeParse(req.auth);
-    if (!authResult.success) {
-      res.status(400).json({ error: authResult.error.flatten() });
-      return;
-    }
+    const authResult = req.auth!;
 
     const bodyResult = UploadImageRequest.safeParse(req.body);
     if (!bodyResult.success) {
@@ -30,7 +28,7 @@ export const uploadImage = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const { storeId } = authResult.data;
+    const { storeId } = authResult;
     const { collection } = bodyResult.data;
 
     const store = await prisma.store.findUnique({

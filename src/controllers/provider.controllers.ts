@@ -2,7 +2,6 @@ import axios from "axios";
 import type { Request, Response } from "express";
 import { prisma } from "../config/db.config";
 import { decryptKey, encryptKey } from "../utils/encrypt";
-import { AuthSchema } from "../schemas/user.schema";
 import {
   ProviderCreateRequestSchema,
   deleteMultipleProviderSchema,
@@ -12,12 +11,13 @@ import {
   ProviderUpdateRequestSchema,
 } from "../schemas/provider.schema";
 import { v4 as uuidv4 } from "uuid";
+import { AdminAuthSchema } from "../schemas/admin.schema";
 
 export const getProviderServices = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const bodyParsed = ProviderServicesSchema.safeParse(req.params);
 
   if (!authParsed.success || !bodyParsed.success) {
@@ -78,7 +78,7 @@ export const importServices = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const bodyParsed = ImportProviderServicesRequestSchema.safeParse(req.body);
 
   if (!authParsed.success || !bodyParsed.success) {
@@ -245,7 +245,7 @@ export const addProvider = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const bodyParsed = ProviderCreateRequestSchema.safeParse(req.body);
 
   if (!authParsed.success || !bodyParsed.success) {
@@ -313,7 +313,7 @@ export const getProviders = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
 
   if (!authParsed.success) {
     res.status(400).json({
@@ -350,7 +350,7 @@ export const updateProvider = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = ProviderUpdateRequestSchema.safeParse(req.body);
 
   if (!parsed.success || !authParsed.success) {
@@ -394,7 +394,7 @@ export const deleteProvider = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = deleteProviderSchema.safeParse(req.body);
 
   if (!authParsed.success || !parsed.success) {
@@ -425,7 +425,7 @@ export const deleteMultipleProviders = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = deleteMultipleProviderSchema.safeParse(req.body);
 
   if (!authParsed.success || !parsed.success) {

@@ -1,8 +1,8 @@
 import { z } from "zod";
 import type { Request, Response } from "express";
 import { prisma } from "../config/db.config";
-import { AuthSchema } from "../schemas/user.schema";
 import { v4 as uuidv4 } from "uuid";
+import { AdminAuthSchema } from "../schemas/admin.schema";
 
 const categoryIdSchema = z.object({
   categoryId: z.coerce.number(),
@@ -71,7 +71,7 @@ export const updateCategory = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = updateCategorySchema.safeParse(req.body);
 
   if (!parsed.success) {
@@ -108,7 +108,7 @@ export const deleteCategory = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = deleteCategorySchema.safeParse(req.body);
 
   if (!parsed.success) {
@@ -138,7 +138,7 @@ export const deleteMultipleCategory = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = z
     .object({
       uids: z.array(z.string()),
@@ -175,7 +175,7 @@ export const addCategory = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = AuthSchema.safeParse(req.auth);
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = z
     .object({
       name: z.string(),
