@@ -4,7 +4,7 @@ import { Admin, AdminRole, AdminStatus } from "../../prisma/generated";
 
 extendZodWithOpenApi(z);
 
-export const AdminSchema = z
+export const AdminSchema: z.ZodType<Admin> = z
   .object({
     id: z.number(),
     uid: z.string(),
@@ -17,8 +17,8 @@ export const AdminSchema = z
     status: z.nativeEnum(AdminStatus),
     storeId: z.number(),
     currency: z.string(),
-    timestamp: z.union([z.date(), z.string()]),
-    lastSeen: z.union([z.date(), z.string()]),
+    timestamp: z.date(),
+    lastSeen: z.date(),
   })
   .openapi("Admin");
 

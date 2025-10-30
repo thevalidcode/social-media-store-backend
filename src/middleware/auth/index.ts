@@ -54,6 +54,9 @@ export const authenticateAdmin = async (
       return;
     }
 
+    admin.timestamp = new Date(admin.timestamp);
+    admin.lastSeen = new Date(admin.lastSeen);
+
     req.auth = {
       storeId,
       uid,
