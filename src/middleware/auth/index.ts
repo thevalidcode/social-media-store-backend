@@ -47,6 +47,7 @@ export const authenticateAdmin = async (
     if (!payload) return;
 
     const { storeId, uid } = payload;
+console.log(payload)
 
     const admin = await prisma.admin.findFirst({ where: { storeId, uid } });
     if (!admin) {
@@ -54,7 +55,7 @@ export const authenticateAdmin = async (
       return;
     }
 
-
+console.log(admin)
     req.auth = {
       storeId,
       uid,

@@ -28,6 +28,7 @@ export const AdminAuthSchema = z.object({
   type: z.literal("admin"),
   user: AdminSchema,
 });
+
 export const AuthenticateAdminSchema = z.object({
   storeId: z.coerce.number().describe("Associated store ID"),
   email: z.string().email().describe("Admin email"),
