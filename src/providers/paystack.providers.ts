@@ -3,19 +3,51 @@ import convertCurrency from "../utils/ConvertCurrency";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import { decryptKey } from "../utils/encrypt";
-import { exchangeRates } from "../helpers/currency.helper";
+import { exchangeRates as getExchangeRates } from "../helpers/currency.helper";
+import { PaystackWebhookData } from "../schemas/webhook.schema";
+import type { Request } from "express";
+import { verifyPaystackSignature } from "../utils/webhook/verifySignatures";
+import { Decimal } from "@prisma/client/runtime/library";
+
+const verifySignature = async (req: Request, storeId: number) => {
+  const gateway = await prisma.paymentGateway.findFirst({
+    where: { storeId, platform: "PAYSTACK" },
+  });
+
+  if (!gateway || !gateway.signature) {
+    throw new Error("Invalid store or missing signature");
+  }
+
+  const signature = gateway.secretKey as {
+    encrypted_key: string;
+    iv: string;
+  };
+
+  const decryptedKey = decryptKey(signature.encrypted_key, signature.iv);
+  if (!verifyPaystackSignature(req, decryptedKey)) {
+    throw new Error("Invalid signature");
+  }
+};
 
 export const initPaystackPayment = async (
   paymentData: any,
   secretKey: { encrypted_key: string; iv: string }
 ) => {
+  const exchangeRates = await getExchangeRates();
+  const convertedNGNAmount = convertCurrency(
+    paymentData.amount,
+    paymentData.currency,
+    "NGN",
+    exchangeRates
+  );
   const response = await axios.post(
     "https://api.paystack.co/transaction/initialize",
     {
       email: paymentData.customer.email,
-      amount: paymentData.amount * 100, // Paystack uses kobo
-      currency: paymentData.currency,
+      amount: convertedNGNAmount * 100, // Paystack uses kobo
+      currency: "NGN",
       callback_url: paymentData.redirect_url,
+      metadata: paymentData.meta,
     },
     {
       headers: {
@@ -29,19 +61,23 @@ export const initPaystackPayment = async (
   return { url: response.data.data.authorization_url };
 };
 
-const processSuccess = async (data: any, customer: any, storeId: number) => {
+const processSuccess = async (
+  req: Request,
+  data: PaystackWebhookData,
+  customer: PaystackWebhookData["customer"]
+) => {
+  await verifySignature(req, data.metadata.storeId);
   const user = await prisma.user.findFirst({
-    where: { email: customer.email, storeId },
+    where: { email: customer.email },
   });
-
-  const rates = await exchangeRates();
 
   if (!user) throw new Error("User not found");
 
-  const amount = Number(data.amount) / 100; // Paystack uses kobo
+  const amount = new Decimal(data.amount / 100); // Paystack uses kobo
+
   await prisma.$transaction(async (tx) => {
     const counter = await tx.storeCounter.update({
-      where: { storeId },
+      where: { storeId: data.metadata.storeId },
       data: { paymentCounter: { increment: 1 } },
     });
     await tx.payment.create({
@@ -49,51 +85,45 @@ const processSuccess = async (data: any, customer: any, storeId: number) => {
         uid: uuidv4(),
         status: "SUCCESS",
         amount,
-        method: "PAYSTACK",
+        storeId: data.metadata.storeId,
         storeScopedId: counter.paymentCounter,
+        method: "PAYSTACK",
         currency: data.currency,
         chargedAmount: amount,
         userUid: user.uid,
-        storeId,
       },
     });
   });
-
-  if (!rates || !rates) {
-    throw new Error("Exchange rates not available");
-  }
-
-  const converted = convertCurrency(amount, data.currency, "USD", rates);
-  const newBalance = Number(user.balance) + Number(converted);
-
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { balance: newBalance },
-  });
 };
 
-const processFailure = async (data: any, customer: any, storeId: number) => {
+const processFailure = async (
+  req: Request,
+  data: PaystackWebhookData,
+  customer: PaystackWebhookData["customer"]
+) => {
+  await verifySignature(req, data.metadata.storeId);
   const user = await prisma.user.findFirst({
-    where: { email: customer.email, storeId },
+    where: { email: customer.email },
   });
 
   if (!user) throw new Error("User not found");
+  const amountInDecimal = new Decimal(data.amount / 100);
   await prisma.$transaction(async (tx) => {
     const counter = await tx.storeCounter.update({
-      where: { storeId },
+      where: { storeId: data.metadata.storeId },
       data: { paymentCounter: { increment: 1 } },
     });
     await tx.payment.create({
       data: {
         uid: crypto.randomUUID(),
-        status: data.status.toUppercase(),
-        amount: data.amount / 100,
+        status: "FAILED",
+        amount: amountInDecimal,
         method: "PAYSTACK",
-        currency: data.currency,
-        chargedAmount: data.amount / 100,
-        userUid: user.uid,
+        storeId: data.metadata.storeId,
         storeScopedId: counter.paymentCounter,
-        storeId,
+        currency: data.currency,
+        chargedAmount: amountInDecimal,
+        userUid: user.uid,
       },
     });
   });

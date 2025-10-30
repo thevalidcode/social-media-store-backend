@@ -102,10 +102,10 @@ export const updateStoreGeneralData = async (
     return;
   }
 
-  const { storeId, role } = authParsed.data;
+  const { storeId, type } = authParsed.data;
   const bodyData = bodyParsed.data;
 
-  if (role !== "admin") {
+  if (type !== "admin") {
     res.status(403).json({ error: "Access denied. Admins only." });
     return;
   }
@@ -168,10 +168,10 @@ export const updateStoreStyles = async (
     return;
   }
 
-  const { storeId, role } = authParsed.data;
+  const { storeId, type } = authParsed.data;
   const bodyData = bodyParsed.data;
 
-  if (role !== "admin") {
+  if (type !== "admin") {
     res.status(403).json({ error: "Access denied. Admins only." });
     return;
   }

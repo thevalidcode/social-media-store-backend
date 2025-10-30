@@ -5,6 +5,7 @@ extendZodWithOpenApi(z);
 
 export const ProviderSchema = z
   .object({
+    id: z.number(),
     storeScopedId: z.number(),
     uid: z.string(),
     name: z.string(),
@@ -17,7 +18,7 @@ export const ProviderSchema = z
 
 export const ProviderCreateRequestSchema = z.object({
   name: z.string(),
-  url: z.string().url(),
+  url: z.string(),
   percentage: z.number(),
   image: z.string().url(),
   apiKey: z.string(),
@@ -27,7 +28,7 @@ export const ProviderCreateRequestSchema = z.object({
 export const ProviderUpdateRequestSchema = z.object({
   uid: z.string(),
   name: z.string().optional(),
-  url: z.string().url().optional(),
+  url: z.string().optional(),
   image: z.string().url(),
   percentage: z.number().optional(),
   apiKey: z.string(),
@@ -69,7 +70,7 @@ export const ImportProviderServicesRequestSchema = z.object({
     .string()
     .url()
     .describe(
-      "API base URL or identifier for the third-party provider (e.g., https://api.example.com/api/v2/)"
+      "API base URL or identifier for the third-party provider (e.g., api.example.com/api/v2/)"
     ),
 });
 
@@ -77,9 +78,7 @@ export const ProviderServicesSchema = z.object({
   provider: z
     .string()
     .url()
-    .describe(
-      "API base URL of the provider (e.g., https://api.example.com/api/v2/)"
-    ),
+    .describe("API base URL of the provider (e.g., api.example.com/api/v2/)"),
 });
 
 export const ProviderServiceSchema = z

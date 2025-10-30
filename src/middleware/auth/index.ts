@@ -23,13 +23,11 @@ export const authenticateUser = async (
       return;
     }
 
-    const { password, ...safeUser } = user;
-
     req.auth = {
       storeId,
       uid,
       type: "user",
-      user: safeUser,
+      user,
     };
 
     next();
@@ -56,13 +54,12 @@ export const authenticateAdmin = async (
       return;
     }
 
-    const { password, ...safeAdmin } = admin;
 
     req.auth = {
       storeId,
       uid,
       type: "admin",
-      user: safeAdmin,
+      user: admin,
     };
 
     next();
@@ -80,9 +77,13 @@ export const authenticateInternalAdmin = async (
     const payload = verifyInternalAdminAuth(req, res);
     if (!payload) return;
 
-    const store = await prisma.store.findFirst({ where: { uid: "validpanel.com" } });
+    const store = await prisma.store.findFirst({
+      where: { uid: "validpanel.com" },
+    });
     if (!store) {
-      res.status(401).json({ error: "The main store (validpanel.com) can't be found" });
+      res
+        .status(401)
+        .json({ error: "The main store (validpanel.com) can't be found" });
       return;
     }
 
@@ -121,28 +122,14 @@ export const authenticateAnyone = async (
         type: "admin",
         storeId,
         uid,
-        user: {
-          id: admin.id,
-          email: admin.email,
-          role: admin.role,
-          uid: admin.uid,
-          apiKey: admin.apiKey,
-          status: admin.status,
-        },
+        user: admin,
       };
     } else if (user) {
       req.auth = {
         type: "user",
         storeId,
         uid,
-        user: {
-          id: user.id,
-          email: user.email,
-          role: user.role,
-          status: user.status,
-          apiKey: user.apiKey,
-          balance: user.balance,
-        },
+        user,
       };
     }
 

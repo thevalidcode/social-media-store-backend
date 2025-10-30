@@ -32,11 +32,9 @@ export const UserSchema: z.ZodType<User> = z
 
 export const AuthSchema = z.object({
   storeId: z.coerce.number(),
-  email: z.string().email(),
   uid: z.string(),
-  apiKey: z.string(),
-  role: z.string(),
-  user: UserSchema || AdminSchema,
+  type: z.enum(["admin", "user"]),
+  user: z.union([UserSchema, AdminSchema]),
 });
 
 export const UserPublicSchema = z
@@ -57,7 +55,8 @@ export const UserUpdateRequestSchema = z.object({
 export const UpdateUserByAdminRequestSchema = UserUpdateRequestSchema.extend({
   balance: z
     .string()
-    .refine((val) => !isNaN(Number(val)), "Balance must be numeric").optional(),
+    .refine((val) => !isNaN(Number(val)), "Balance must be numeric")
+    .optional(),
 });
 
 export const AuthenticateUserSchema = z.object({

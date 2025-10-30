@@ -30,7 +30,9 @@ export const getRefills = async (
       orderBy: { id: "desc" },
     });
 
-    const parsedRefills = refills.map((r) => RefillPublicSchema.safeParse(r).data);
+    const parsedRefills = refills.map(
+      (r) => RefillPublicSchema.safeParse(r).data
+    );
     res.status(200).json(parsedRefills);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -74,14 +76,14 @@ export const getRefillById = async (
     return;
   }
 
-  const { storeId, role, user } = authParsed.data;
+  const { storeId, type, user } = authParsed.data;
 
   try {
     const refill = await prisma.refill.findFirst({
       where: {
         uid: refillUid,
         storeId,
-        ...(role === "user" ? { userUid: user.uid } : {}),
+        ...(type === "user" ? { userUid: user.uid } : {}),
       },
     });
 
@@ -91,7 +93,7 @@ export const getRefillById = async (
     }
 
     const parsedRefill =
-      role === "user"
+      type === "user"
         ? RefillPublicSchema.safeParse(refill)
         : RefillSchema.safeParse(refill);
 
@@ -161,7 +163,6 @@ export const updateRefill = async (
   const parsed = updateRefillSchema.safeParse(req.body);
   const { refillUid } = req.params;
 
-
   if (!authParsed.success || !parsed.success) {
     res.status(400).json({
       error: {
@@ -218,7 +219,6 @@ export const getRefillsByStatus = async (
   const authParsed = AuthSchema.safeParse(req.auth);
   const parsed = getRefillsByStatusSchema.safeParse(req.params);
 
-
   if (!authParsed.success || !parsed.success) {
     res.status(400).json({
       error: {
@@ -229,21 +229,21 @@ export const getRefillsByStatus = async (
     return;
   }
 
-  const { storeId, role, user } = authParsed.data;
+  const { storeId, type, user } = authParsed.data;
   const { status } = parsed.data;
 
   try {
     const refills = await prisma.refill.findMany({
       where: {
         storeId,
-        ...(role === "user" ? { userUid: user.uid } : {}),
+        ...(type === "user" ? { userUid: user.uid } : {}),
         ...(status !== "all" ? { status } : {}),
       },
       orderBy: { id: "desc" },
     });
 
     const parsedRefills =
-      role === "user"
+      type === "user"
         ? refills.map((r) => RefillPublicSchema.safeParse(r).data)
         : refills.map((r) => RefillSchema.safeParse(r).data);
 

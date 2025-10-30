@@ -1,9 +1,25 @@
 import { prisma } from "../config/db.config";
-import convertCurrency from "../utils/ConvertCurrency";
+import { verifyFlutterwaveSignature } from "../utils/webhook/verifySignatures";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import { decryptKey } from "../utils/encrypt";
-import { exchangeRates } from "../helpers/currency.helper";
+import { FlutterwaveWebhookData } from "../schemas/webhook.schema";
+import { Decimal } from "@prisma/client/runtime/library";
+import type { Request } from "express";
+
+const verifySignature = async (req: Request, storeId: number) => {
+  const gateway = await prisma.paymentGateway.findFirst({
+    where: { storeId, platform: "FLUTTERWAVE" },
+  });
+
+  if (!gateway || !gateway.signature) {
+    throw new Error("Invalid store or missing signature");
+  }
+
+  if (!verifyFlutterwaveSignature(req, gateway.signature)) {
+    throw new Error("Invalid signature");
+  }
+};
 
 export const initFlutterwavePayment = async (
   paymentData: any,
@@ -11,7 +27,7 @@ export const initFlutterwavePayment = async (
 ) => {
   const response = await axios.post(
     "https://api.flutterwave.com/v3/payments",
-    paymentData,
+    { ...paymentData },
     {
       headers: {
         Authorization: `Bearer ${decryptKey(
@@ -24,78 +40,69 @@ export const initFlutterwavePayment = async (
   return { url: response.data.data.link };
 };
 
-const processSuccess = async (data: any, customer: any, storeId: number) => {
+const processSuccess = async (
+  req: Request,
+  data: FlutterwaveWebhookData,
+  customer: FlutterwaveWebhookData["customer"]
+) => {
+  await verifySignature(req, data.meta.storeId);
   const user = await prisma.user.findFirst({
-    where: { email: customer.email, storeId },
-  });
-
-  const rates = await exchangeRates();
-
-  if (!user) throw new Error("User not found");
-
-  await prisma.$transaction(async (tx) => {
-    const counter = await tx.storeCounter.update({
-      where: { storeId },
-      data: { paymentCounter: { increment: 1 } },
-    });
-    await prisma.payment.create({
-      data: {
-        uid: uuidv4(),
-        status: "SUCCESS",
-        amount: data.charged_amount,
-        method: "FLUTTERWAVE",
-        currency: data.currency,
-        chargedAmount: data.charged_amount,
-        userUid: user.uid,
-        storeId,
-        storeScopedId: counter.paymentCounter,
-      },
-    });
-  });
-
-  if (!rates || !rates) {
-    throw new Error("Exchange rates not available");
-  }
-
-  const converted = convertCurrency(
-    data.charged_amount,
-    data.currency,
-    "USD",
-    rates
-  );
-  const newBalance = Number(user.balance) + Number(converted);
-
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { balance: newBalance },
-  });
-
-  // Optional: send email notification
-};
-
-const processFailure = async (data: any, customer: any, storeId: number) => {
-  const user = await prisma.user.findFirst({
-    where: { email: customer.email, storeId },
+    where: { email: customer.email },
   });
 
   if (!user) throw new Error("User not found");
 
   await prisma.$transaction(async (tx) => {
     const counter = await tx.storeCounter.update({
-      where: { storeId },
+      where: { storeId: data.meta.storeId },
       data: { paymentCounter: { increment: 1 } },
     });
     await tx.payment.create({
       data: {
         uid: uuidv4(),
-        status: data.status.toUppercase(),
-        amount: data.charged_amount,
+        status: "SUCCESS",
+        amount: data.amount,
+        storeId: data.meta.storeId,
+        storeScopedId: counter.paymentCounter,
         method: "FLUTTERWAVE",
+        currency: data.currency,
+        chargedAmount: data.amount,
+        userUid: user.uid,
+      },
+    });
+  });
+
+  // Optional: send email notification
+};
+
+const processFailure = async (
+  req: Request,
+  data: FlutterwaveWebhookData,
+  customer: FlutterwaveWebhookData["customer"]
+) => {
+  await verifySignature(req, data.meta.storeId);
+  const user = await prisma.user.findFirst({
+    where: { email: customer.email },
+  });
+
+  if (!user) throw new Error("User not found");
+  const amountInDecimal = new Decimal(data.amount / 100);
+  await prisma.$transaction(async (tx) => {
+    const counter = await tx.storeCounter.update({
+      where: { storeId: data.meta.storeId },
+      data: { paymentCounter: { increment: 1 } },
+    });
+    await tx.payment.create({
+      data: {
+        uid: crypto.randomUUID(),
+        status: "FAILED",
+        amount: amountInDecimal,
+        method: "FLUTTERWAVE",
+        storeId: data.meta.storeId,
         storeScopedId: counter.paymentCounter,
         currency: data.currency,
-        chargedAmount: data.charged_amount,
+        chargedAmount: amountInDecimal,
         userUid: user.uid,
-        storeId,
       },
     });
   });

@@ -3,7 +3,7 @@ import * as webhooks from "../controllers/webhook.controllers";
 
 const router = express.Router();
 
-router.post("/flutterwave/:storeId", webhooks.flutterwaveWebhook);
-router.post("/paystack/:storeId", webhooks.paystackWebhook);
+router.post("/flutterwave", webhooks.flutterwaveWebhook);
+router.post("/paystack", webhooks.paystackWebhook);
 
 export default router;

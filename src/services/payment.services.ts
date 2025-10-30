@@ -4,9 +4,17 @@ import { prisma } from "../config/db.config";
 import { initFlutterwavePayment } from "../providers/flutterwave.providers";
 import { initPaystackPayment } from "../providers/paystack.providers";
 import type { CreatePaymentInput } from "../schemas/payment.schema";
-import { User } from "../../prisma/generated";
+import { Admin, TransactionType, User } from "../../prisma/generated";
+import {
+  FlutterwaveWebhookData,
+  PaystackWebhookData,
+} from "../schemas/webhook.schema";
+import type { Request } from "express";
 
-export const createPayment = async (user: User, input: CreatePaymentInput) => {
+export const createPayment = async (
+  user: User | Admin,
+  input: CreatePaymentInput
+) => {
   const { storeId, platform, currency, amount, redirect_url } = input;
 
   const gateway = await prisma.paymentGateway.findFirst({
@@ -37,6 +45,11 @@ export const createPayment = async (user: User, input: CreatePaymentInput) => {
       description: gateway.description,
       logo: general.logoUrl,
     },
+    meta: {
+      userUid: user.uid,
+      storeId: user.storeId,
+      type: "WALLET_CREDIT" as TransactionType,
+    },
   };
   const parsedSecretKey = gateway.secretKey as {
     encrypted_key: string;
@@ -54,35 +67,35 @@ export const createPayment = async (user: User, input: CreatePaymentInput) => {
 };
 
 const handleFlutterwaveSuccess = async (
-  data: any,
-  customer: any,
-  storeId: number
+  req: Request,
+  data: FlutterwaveWebhookData,
+  customer: FlutterwaveWebhookData["customer"]
 ) => {
-  return await flutterwaveProvider.processSuccess(data, customer, storeId);
+  return await flutterwaveProvider.processSuccess(req, data, customer);
 };
 
 const handleFlutterwaveFailure = async (
-  data: any,
-  customer: any,
-  storeId: number
+  req: Request,
+  data: FlutterwaveWebhookData,
+  customer: FlutterwaveWebhookData["customer"]
 ) => {
-  return await flutterwaveProvider.processFailure(data, customer, storeId);
+  return await flutterwaveProvider.processFailure(req, data, customer);
 };
 
 const handlePaystackSuccess = async (
-  data: any,
-  customer: any,
-  storeId: number
+  req: Request,
+  data: PaystackWebhookData,
+  customer: PaystackWebhookData["customer"]
 ) => {
-  return await paystackProvider.processSuccess(data, customer, storeId);
+  return await paystackProvider.processSuccess(req, data, customer);
 };
 
 const handlePaystackFailure = async (
-  data: any,
-  customer: any,
-  storeId: number
+  req: Request,
+  data: PaystackWebhookData,
+  customer: PaystackWebhookData["customer"]
 ) => {
-  return await paystackProvider.processFailure(data, customer, storeId);
+  return await paystackProvider.processFailure(req, data, customer);
 };
 
 export default {

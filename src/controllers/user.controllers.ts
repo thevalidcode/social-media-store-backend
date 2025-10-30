@@ -343,7 +343,7 @@ export const verifySession = async (
     res.status(400).json({ error: authParsed.error.flatten() });
     return;
   }
-  res.status(200).send({ role: authParsed.data.role });
+  res.status(200).send({ role: authParsed.data.user.role });
 };
 
 // ✅ Delete one user

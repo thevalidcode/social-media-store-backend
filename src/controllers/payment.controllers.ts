@@ -1,7 +1,5 @@
 import type { Request, Response } from "express";
-import {
-  CreatePaymentSchema,
-} from "../schemas/payment.schema";
+import { CreatePaymentSchema } from "../schemas/payment.schema";
 import * as paymentService from "../services/payment.services";
 import { AuthSchema } from "../schemas/user.schema";
 

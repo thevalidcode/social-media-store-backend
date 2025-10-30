@@ -15,14 +15,6 @@ registry.registerPath({
   path: "/webhooks/flutterwave/{storeId}",
   summary: "Flutterwave webhook for users",
   tags: ["Webhooks"],
-  parameters: [
-    {
-      name: "storeId",
-      in: "path",
-      required: true,
-      schema: { type: "number" },
-    },
-  ],
   request: {
     body: {
       content: {
@@ -45,14 +37,6 @@ registry.registerPath({
   path: "/webhooks/paystack/{storeId}",
   summary: "Paystack webhook for users",
   tags: ["Webhooks"],
-  parameters: [
-    {
-      name: "storeId",
-      in: "path",
-      required: true,
-      schema: { type: "number" },
-    },
-  ],
   request: {
     body: {
       content: {
