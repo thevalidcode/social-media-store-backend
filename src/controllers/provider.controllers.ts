@@ -12,26 +12,28 @@ import {
 } from "../schemas/provider.schema";
 import { v4 as uuidv4 } from "uuid";
 import { AdminAuthSchema } from "../schemas/admin.schema";
+import { Decimal } from "@prisma/client/runtime/library";
+import { ServiceType } from "../../prisma/generated";
 
 export const getProviderServices = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
-  const bodyParsed = ProviderServicesSchema.safeParse(req.params);
+  const queryParsed = ProviderServicesSchema.safeParse(req.query);
 
-  if (!authParsed.success || !bodyParsed.success) {
+  if (!authParsed.success || !queryParsed.success) {
     res.status(400).json({
       error: {
         auth: !authParsed.success ? authParsed.error.flatten() : undefined,
-        body: !bodyParsed.success ? bodyParsed.error.flatten() : undefined,
+        query: !queryParsed.success ? queryParsed.error.flatten() : undefined,
       },
     });
     return;
   }
 
   const { storeId } = authParsed.data;
-  const { provider } = bodyParsed.data;
+  const { provider } = queryParsed.data;
 
   try {
     const providerData = await prisma.provider.findFirst({
@@ -124,10 +126,11 @@ export const importServices = async (
         }),
       ]);
 
-    const providerCurrency = balanceData.currency.toUpperCase();
+    const providerCurrency = String(
+      balanceData.currency || "USD"
+    ).toUpperCase();
 
     const newServices = await prisma.$transaction(async (tx) => {
-      // Preload existing services to avoid duplicate checks per loop
       const existingServices = await tx.service.findMany({
         where: { storeId },
         select: { providerId: true },
@@ -136,13 +139,11 @@ export const importServices = async (
         existingServices.map((s) => s.providerId)
       );
 
-      // Preload categories and cache them
       const categories = await tx.category.findMany({ where: { storeId } });
       const categoryCache = new Map(
         categories.map((c) => [c.name.toLowerCase(), c])
       );
 
-      // Get and increment service counter
       const counter = await tx.storeCounter.update({
         where: { storeId },
         data: { serviceCounter: { increment: providerServicesId.length } },
@@ -161,16 +162,19 @@ export const importServices = async (
         const providerId = parseInt(service.service);
         if (existingProviderIds.has(providerId)) continue;
 
-        const baseRate = parseFloat(service.rate);
-        const finalPrice = parseFloat(
+        const baseRate = parseFloat(service.rate) || 0;
+        const finalPrice = new Decimal(
           (baseRate + (baseRate * importPercent) / 100).toFixed(2)
         );
 
         currentServiceId++;
 
+        // Category handling
         let serviceCategory = category.label;
         if (category.value === "createSameCategory") {
-          const categoryName = service.category.toLowerCase();
+          const categoryName = (
+            service.category || "Uncategorized"
+          ).toLowerCase();
           if (!categoryCache.has(categoryName)) {
             const catCounter = await tx.storeCounter.update({
               where: { storeId },
@@ -179,7 +183,7 @@ export const importServices = async (
 
             const newCategory = await tx.category.create({
               data: {
-                name: service.category,
+                name: service.category || "Uncategorized",
                 status: "ACTIVE",
                 position: catCounter.categoryCounter,
                 uid: uuidv4(),
@@ -194,29 +198,55 @@ export const importServices = async (
           serviceCategory = categoryCache.get(categoryName)!.name;
         }
 
+        // Normalize all fields
+        const formattedType = String(
+          service.type
+            ? service.type.replace(/\s+/g, "_").toUpperCase()
+            : "DEFAULT"
+        ) as ServiceType;
+
+        if (!(formattedType in ServiceType)) {
+          console.log(
+            "Unknown type:",
+            service.type,
+            "-> formatted as:",
+            formattedType
+          );
+        }
+
+        const formattedStatus = "ACTIVE";
+        const formattedNetwork = String(service.network || "None");
+        const formattedCancel =
+          service.cancel === true || service.cancel === "true";
+        const formattedRefill =
+          service.refill === true || service.refill === "true";
+        const formattedSyncQuantity = true;
+        const formattedSyncCatAndName = true;
+        const formattedDripFeed = false;
+
         servicesToCreate.push({
           id: currentServiceId,
-          name: service.name,
-          category: serviceCategory,
-          type: service.type,
-          min: parseInt(service.min),
-          max: parseInt(service.max),
+          name: String(service.name || "Untitled Service"),
+          category: String(serviceCategory),
+          type: formattedType,
+          min: parseInt(service.min) || 0,
+          max: parseInt(service.max) || 0,
           providerId,
-          description: service.description || "",
+          description: String(service.description || ""),
           providerPrice: baseRate,
+          providerUid: providerData.uid,
           storeId,
-          status: "active",
-          syncQuantity: true,
-          syncCatAndName: true,
+          status: formattedStatus,
+          syncQuantity: formattedSyncQuantity,
+          syncCatAndName: formattedSyncCatAndName,
           price: finalPrice,
           position: currentServiceId,
-          cancel: service.cancel,
-          network: service.network || "None",
-          refill: service.refill,
+          cancel: formattedCancel,
+          network: formattedNetwork,
+          refill: formattedRefill,
           percentage: importPercent,
-          dripFeed: false,
-          provider,
-          providerCurrency: providerCurrency,
+          dripFeed: formattedDripFeed,
+          providerCurrency,
           uid: uuidv4(),
           storeScopedId: currentServiceId,
         });
@@ -224,7 +254,6 @@ export const importServices = async (
         actualCreatedCount++;
       }
 
-      // Bulk insert services
       if (servicesToCreate.length > 0) {
         await tx.service.createMany({ data: servicesToCreate });
       }
@@ -237,6 +266,7 @@ export const importServices = async (
       imported: newServices,
     });
   } catch (err: any) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -299,11 +329,8 @@ export const addProvider = async (
       return provider;
     });
 
-    res.status(200).json({
-      success: "Provider created successfully",
-    });
-
     res.status(200).json({ success: "Added Provider successfully." });
+    return;
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -332,6 +359,7 @@ export const getProviders = async (
         uid: true,
         name: true,
         url: true,
+        image: true,
         sync: true,
         percentage: true,
         createdAt: true,

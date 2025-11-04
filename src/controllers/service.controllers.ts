@@ -80,6 +80,9 @@ export const getServicesForAdmins = async (
     const services = await prisma.service.findMany({
       where: { storeId },
       orderBy: { position: "asc" },
+      include: {
+        provider: true,
+      },
     });
 
     res.status(200).json(services);
@@ -154,6 +157,7 @@ export const getServiceByIDFromAdmin = async (
   try {
     const service = await prisma.service.findFirst({
       where: { storeId, id: serviceId },
+      include: { provider: true },
     });
 
     res.status(200).json({ service });

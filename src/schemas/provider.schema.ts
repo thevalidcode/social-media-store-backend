@@ -10,7 +10,7 @@ export const ProviderSchema = z
     uid: z.string(),
     name: z.string(),
     image: z.string().url(),
-    url: z.string().url(),
+    url: z.string(),
     percentage: z.number(),
     sync: z.boolean(),
   })
@@ -68,7 +68,6 @@ export const ImportProviderServicesRequestSchema = z.object({
     .describe("Target category to group the imported services under"),
   provider: z
     .string()
-    .url()
     .describe(
       "API base URL or identifier for the third-party provider (e.g., api.example.com/api/v2/)"
     ),
@@ -77,7 +76,6 @@ export const ImportProviderServicesRequestSchema = z.object({
 export const ProviderServicesSchema = z.object({
   provider: z
     .string()
-    .url()
     .describe("API base URL of the provider (e.g., api.example.com/api/v2/)"),
 });
 

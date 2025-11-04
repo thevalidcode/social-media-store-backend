@@ -16,7 +16,6 @@ export const AdminSchema: z.ZodType<Admin> = z
     role: z.nativeEnum(AdminRole),
     status: z.nativeEnum(AdminStatus),
     storeId: z.number(),
-    currency: z.string(),
     timestamp: z.date(),
     lastSeen: z.date(),
   })

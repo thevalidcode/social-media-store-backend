@@ -4,6 +4,8 @@ import { prisma } from "../config/db.config";
 import { sendEmail } from "../emails";
 import { decryptKey } from "../utils/encrypt";
 import { v4 as uuidv4 } from "uuid";
+import { Decimal } from "@prisma/client/runtime/library";
+import { ServiceType } from "../../prisma/generated";
 
 const agent = new https.Agent({
   keepAlive: true,
@@ -24,13 +26,16 @@ export const updateExistingServices = async (): Promise<void> => {
     });
 
     for (const { storeId } of storeIds) {
-      const services = await prisma.service.findMany({ where: { storeId } });
+      const services = await prisma.service.findMany({
+        where: { storeId },
+        include: { provider: true },
+      });
       const providers = await prisma.provider.findMany({ where: { storeId } });
 
       const provCache: Record<string, any> = {};
 
       for (const svc of services) {
-        const prov = providers.find((p) => p.url === svc.provider);
+        const prov = providers.find((p) => p.url === svc.provider?.url);
         if (!prov) continue;
 
         if (!provCache[prov.url]) {
@@ -84,7 +89,11 @@ export const updateExistingServices = async (): Promise<void> => {
         await prisma.service.update({
           where: { uid: svc.uid },
           data: {
-            type: liveSvc.type,
+            type: String(
+              liveSvc.type
+                ? liveSvc.type.replace(/\s+/g, "_").toUpperCase()
+                : "DEFAULT"
+            ) as ServiceType,
             providerPrice: safeFloat(liveSvc.rate),
             price: safeFloat(priceUSD),
             cancel: liveSvc.cancel,
@@ -200,25 +209,27 @@ export const syncServices = async (): Promise<void> => {
                 uid: uuidv4(),
                 name: s.name,
                 category: s.category,
-                type: s.type,
+                type: String(
+                  s.type ? s.type.replace(/\s+/g, "_").toUpperCase() : "DEFAULT"
+                ) as ServiceType,
                 providerCurrency: provCur,
                 min: safeInt(s.min),
                 max: safeInt(s.max),
                 providerId: safeInt(s.service),
                 description: s.description || "",
-                providerPrice: safeFloat(s.rate),
+                providerPrice: new Decimal(s.rate),
                 storeId,
                 status: "ACTIVE",
                 syncQuantity: true,
                 syncCatAndName: true,
-                price: safeFloat(endPrice),
+                price: new Decimal(endPrice),
                 position: serviceCounter.serviceCounter,
                 cancel: s.cancel,
                 network: s.network || "None",
                 refill: s.refill,
                 percentage: prov.percentage,
                 dripFeed: false,
-                provider: prov.url,
+                providerUid: prov.uid,
               },
             });
 

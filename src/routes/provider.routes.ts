@@ -14,7 +14,7 @@ router.post(
   providers.importServices
 );
 router.get(
-  "/services/:provider",
+  "/services",
   authenticateAdmin,
   limitProviderActions,
   providers.getProviderServices

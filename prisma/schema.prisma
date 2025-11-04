@@ -146,11 +146,23 @@ enum ServiceStatus {
 }
 
 enum ServiceType {
-  MANUAL         @map("Manual")
-  DEFAULT        @map("Default")
-  PACKAGE        @map("Package")
-  SUBSCRIPTION   @map("Subscription")
-  CUSTOMCOMMENTS @map("Custom Comments")
+  MANUAL                  @map("manual")
+  DEFAULT                 @map("default")
+  PACKAGE                 @map("package")
+  SEO                     @map("seo")
+  CUSTOM_COMMENTS         @map("custom_comments")
+  MENTIONS                @map("mentions")
+  MENTIONS_WITH_HASHTAGS  @map("mentions_with_hashtags")
+  MENTIONS_CUSTOM_LIST    @map("mentions_custom_list")
+  MENTIONS_HASHTAG        @map("mentions_hashtag")
+  MENTIONS_USER_FOLLOWERS @map("mentions_user_followers")
+  MENTIONS_MEDIA_LIKERS   @map("mentions_media_likers")
+  CUSTOM_COMMENTS_PACKAGE @map("custom_comments_package")
+  COMMENT_LIKES           @map("comment_likes")
+  POLL                    @map("poll")
+  COMMENT_REPLIES         @map("comment_replies")
+  SUBSCRIPTIONS           @map("subscriptions")
+  INVITES_FROM_GROUPS     @map("invites_from_groups")
 }
 
 model Service {
@@ -167,6 +179,7 @@ model Service {
   position         Int           @default(1)
   status           ServiceStatus @default(ACTIVE)
   providerId       Int?          @map("provider_id")
+  providerUid      String?       @map("provider_uid")
   providerPrice    Decimal?      @map("provider_price") @db.Decimal(10, 2)
   storeId          Int           @map("store_id")
   store            Store         @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
@@ -178,11 +191,12 @@ model Service {
   refill           Boolean?
   percentage       Float?
   dripFeed         Boolean?      @default(false) @map("drip_feed")
-  provider         String?
   providerCurrency String?       @map("provider_currency")
   refillDays       Int?          @map("refill_days")
   price            Decimal       @default(0.00) @db.Decimal(10, 2)
   Order            Order[]
+
+  provider Provider? @relation(fields: [providerUid], references: [uid], onDelete: Cascade)
 
   @@unique([storeId, storeScopedId])
   @@map("services")
@@ -271,7 +285,6 @@ model Blog {
   title         String
   excerpt       String
   content       String
-  description   String     @default("")
   coverImage    String     @default("") @map("cover_image")
   status        BlogStatus @default(ACTIVE)
   position      Int
@@ -279,7 +292,8 @@ model Blog {
   uid           String     @unique
   storeId       Int        @map("store_id")
   store         Store      @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
-  timestamp     DateTime   @default(now())
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
 
   @@unique([storeId, storeScopedId])
   @@map("blogs")
@@ -480,18 +494,19 @@ model PaymentGateway {
 }
 
 model Provider {
-  id            Int      @id @default(autoincrement())
-  storeScopedId Int      @map("store_scoped_id")
-  uid           String   @unique
+  id            Int       @id @default(autoincrement())
+  storeScopedId Int       @map("store_scoped_id")
+  uid           String    @unique
   name          String
   image         String
-  apiKey        Json     @map("api_key")
+  apiKey        Json      @map("api_key")
   url           String
-  sync          Boolean  @default(false)
-  percentage    Float    @default(0)
-  createdAt     DateTime @default(now()) @map("created_at")
-  storeId       Int      @map("store_id")
-  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  sync          Boolean   @default(false)
+  percentage    Float     @default(0)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  storeId       Int       @map("store_id")
+  store         Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  Service       Service[]
 
   @@unique([storeId, storeScopedId])
   @@map("providers")

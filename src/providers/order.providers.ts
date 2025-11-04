@@ -38,7 +38,12 @@ export const sendOrderToProvider = async (
 
     const [user, service, provider, affiliate, rates] = await Promise.all([
       prisma.user.findUnique({ where: { storeId, uid: orderData.userUid } }),
-      prisma.service.findUnique({ where: { uid: orderData.serviceUid } }),
+      prisma.service.findUnique({
+        where: { uid: orderData.serviceUid },
+        include: {
+          provider: true,
+        },
+      }),
       prisma.provider.findFirst({ where: { storeId, url: order.provider } }),
       prisma.affiliateSetting.findFirst({ where: { storeId } }),
       exchangeRates(),
@@ -88,11 +93,11 @@ export const sendOrderToProvider = async (
     };
 
     if (service.type === "PACKAGE") delete payload.quantity;
-    if (service.type === "CUSTOMCOMMENTS") {
+    if (service.type === "CUSTOM_COMMENTS") {
       payload.comments = orderData.comments;
     }
 
-    const url = `${service.provider}`;
+    const url = `${service.provider?.url}`;
     const { data: res } = await axios.post(`https://${url}`, payload, {
       httpsAgent: agent,
     });
@@ -520,6 +525,9 @@ export const processDripFeedOrders = async (): Promise<void> => {
           });
           const service = await prisma.service.findUnique({
             where: { uid: order.serviceUid },
+            include: {
+              provider: true,
+            },
           });
           if (!user || !service) continue;
 
@@ -594,9 +602,9 @@ export const processDripFeedOrders = async (): Promise<void> => {
 
           const newOrderData = {
             ...order,
-            provider: service.provider,
+            provider: service.provider?.url,
             syncOrder: true,
-            providerServiceId: service.providerId,
+            providerOrderId: service.providerId,
             price: parseFloat(price),
             storeId,
             uid: uuidv4(),

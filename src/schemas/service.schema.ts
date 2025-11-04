@@ -70,6 +70,7 @@ export const ServiceCreateInputSchema = z.object({
   network: z.string().optional(),
   refill: z.boolean().optional(),
   cancel: z.boolean().optional(),
+  providerUid: z.string().optional(),
 });
 
 export const ServiceUpdateInputSchema = z.object({

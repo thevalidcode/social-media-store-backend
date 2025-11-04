@@ -169,12 +169,12 @@ registry.registerPath({
 
 registry.registerPath({
   method: "get",
-  path: "/providers/services/{provider}",
+  path: "/providers/services",
   summary: "Get provider services",
   tags: ["Providers"],
   security: [{ CookieAuth: [] }],
   request: {
-    params: ProviderServicesSchema,
+    query: ProviderServicesSchema,
   },
   responses: {
     200: ProviderServicesListResponse,

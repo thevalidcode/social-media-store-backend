@@ -4,8 +4,8 @@ import { BlogStatus } from "../../prisma/generated";
 
 extendZodWithOpenApi(z);
 
-export const blogIdSchema = z.object({
-  blogId: z.coerce.number(),
+export const blogUidSchema = z.object({
+  blogUid: z.coerce.string(),
 });
 
 export const createBlogSchema = z.object({
@@ -13,7 +13,7 @@ export const createBlogSchema = z.object({
   excerpt: z.string().min(1),
   coverImage: z.string().url(),
   content: z.string().min(1),
-  description: z.string().optional(),
+  slug: z.string().optional(),
 });
 
 export const BlogSchema = z
@@ -25,7 +25,8 @@ export const BlogSchema = z
     content: z.string().min(1),
     status: z.nativeEnum(BlogStatus),
     position: z.coerce.number(),
-    description: z.string().optional(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
   })
   .openapi("Blog");
 
@@ -34,7 +35,7 @@ export const updateBlogSchema = z.object({
   excerpt: z.string().min(1),
   title: z.string().min(1),
   content: z.string().min(1),
-  description: z.string().optional(),
+  slug: z.string().optional(),
 });
 
 export const deleteBlogSchema = z.object({

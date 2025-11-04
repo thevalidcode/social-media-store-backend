@@ -13,7 +13,7 @@ import {
 
 // Public routes
 router.get("/", getBlogsLimiter, blogs.getBlogs);
-router.get("/:blogId", getBlogByIDLimiter, blogs.getBlogByID);
+router.get("/:blogUid", getBlogByIDLimiter, blogs.getBlogByUid);
 
 // Protected routes
 router.post("/", authenticateAdmin, addBlogLimiter, blogs.addBlog);

@@ -41,7 +41,6 @@ export const OrderSchema = z
     url: z.string(),
     uid: z.string(),
     serviceUid: z.string(),
-    providerServiceId: z.coerce.number().optional(),
     providerOrderId: z.coerce.number().optional(),
     providerCurrency: z.string().optional(),
     providerError: z.string().optional(),

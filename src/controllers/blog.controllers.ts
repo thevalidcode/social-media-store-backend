@@ -1,6 +1,6 @@
 import { prisma } from "../config/db.config";
 import {
-  blogIdSchema,
+  blogUidSchema,
   createBlogSchema,
   updateBlogSchema,
   deleteBlogSchema,
@@ -32,11 +32,11 @@ export const getBlogs = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export const getBlogByID = async (
+export const getBlogByUid = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const parsed = blogIdSchema.safeParse(req.params);
+  const parsed = blogUidSchema.safeParse(req.params);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -48,12 +48,12 @@ export const getBlogByID = async (
     return;
   }
 
-  const { blogId } = parsed.data;
+  const { blogUid } = parsed.data;
   const { storeId } = queryParsed.data;
 
   try {
     const blog = await prisma.blog.findFirst({
-      where: { id: blogId, storeId },
+      where: { uid: blogUid, storeId },
     });
 
     res.status(200).json({ blog });
@@ -109,7 +109,6 @@ export const addBlog = async (req: Request, res: Response): Promise<void> => {
           excerpt: parsed.data.excerpt,
           content: parsed.data.content,
           coverImage: parsed.data.coverImage,
-          description: parsed.data.description || "",
           status: "ACTIVE",
           position: newPosition,
           uid: uuidv4(),
