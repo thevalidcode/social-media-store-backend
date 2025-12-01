@@ -1,5 +1,5 @@
 import { z } from "zod";
-import {} from "../../schemas/files.schema";
+import { collection } from "../../schemas/files.schema";
 
 export const UploadedImageSuccess = {
   description: "Image uploaded successfully",
@@ -8,6 +8,7 @@ export const UploadedImageSuccess = {
       schema: z.object({
         message: z.string(),
         url: z.string().url(),
+        collection,
       }),
     },
   },

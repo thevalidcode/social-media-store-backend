@@ -4,11 +4,10 @@ import * as categories from "../controllers/category.controllers";
 import { authenticateAdmin } from "../middleware/auth";
 
 import {
-  limitPublicGet,
   limitCategoryMutations,
 } from "../middleware/ratelimit/category.ratelimit";
 
-router.get("/", limitPublicGet, categories.getCategories);
+router.get("/", categories.getCategories);
 router.get("/:categoryId", categories.getCategoryByID);
 
 router.post(

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 
 extendZodWithOpenApi(z);
-const collection = z
+export const collection = z
   .enum([
     "blogs",
     "faqs",
@@ -13,6 +13,7 @@ const collection = z
     "users",
     "admins",
     "store",
+    "payment-gateways",
   ])
   .describe("Collection of the image uploaded");
 

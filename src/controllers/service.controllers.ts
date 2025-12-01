@@ -48,10 +48,12 @@ export const getServices = async (
         position: true,
         cancel: true,
         network: true,
+        currency: true,
         refill: true,
         percentage: true,
         dripFeed: true,
         refillDays: true,
+        storeScopedId: true,
         price: true,
         timestamp: true,
       },
@@ -116,8 +118,10 @@ export const getServiceByID = async (
         type: true,
         min: true,
         max: true,
+        currency: true,
         cancel: true,
         icon: true,
+        storeScopedId: true,
         network: true,
         refill: true,
         dripFeed: true,
@@ -322,6 +326,17 @@ export const addService = async (
         data: { serviceCounter: { increment: 1 } },
       });
 
+      if (parsed.data.providerUid) {
+        const provider = await tx.provider.findUnique({
+          where: { uid: parsed.data.providerUid },
+        });
+        if (!provider) {
+          throw new Error(
+            `Provider with uid ${parsed.data.providerUid} not found`
+          );
+        }
+      }
+
       const lastService = await tx.service.findFirst({
         where: { storeId },
         orderBy: { position: "desc" },
@@ -330,16 +345,20 @@ export const addService = async (
 
       const newPosition = lastService ? lastService.position + 1 : 1;
 
-      return tx.service.create({
-        data: {
-          ...parsed.data,
-          uid: uuidv4(),
-          storeId,
-          storeScopedId: counter.serviceCounter,
-          status: "ACTIVE",
-          position: newPosition,
-        },
-      });
+      const serviceData: any = {
+        ...parsed.data,
+        uid: uuidv4(),
+        storeId,
+        storeScopedId: counter.serviceCounter,
+        status: "ACTIVE",
+        position: newPosition,
+      };
+
+      if (!parsed.data.providerUid) {
+        delete serviceData.providerUid;
+      }
+
+      return tx.service.create({ data: serviceData });
     });
 
     res

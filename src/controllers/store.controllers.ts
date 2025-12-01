@@ -98,7 +98,7 @@ export const updateStoreGeneralData = async (
 
     if (!existing) {
       await prisma.setting.create({
-        data: { ...bodyData, storeId, uid: uuidv4(), storeScopedId: 1 },
+        data: { ...bodyData, storeId, uid: uuidv4() },
       });
     } else {
       await prisma.setting.update({

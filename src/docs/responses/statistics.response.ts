@@ -95,6 +95,7 @@ export const UserDashboardResponse = {
         yourOrders: z.number(),
         yourSpent: z.number(),
         storeOrders: z.number(),
+        failedOrders: z.number(),
         ordersData: z.array(
           z.object({
             month: z.string(),

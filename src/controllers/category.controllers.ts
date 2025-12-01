@@ -13,6 +13,7 @@ const categoryIdSchema = z.object({
 const updateCategorySchema = z.object({
   uid: z.string(),
   name: z.string().optional(),
+  icon: z.string().optional(),
   position: z.coerce.number().optional(),
   description: z.string().optional(),
 });

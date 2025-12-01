@@ -121,6 +121,7 @@ model Service {
   network          String?
   refill           Boolean?
   percentage       Float?
+  currency         String?
   dripFeed         Boolean?      @default(false) @map("drip_feed")
   providerCurrency String?       @map("provider_currency")
   refillDays       Int?          @map("refill_days")
@@ -320,7 +321,6 @@ model Faq {
 
 model Setting {
   id                    Int      @id @default(autoincrement())
-  storeScopedId         Int      @map("store_scoped_id")
   uid                   String   @unique
   storeId               Int      @map("store_id")
   storeName             String   @default("My Store") @map("store_name")
@@ -331,7 +331,6 @@ model Setting {
   showBanner            Boolean? @default(true) @map("show_banner")
   store                 Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
-  @@unique([storeId, storeScopedId])
   @@map("settings")
 }
 

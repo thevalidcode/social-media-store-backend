@@ -157,7 +157,7 @@ export const getUserDashboardData = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { storeId } = req.auth!;
+  const { storeId, uid } = req.auth!;
 
   try {
     // Fetch all orders for this store
@@ -166,6 +166,13 @@ export const getUserDashboardData = async (
       include: { user: true, service: true },
       orderBy: { timestamp: "desc" },
     });
+
+    // Fetch all orders for this store
+    const failedOrders = (
+      await prisma.order.findMany({
+        where: { storeId, status: "FAILED", userUid: uid },
+      })
+    ).length;
 
     // Count and total spent
     const yourOrders = orders.length;
@@ -202,6 +209,7 @@ export const getUserDashboardData = async (
       icon: s.icon,
       min: s.min,
       max: s.max,
+      currency: s.currency,
       type: s.type,
       price: s.price,
       date: new Date(s.timestamp).toLocaleDateString("en-US", {
@@ -282,6 +290,7 @@ export const getUserDashboardData = async (
     res.json({
       yourOrders,
       yourSpent,
+      failedOrders,
       storeOrders: totalStoreOrders,
       recentlyAddedServices: formattedServices,
       ordersData: last6Months.map((m) => ({

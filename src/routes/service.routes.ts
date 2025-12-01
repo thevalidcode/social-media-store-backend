@@ -8,7 +8,7 @@ import {
 } from "../middleware/ratelimit/service.ratelimit";
 
 router.get("/", services.getServices);
-router.post("/", limitServiceAdd, services.addService);
+router.post("/", limitServiceAdd, authenticateAdmin, services.addService);
 router.get("/admin", authenticateAdmin, services.getServicesForAdmins);
 router.get("/:providerId", authenticateAdmin, services.getServicesByProviderId);
 router.get("/:serviceId", services.getServiceByID);

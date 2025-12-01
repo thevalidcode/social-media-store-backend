@@ -46,6 +46,23 @@ export const uploadImage = async (
       .replace(/[^a-zA-Z0-9.-]/g, "")
       .toLowerCase();
 
+    const existingLog = await prisma.uploadLog.findFirst({
+      where: {
+        storeId,
+        collection,
+        filename: safeName,
+      },
+    });
+
+    if (existingLog) {
+      res.status(200).json({
+        error: "This file has already been uploaded",
+        url: existingLog.url,
+        collection: existingLog.collection,
+      });
+      return;
+    }
+
     const buffer = req.file.buffer;
     const s3Url = await uploadToS3(buffer, safeName, storeId, collection);
 
@@ -79,6 +96,7 @@ export const uploadImage = async (
     res.status(200).json({
       message: "Image uploaded successfully",
       url: uploadLog.url,
+      collection: uploadLog.collection,
     });
   } catch (err: any) {
     console.error("Upload error:", err);
