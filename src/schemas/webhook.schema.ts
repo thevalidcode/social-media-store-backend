@@ -5,15 +5,15 @@ import { TransactionType } from "../../prisma/generated";
 extendZodWithOpenApi(z);
 
 export const FlutterwaveWebhookSchema = z.object({
-  event: z.string(), // usually "charge.completed"
-  status: z.string(), // "successful" | "failed"
+  event: z.string(),
+  status: z.string(),
   data: z.object({
     id: z.number(),
     tx_ref: z.string(),
     flw_ref: z.string(),
     amount: z.number(),
     currency: z.string(),
-    status: z.string(), // "successful", "failed", etc.
+    status: z.string(),
     charged_amount: z.number(),
     payment_type: z.string(),
     created_at: z.string(),
@@ -38,12 +38,12 @@ export type FlutterwaveWebhookData = z.infer<
 >["data"];
 
 export const PaystackWebhookSchema = z.object({
-  event: z.string(), // e.g. "charge.success"
+  event: z.string(),
   data: z.object({
     id: z.number(),
     amount: z.number(),
     currency: z.string(),
-    status: z.string(), // "success" | "failed"
+    status: z.string(),
     reference: z.string(),
     domain: z.string(),
     paid_at: z.string(),
@@ -66,8 +66,6 @@ export const PaystackWebhookSchema = z.object({
         bin: z.string(),
         bank: z.string(),
         channel: z.string(),
-        reusable: z.boolean(),
-        signature: z.string(),
       })
       .optional(),
     customer: z.object({

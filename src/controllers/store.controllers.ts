@@ -3,7 +3,6 @@ import type { Request, Response } from "express";
 import { prisma } from "../config/db.config";
 import {
   StoreGeneralDataRequestSchema,
-  StoreGeneralDataResponseSchema,
   UpdateGeneralDataRequestSchema,
   UpdateStylesRequestSchema,
 } from "../schemas/store.schema";
@@ -14,7 +13,6 @@ import { AdminAuthSchema } from "../schemas/admin.schema";
 const storeIdQuerySchema = z.object({ domain: z.string().min(1) });
 const storeIdSchema = z.object({ storeId: z.coerce.number() });
 
-// ✅ Get store data by domain
 export const getStoreData = async (
   req: Request,
   res: Response
@@ -45,7 +43,6 @@ export const getStoreData = async (
   }
 };
 
-// ✅ Get general store data
 export const getStoreGeneralData = async (
   req: Request,
   res: Response
@@ -70,22 +67,13 @@ export const getStoreGeneralData = async (
       return;
     }
 
-    const parsedData = StoreGeneralDataResponseSchema.safeParse({
-      logoUrl: generalData.logoUrl,
-      storeId: generalData.storeId,
-      faviconUrl: generalData.faviconUrl,
-      storeName: generalData.storeName,
-      defaultClientCurrency: generalData.defaultClientCurrency,
-    });
-
-    res.json(parsedData.data);
+    res.json(generalData);
   } catch (err: any) {
     console.error("Error fetching store general data:", err);
     res.status(500).json({ error: "Failed to fetch store general data." });
   }
 };
 
-// ✅ Update general store data
 export const updateStoreGeneralData = async (
   req: Request,
   res: Response
@@ -126,7 +114,6 @@ export const updateStoreGeneralData = async (
   }
 };
 
-// ✅ Get store design styles
 export const getStyles = async (req: Request, res: Response): Promise<void> => {
   const parsed = storeIdSchema.safeParse(req.params);
   if (!parsed.success) {
@@ -146,7 +133,6 @@ export const getStyles = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// ✅ Update store design styles
 export const updateStoreStyles = async (
   req: Request,
   res: Response
@@ -187,7 +173,6 @@ export const updateStoreStyles = async (
   }
 };
 
-// ✅ Get site data
 export const getSiteData = async (
   req: Request,
   res: Response
@@ -209,7 +194,6 @@ export const getSiteData = async (
   }
 };
 
-// ✅ Get current logged-in user
 export const getCurrentUser = async (
   req: Request,
   res: Response
@@ -237,6 +221,7 @@ export const getCurrentUser = async (
         currency: true,
         role: true,
         image: true,
+        email: true,
         uid: true,
         id: true,
         lastSeen: true,
@@ -255,7 +240,6 @@ export const getCurrentUser = async (
   }
 };
 
-// ✅ Get current logged-in admin
 export const getCurrentAdmin = async (
   req: Request,
   res: Response

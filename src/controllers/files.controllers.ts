@@ -3,6 +3,7 @@ import { UploadImageRequest, FileSchema } from "../schemas/files.schema";
 import { uploadToS3 } from "../services/s3.services";
 import { prisma } from "../config/db.config";
 import { v4 as uuidv4 } from "uuid";
+import { AdminAuthSchema } from "../schemas/admin.schema";
 
 export const uploadImage = async (
   req: Request,
@@ -63,6 +64,7 @@ export const uploadImage = async (
         data: {
           uid: uuidv4(),
           storeId,
+          collection,
           storeScopedId: counter.uploadLogCounter,
           filename: safeName,
           url: s3Url,
@@ -81,5 +83,36 @@ export const uploadImage = async (
   } catch (err: any) {
     console.error("Upload error:", err);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getPreviousImages = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
+  if (!authParsed.success) {
+    res.status(400).json({ error: authParsed.error.flatten() });
+    return;
+  }
+
+  const queryParsed = UploadImageRequest.safeParse(req.query);
+  if (!queryParsed.success) {
+    res.status(400).json({ error: queryParsed.error.flatten() });
+    return;
+  }
+
+  const { storeId } = authParsed.data;
+  const { collection } = queryParsed.data;
+
+  try {
+    const images = await prisma.uploadLog.findMany({
+      where: { storeId, collection },
+      orderBy: { timestamp: "desc" },
+    });
+
+    res.status(200).json({ images });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 };

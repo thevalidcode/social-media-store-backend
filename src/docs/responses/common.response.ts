@@ -62,3 +62,14 @@ export const ServerError = {
     },
   },
 };
+
+export const InvalidData = {
+  description: "Request is missing or has invalid fields",
+  content: {
+    "application/json": {
+      schema: z.object({
+        error: z.literal("No valid fields to update"),
+      }),
+    },
+  },
+};

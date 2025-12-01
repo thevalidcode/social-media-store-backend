@@ -13,6 +13,7 @@ export const PaymentGatewayAdminsSchema = z
     uid: z.string(),
     name: z.string(),
     description: z.string().optional(),
+    webhookUrl: z.string().optional(),
     min: z.number(),
     max: z.number(),
     feePercent: z.number(),
@@ -29,6 +30,7 @@ export const PaymentGatewayUsersSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
   min: z.number(),
+  webhookUrl: z.string().optional(),
   feePercent: z.number().optional(),
   max: z.number(),
   position: z.number(),
@@ -40,7 +42,7 @@ export const PaymentCreateRequestSchema = z.object({
   name: z.string(),
   min: z.coerce.number(),
   max: z.coerce.number(),
-  feePercent: z.number().optional(),
+  feePercent: z.coerce.number().optional(),
   secretKey: z.string().optional(),
   description: z.string().optional(),
   image: z.string(),
@@ -56,6 +58,11 @@ export const PaymentUpdateRequestSchema = z.object({
   secretKey: z.string().optional(),
   description: z.string().optional(),
   image: z.string(),
+});
+
+export const PaymentUpdateStatusRequestSchema = z.object({
+  uid: z.string(),
+  status: z.nativeEnum(PaymentGatewayStatus),
 });
 
 export const DeletePaymentGatewaySchema = z.object({

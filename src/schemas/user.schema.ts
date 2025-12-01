@@ -16,7 +16,7 @@ export const UserSchema: z.ZodType<User> = z
     password: z.string(),
     username: z.string(),
     apiKey: z.string(),
-    fullName: z.string(),
+    fullName: z.string().nullable(),
     role: z.nativeEnum(UserRole),
     status: z.nativeEnum(UserStatus),
     storeId: z.number(),
@@ -48,14 +48,16 @@ export const UserUpdateRequestSchema = z.object({
   username: z.string().describe("Username").optional(),
   fullName: z.string().describe("Full name").optional(),
   email: z.string().email().describe("User email").optional(),
+  image: z.string().url().describe("User image").optional(),
   apiKey: z.string().describe("User api key").optional(),
 });
 
 export const UpdateUserByAdminRequestSchema = UserUpdateRequestSchema.extend({
   balance: z
     .string()
-    .refine((val) => !isNaN(Number(val)), "Balance must be numeric")
-    .optional(),
+    .refine((val) => !isNaN(Number(val)), "Balance must be numeric"),
+  uid: z.string(),
+  status: z.nativeEnum(UserStatus).optional(),
 });
 
 export const AuthenticateUserSchema = z.object({

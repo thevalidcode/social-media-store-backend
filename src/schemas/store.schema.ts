@@ -23,6 +23,7 @@ export const StoreGeneralDataResponseSchema = z
     logoUrl: z.string().url(),
     faviconUrl: z.string().url(),
     storeName: z.string(),
+    showBanner: z.boolean().optional(),
     storeDescription: z.string(),
     defaultClientCurrency: z.string().length(3).toUpperCase(),
   })
@@ -30,9 +31,10 @@ export const StoreGeneralDataResponseSchema = z
   .openapi("General");
 
 export const UpdateGeneralDataRequestSchema = z.object({
-  logoUrl: z.string().url().optional(),
-  faviconUrl: z.string().url().optional(),
+  logoUrl: z.string().url().optional().or(z.literal("")),
+  faviconUrl: z.string().url().optional().or(z.literal("")),
   storeName: z.string().optional(),
+  showBanner: z.boolean().optional(),
   storeDescription: z.string().optional(),
   defaultClientCurrency: z.string().length(3).toUpperCase().optional(),
 });
@@ -44,8 +46,7 @@ export const ExchangeRatesSchema = z
 
 export const DesignStylesSchema = z
   .object({
-    id: z.number().describe("Style ID"),
-    title: z.string().describe("Design title"),
+    name: z.string().describe("Color name"),
     hex: z.string().describe("Color hex"),
     schema: z.object({
       [":root"]: z.record(z.string()).describe("Light mode variables"),
@@ -56,7 +57,7 @@ export const DesignStylesSchema = z
 
 export const UpdateStylesRequestSchema = z
   .object({
-    title: z.string().describe("Design title"),
+    name: z.string().describe("Color name"),
     hex: z.string().describe("Color hex"),
     schema: z.object({
       [":root"]: z.record(z.string()).describe("Light mode variables"),

@@ -4,8 +4,8 @@ import { BlogStatus } from "../../prisma/generated";
 
 extendZodWithOpenApi(z);
 
-export const blogUidSchema = z.object({
-  blogUid: z.coerce.string(),
+export const blogIdSchema = z.object({
+  blogId: z.coerce.number(),
 });
 
 export const createBlogSchema = z.object({

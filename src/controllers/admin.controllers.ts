@@ -4,7 +4,10 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import type { Request, Response } from "express";
-import { AuthenticateAdminSchema } from "../schemas/admin.schema";
+import {
+  AdminUpdateRequestSchema,
+  AuthenticateAdminSchema,
+} from "../schemas/admin.schema";
 
 export const authenticateAdmin = async (
   req: Request,
@@ -50,14 +53,14 @@ export const authenticateAdmin = async (
     res.cookie("csrf_token", csrfToken, {
       httpOnly: false,
       secure: env.NODE_ENV === "production",
-      sameSite: "none",
+      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.cookie("auth_token", token, {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
-      sameSite: "none",
+      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -72,5 +75,27 @@ export const authenticateAdmin = async (
     });
   } catch (err: any) {
     res.status(500).json({ error: "Login failed " + err.message });
+  }
+};
+
+export const updateAdmin = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const parsed = AdminUpdateRequestSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+  const { uid } = req.auth!;
+
+  try {
+    const admin = await prisma.admin.update({
+      where: { uid: uid },
+      data: parsed.data,
+    });
+    res.status(200).json({ success: "Successfully updated admin", admin });
+  } catch {
+    res.status(500).json({ error: "Failed to update admin" });
   }
 };

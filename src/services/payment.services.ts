@@ -10,27 +10,34 @@ import {
   PaystackWebhookData,
 } from "../schemas/webhook.schema";
 import type { Request } from "express";
+import { Decimal } from "@prisma/client/runtime/library";
 
 export const createPayment = async (user: User, input: CreatePaymentInput) => {
-  const { storeId, platform, currency, amount, redirect_url } = input;
+  const { platform, currency, amount, redirect_url } = input;
 
   const gateway = await prisma.paymentGateway.findFirst({
-    where: { platform, storeId },
-    select: { secretKey: true, description: true },
+    where: { platform, storeId: user.storeId },
+    select: { secretKey: true, description: true, feePercent: true },
   });
+
   if (!gateway) {
     throw new Error("Payment gateway not configured");
   }
 
-  const general = await prisma.setting.findFirst({
-    where: { storeId },
+  const setting = await prisma.setting.findFirst({
+    where: { storeId: user.storeId },
     select: { storeName: true, logoUrl: true },
   });
-  if (!general) throw new Error("Store general settings missing");
+
+  if (!setting) throw new Error("Store settings is missing");
+
+  const decimalAmount = new Decimal(amount);
+  const gatewayFee = decimalAmount.mul(gateway.feePercent || 0);
+  const newAmount = decimalAmount.add(gatewayFee).toNumber();
 
   const paymentData = {
     tx_ref: Date.now(),
-    amount,
+    amount: newAmount,
     currency,
     redirect_url,
     customer: {
@@ -38,9 +45,9 @@ export const createPayment = async (user: User, input: CreatePaymentInput) => {
       name: user.username,
     },
     customizations: {
-      title: general.storeName,
+      title: setting.storeName,
       description: gateway.description,
-      logo: general.logoUrl,
+      logo: setting.logoUrl,
     },
     meta: {
       userUid: user.uid,

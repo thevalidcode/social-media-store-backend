@@ -41,18 +41,18 @@ registry.registerPath({
   },
 });
 
-// GET /blogs/{blogUid}?storeId=123
+// GET /blogs/{blogId}?storeId=123
 registry.registerPath({
   method: "get",
-  path: "/blogs/{blogUid}",
+  path: "/blogs/{blogId}",
   summary: "Get blog by UID",
   tags: ["Blogs"],
   parameters: [
     {
-      name: "blogUid",
+      name: "blogId",
       in: "path",
       required: true,
-      schema: { type: "string" },
+      schema: { type: "number" },
     },
     {
       name: "storeId",

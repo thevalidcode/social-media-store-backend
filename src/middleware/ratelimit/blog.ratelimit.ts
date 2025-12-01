@@ -1,20 +1,5 @@
 import rateLimit from "express-rate-limit";
 
-// Public
-export const getBlogsLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 30,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-export const getBlogByIDLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 30,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 // Protected
 export const addBlogLimiter = rateLimit({
   windowMs: 60 * 1000,

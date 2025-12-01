@@ -32,19 +32,6 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
   try {
     const allUsers = await prisma.user.findMany({
       where: { storeId },
-      select: {
-        id: true,
-        storeScopedId: true,
-        uid: true,
-        email: true,
-        username: true,
-        balance: true,
-        spent: true,
-        status: true,
-        timestamp: true,
-        lastSeen: true,
-        currency: true,
-      },
     });
     res.status(200).json(allUsers);
   } catch {
@@ -130,14 +117,14 @@ export const createUser = async (
       res.cookie("csrf_token", csrfToken, {
         httpOnly: false,
         secure: env.NODE_ENV === "production",
-        sameSite: "none",
+        sameSite: env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
       res.cookie("auth_token", token, {
         httpOnly: true,
         secure: env.NODE_ENV === "production",
-        sameSite: "none",
+        sameSite: env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
@@ -202,14 +189,14 @@ export const me = async (req: Request, res: Response): Promise<void> => {
     res.cookie("csrf_token", csrfToken, {
       httpOnly: false,
       secure: env.NODE_ENV === "production",
-      sameSite: "none",
+      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.cookie("auth_token", token, {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
-      sameSite: "none",
+      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -396,11 +383,11 @@ export const updateUser = async (
   const { uid } = req.auth!;
 
   try {
-    await prisma.user.update({
+    const user = await prisma.user.update({
       where: { uid: uid },
       data: parsed.data,
     });
-    res.status(200).json({ success: "Successfully updated user" });
+    res.status(200).json({ success: "Successfully updated user", user });
   } catch {
     res.status(500).json({ error: "Failed to update user" });
   }
@@ -415,19 +402,19 @@ export const updateUserByAdmin = async (
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { uid } = req.auth!;
 
-  const { balance } = parsed.data;
+  const { balance, uid } = parsed.data;
 
   try {
-    const parsedBalance = new Decimal(balance || 0);
+    const parsedBalance = new Decimal(balance);
     await prisma.user.update({
       where: { uid: uid },
       data: { ...parsed.data, balance: parsedBalance },
     });
 
     res.status(200).json({ success: "Successfully updated user" });
-  } catch {
+  } catch (error: any) {
     res.status(500).json({ error: "Failed to update user" });
+    console.log(error.message);
   }
 };

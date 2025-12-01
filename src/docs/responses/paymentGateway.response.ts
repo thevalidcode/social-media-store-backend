@@ -68,6 +68,17 @@ export const PaymentGatewayUpdatedResponse = {
   },
 };
 
+export const PaymentGatewayUpdatedStatusResponse = {
+  description: "Successfully updated a payment gateway",
+  content: {
+    "application/json": {
+      schema: z.object({
+        success: z.literal("Payment Gateway updated successfully."),
+      }),
+    },
+  },
+};
+
 export const PaymentGatewayDeletedResponse = {
   description: "Successfully deleted a payment gateway",
   content: {

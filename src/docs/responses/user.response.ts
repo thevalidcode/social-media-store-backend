@@ -63,17 +63,7 @@ export const UpdateSuccess = {
     "application/json": {
       schema: z.object({
         success: z.literal("Successfully updated the user"),
-      }),
-    },
-  },
-};
-
-export const InvalidData = {
-  description: "Request is missing or has invalid fields",
-  content: {
-    "application/json": {
-      schema: z.object({
-        error: z.literal("No valid fields to update"),
+        user: UserSchema,
       }),
     },
   },

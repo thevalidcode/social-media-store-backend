@@ -3,8 +3,6 @@ const router = express.Router();
 import * as blogs from "../controllers/blog.controllers";
 import { authenticateAdmin } from "../middleware/auth";
 import {
-  getBlogsLimiter,
-  getBlogByIDLimiter,
   addBlogLimiter,
   updateBlogLimiter,
   deleteBlogLimiter,
@@ -12,8 +10,8 @@ import {
 } from "../middleware/ratelimit/blog.ratelimit";
 
 // Public routes
-router.get("/", getBlogsLimiter, blogs.getBlogs);
-router.get("/:blogUid", getBlogByIDLimiter, blogs.getBlogByUid);
+router.get("/", blogs.getBlogs);
+router.get("/:blogId", blogs.getBlogById);
 
 // Protected routes
 router.post("/", authenticateAdmin, addBlogLimiter, blogs.addBlog);

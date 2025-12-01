@@ -2,11 +2,22 @@ import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 
 extendZodWithOpenApi(z);
+const collection = z
+  .enum([
+    "blogs",
+    "faqs",
+    "general",
+    "services",
+    "categories",
+    "providers",
+    "users",
+    "admins",
+    "store",
+  ])
+  .describe("Collection of the image uploaded");
 
 export const UploadImageRequest = z.object({
-  collection: z
-    .enum(["blogs", "faqs", "general", "services", "categories", "users"])
-    .describe("Collection of the image uploaded"),
+  collection,
 });
 
 export const UploadImageResponse = z.object({

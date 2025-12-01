@@ -3,6 +3,7 @@ import {
   DeletePaymentGatewaySchema,
   PaymentCreateRequestSchema,
   PaymentUpdateRequestSchema,
+  PaymentUpdateStatusRequestSchema,
 } from "../../schemas/paymentGateway.schema";
 
 import {
@@ -13,6 +14,7 @@ import {
   PaymentGatewayForUsersListResponse,
   PaymentGatewayForAdminsListResponse,
   PaymentGatewayAdminsObject,
+  PaymentGatewayUpdatedStatusResponse,
 } from "../responses/paymentGateway.response";
 import {
   BadRequest,
@@ -140,21 +142,39 @@ registry.registerPath({
   },
 });
 
-// DELETE /payment-gateways
+// PATCH /payment-gateways/status
 registry.registerPath({
-  method: "delete",
-  path: "/payment-gateways",
-  summary: "Delete a Payment Gateway",
+  method: "patch",
+  path: "/payment-gateways/status",
+  summary: "Update a Payment Gateway",
   tags: ["Payment Gateways"],
   security: [{ CookieAuth: [] }],
   request: {
     body: {
       content: {
         "application/json": {
-          schema: DeletePaymentGatewaySchema,
+          schema: PaymentUpdateStatusRequestSchema,
         },
       },
     },
+  },
+  responses: {
+    200: PaymentGatewayUpdatedStatusResponse,
+    400: BadRequest,
+    403: Forbidden,
+    500: ServerError,
+  },
+});
+
+// DELETE /payment-gateways
+registry.registerPath({
+  method: "delete",
+  path: "/payment-gateways/{uid}",
+  summary: "Delete a Payment Gateway",
+  tags: ["Payment Gateways"],
+  security: [{ CookieAuth: [] }],
+  request: {
+    params: DeletePaymentGatewaySchema,
   },
   responses: {
     200: PaymentGatewayDeletedResponse,

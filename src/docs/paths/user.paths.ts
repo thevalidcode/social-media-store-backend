@@ -9,7 +9,6 @@ import {
 
 import {
   UpdateSuccess,
-  InvalidData,
   UsersListResponse,
   AuthenticateUserResponse,
   VerifySessionResponse,
@@ -22,6 +21,7 @@ import {
   BadRequest,
   Forbidden,
   ServerError,
+  InvalidData,
   SuccessResponse,
 } from "../responses/common.response";
 

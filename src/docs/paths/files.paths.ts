@@ -1,6 +1,7 @@
+import { UploadImageRequest } from "../../schemas/files.schema";
 import { registry } from "../components/registry";
 import { ServerError, Forbidden } from "../responses/common.response";
-import { UploadedImageSuccess } from "../responses/files.response";
+import { UploadedImageSuccess, ImagesLogs } from "../responses/files.response";
 
 // POST /files/image
 registry.registerPath({
@@ -38,6 +39,22 @@ registry.registerPath({
   },
   responses: {
     200: UploadedImageSuccess,
+    403: Forbidden,
+    500: ServerError,
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/files/image/logs",
+  summary: "Get previous image upload logs",
+  tags: ["Files"],
+  security: [{ CookieAuth: [] }],
+  request: {
+    query: UploadImageRequest,
+  },
+  responses: {
+    200: ImagesLogs,
     403: Forbidden,
     500: ServerError,
   },

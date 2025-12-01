@@ -68,6 +68,14 @@ export const getAllTicketsForUser = async (
             createdAt: true,
           },
         },
+        user: {
+          select: {
+            email: true,
+            fullName: true,
+            image: true,
+            username: true,
+          },
+        },
       },
     });
 
@@ -177,6 +185,14 @@ export const getTicketByUid = async (
             createdAt: true,
           },
         },
+        user: {
+          select: {
+            email: true,
+            fullName: true,
+            image: true,
+            username: true,
+          },
+        },
       },
     });
 
@@ -210,7 +226,7 @@ export const getTicketByUidForAdmin = async (
   try {
     const ticket = await prisma.supportTicket.findUnique({
       where: { uid },
-      include: { messages: true },
+      include: { messages: true, user: true },
     });
 
     res.status(200).json(ticket);

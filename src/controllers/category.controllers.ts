@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import { prisma } from "../config/db.config";
 import { v4 as uuidv4 } from "uuid";
 import { AdminAuthSchema } from "../schemas/admin.schema";
+import { CategoryCreateRequestSchema } from "../schemas/category.schema";
 
 const categoryIdSchema = z.object({
   categoryId: z.coerce.number(),
@@ -176,12 +177,7 @@ export const addCategory = async (
   res: Response
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
-  const parsed = z
-    .object({
-      name: z.string(),
-      description: z.string().optional(),
-    })
-    .safeParse(req.body);
+  const parsed = CategoryCreateRequestSchema.safeParse(req.body);
 
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -217,6 +213,7 @@ export const addCategory = async (
           position: newPosition,
           uid: uuidv4(),
           storeId,
+          icon: parsed.data.icon || "",
           storeScopedId: counter.categoryCounter,
         },
       });

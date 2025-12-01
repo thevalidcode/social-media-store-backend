@@ -183,14 +183,14 @@ export const verifySessionCode = async (
   res.cookie("csrf_token", csrfToken, {
     httpOnly: false,
     secure: env.NODE_ENV === "production",
-    sameSite: "none",
+    sameSite: env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
   res.cookie("auth_token", token, {
     httpOnly: true,
     secure: env.NODE_ENV === "production",
-    sameSite: "none",
+    sameSite: env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 

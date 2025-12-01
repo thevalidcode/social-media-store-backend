@@ -171,6 +171,8 @@ export const getUserDashboardData = async (
     const yourOrders = orders.length;
     const yourSpent = orders.reduce((sum, o) => sum + Number(o.price), 0);
 
+    const totalStoreOrders = orders.length;
+
     // Recent 10 orders
     const storeOrders = orders.slice(0, 10).map((order) => ({
       id: order.uid,
@@ -194,10 +196,14 @@ export const getUserDashboardData = async (
     });
 
     const formattedServices = recentlyAddedServices.map((s) => ({
-      id: s.uid,
-      serviceName: s.name,
+      storeScopedId: s.storeScopedId,
+      id: s.id,
+      name: s.name,
+      icon: s.icon,
+      min: s.min,
+      max: s.max,
       type: s.type,
-      price: `$${s.price.toFixed(2)}`,
+      price: s.price,
       date: new Date(s.timestamp).toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
@@ -275,8 +281,8 @@ export const getUserDashboardData = async (
 
     res.json({
       yourOrders,
-      yourSpent: `$${yourSpent.toFixed(2)}`,
-      storeOrders,
+      yourSpent,
+      storeOrders: totalStoreOrders,
       recentlyAddedServices: formattedServices,
       ordersData: last6Months.map((m) => ({
         month: `${m.month}`,

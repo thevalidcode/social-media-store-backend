@@ -12,6 +12,7 @@ export const AdminSchema: z.ZodType<Admin> = z
     image: z.string().nullable(),
     password: z.string(),
     username: z.string(),
+    fullName: z.string(),
     apiKey: z.string(),
     role: z.nativeEnum(AdminRole),
     status: z.nativeEnum(AdminStatus),
@@ -58,4 +59,13 @@ export const internalAdminTokenPayloadSchema = z.object({
   type: z.literal("system", {
     errorMap: () => ({ message: "Invalid value provided" }),
   }),
+});
+
+export const AdminUpdateRequestSchema = z.object({
+  username: z.string().describe("Username").optional(),
+  fullName: z.string().describe("Full name").optional(),
+  email: z.string().email().describe("Admin email").optional(),
+  apiKey: z.string().describe("Admin api key").optional(),
+  image: z.string().url().optional(),
+  status: z.nativeEnum(AdminStatus).optional(),
 });

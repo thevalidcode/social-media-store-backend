@@ -7,6 +7,7 @@ import {
   GetPaymentGatewayByIdSchema,
   PaymentCreateRequestSchema,
   PaymentUpdateRequestSchema,
+  PaymentUpdateStatusRequestSchema,
 } from "../schemas/paymentGateway.schema";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
@@ -38,6 +39,8 @@ export const getPaymentGateways = async (
         min: true,
         max: true,
         status: true,
+        webhookUrl: true,
+        feePercent: true,
       },
       orderBy: { position: "asc" },
     });
@@ -79,10 +82,12 @@ export const getPaymentGatewayByUid = async (
         name: true,
         uid: true,
         image: true,
+        feePercent: true,
         description: true,
         min: true,
         max: true,
         status: true,
+        webhookUrl: true,
       },
     });
 
@@ -115,6 +120,7 @@ export const getPaymentGatewaysForUser = async (
         uid: true,
         image: true,
         description: true,
+        feePercent: true,
         position: true,
         min: true,
         max: true,
@@ -157,6 +163,7 @@ export const getPaymentGatewayByUidForUser = async (
         createdAt: true,
         platform: true,
         name: true,
+        feePercent: true,
         uid: true,
         image: true,
         description: true,
@@ -205,6 +212,10 @@ export const addPaymentGateway = async (
         data: { paymentGatewayCounter: { increment: 1 } },
       });
 
+      const store = await tx.store.findFirst({
+        where: { storeId },
+      });
+
       const paymentData: any = {
         uid: uuidv4(),
         storeId,
@@ -214,6 +225,7 @@ export const addPaymentGateway = async (
         description: reqData.description,
         image: reqData.image,
         platform: reqData.platform,
+        feePercent: reqData.feePercent,
         min: reqData.min,
         max: reqData.max,
         status: "ACTIVE",
@@ -223,6 +235,9 @@ export const addPaymentGateway = async (
       if (reqData.secretKey) {
         const encrypted_key = encryptKey(reqData.secretKey);
         paymentData.secretKey = JSON.parse(JSON.stringify(encrypted_key));
+        paymentData.webhookUrl = `https://${
+          store?.uid //The domain name
+        }/webhooks/${reqData.platform.toLowerCase()}`;
       }
 
       const payment = await tx.paymentGateway.create({
@@ -275,6 +290,7 @@ export const updatePaymentGateway = async (
       name: reqData.name,
       description: reqData.description,
       image: reqData.image,
+      feePercent: reqData.feePercent,
       min: reqData.min,
       max: reqData.max,
       secretKey: undefined,
@@ -304,12 +320,48 @@ export const updatePaymentGateway = async (
   }
 };
 
+export const updatePaymentGatewayStatus = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authParsed = AdminAuthSchema.safeParse(req.auth);
+  const parsed = PaymentUpdateStatusRequestSchema.safeParse(req.body);
+
+  if (!parsed.success || !authParsed.success) {
+    res.status(400).json({
+      error: {
+        auth: authParsed.error?.flatten(),
+        body: parsed.error?.flatten(),
+      },
+    });
+    return;
+  }
+
+  const { storeId } = authParsed.data;
+  const reqData = parsed.data;
+
+  try {
+    await prisma.paymentGateway.update({
+      where: { uid: reqData.uid, storeId },
+      data: {
+        ...reqData,
+      },
+    });
+
+    res.status(200).json({
+      success: "Payment updated successfully.",
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const deletePaymentGateway = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
-  const parsed = DeletePaymentGatewaySchema.safeParse(req.body);
+  const parsed = DeletePaymentGatewaySchema.safeParse(req.params);
 
   if (!authParsed.success || !parsed.success) {
     res.status(400).json({

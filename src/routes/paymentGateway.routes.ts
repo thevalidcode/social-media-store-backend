@@ -6,55 +6,49 @@ import {
   limitPaymentActions,
 } from "../middleware/ratelimit/paymentGateway.ratelimit";
 
-
 const router = express.Router();
 
-router.get(
-  "/admin",
-  authenticateAdmin,
-  limitPaymentActions, 
-  paymentGateways.getPaymentGateways
-);
+router.get("/admin", authenticateAdmin, paymentGateways.getPaymentGateways);
 
 router.get(
   "/admin/:uid",
   authenticateAdmin,
-  limitPaymentActions, 
   paymentGateways.getPaymentGatewayByUid
 );
 
-router.get(
-  "/",
-  authenticateUser,
-  limitPaymentActions, 
-  paymentGateways.getPaymentGatewaysForUser
-);
+router.get("/", authenticateUser, paymentGateways.getPaymentGatewaysForUser);
 
 router.get(
   "/:uid",
   authenticateUser,
-  limitPaymentActions, 
   paymentGateways.getPaymentGatewayByUidForUser
 );
 
 router.post(
   "/",
   authenticateAdmin,
-  limitPaymentAdd, 
+  limitPaymentAdd,
   paymentGateways.addPaymentGateway
 );
 
 router.patch(
   "/",
   authenticateAdmin,
-  limitPaymentActions, 
+  limitPaymentActions,
   paymentGateways.updatePaymentGateway
 );
 
-router.delete(
-  "/",
+router.patch(
+  "/status",
   authenticateAdmin,
-  limitPaymentActions, 
+  limitPaymentActions,
+  paymentGateways.updatePaymentGatewayStatus
+);
+
+router.delete(
+  "/:uid",
+  authenticateAdmin,
+  limitPaymentActions,
   paymentGateways.deletePaymentGateway
 );
 
