@@ -1,7 +1,10 @@
 import express from "express";
 const router = express.Router();
 import * as stores from "../controllers/store.controllers";
-import { authenticateAdmin, authenticateUser } from "../middleware/auth";
+import {
+  authenticateAdmin,
+  authenticateUser,
+} from "../middleware/auth";
 
 router.get("/data", stores.getStoreData);
 router.get("/:storeId/general-data", stores.getStoreGeneralData);

@@ -1,0 +1,128 @@
+import "dotenv/config";
+import { prisma } from "../../config/db.config";
+import { CreateStoreParams } from "../../schemas/internal.schema";
+import { assertValidDomain } from "../../utils/domain.guard";
+import { exec } from "child_process";
+import { StoreError } from "../../errors/store.error";
+
+export function runStoreCreateCLI(domain: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const cmd = `validpanel-cli stores:add ${domain} social-media-store`;
+
+    exec(cmd, (error, stdout, stderr) => {
+      if (error) {
+        return reject(new StoreError("CLI_ERROR", stderr || error.message));
+      }
+      resolve();
+    });
+  });
+}
+
+export async function CreateStore(params: CreateStoreParams) {
+  const {
+    storeId,
+    storeDomain,
+    name,
+    description,
+    planId,
+    features = {},
+    adminEmail,
+    adminPassword,
+    adminUsername,
+    fullName,
+    logoUrl,
+    faviconUrl,
+    adminImage,
+    adminId,
+    adminUid,
+  } = params;
+
+  try {
+    // Step 0: Validate domain rules
+    assertValidDomain(storeDomain);
+
+    const response = await prisma.$transaction(async (tx) => {
+      // Step 1: Ensure store domain is unique
+      const existingStore = await tx.store.findFirst({
+        where: { uid: storeDomain },
+        select: { storeId: true },
+      });
+
+      if (existingStore) {
+        throw new StoreError(
+          "DOMAIN_TAKEN",
+          "Store domain has already been used"
+        );
+      }
+
+      // Step 2: Ensure admin email is unique
+      const existingAdmin = await tx.admin.findFirst({
+        where: { email: adminEmail },
+        select: { id: true },
+      });
+
+      if (existingAdmin) {
+        throw new StoreError(
+          "ADMIN_EMAIL_TAKEN",
+          "Admin email has already been used"
+        );
+      }
+
+      // Step 3: Create store
+      const store = await tx.store.create({
+        data: {
+          uid: storeDomain,
+          status: "ACTIVE",
+          storeId,
+          description: description || null,
+          features,
+          name,
+          planId,
+          ssl: true,
+        },
+      });
+
+      // Step 4: Initialize counters
+      await tx.storeCounter.create({
+        data: { storeId: store.storeId },
+      });
+
+      // Step 5: Create default settings
+      const setting = await tx.setting.create({
+        data: {
+          storeId: store.storeId,
+          storeName: name,
+          storeDescription: description || null,
+          faviconUrl: faviconUrl || null,
+          logoUrl: logoUrl || null,
+          defaultClientCurrency: "USD",
+          showBanner: true,
+        },
+      });
+
+      // Step 6: Create admin account
+      const admin = await tx.admin.create({
+        data: {
+          uid: adminUid,
+          id: adminId,
+          email: adminEmail,
+          image: adminImage || null,
+          username: adminUsername || fullName,
+          password: adminPassword,
+          fullName: fullName || null,
+          storeId: store.storeId,
+        },
+      });
+
+      return { store, setting, admin };
+    });
+
+    // Step 7: Run CLI to provision store
+    await runStoreCreateCLI(storeDomain);
+
+    return response;
+  } catch (err: any) {
+    if (err instanceof StoreError) throw err;
+    throw new StoreError("DB_ERROR", err.message || "Database error");
+  }
+}

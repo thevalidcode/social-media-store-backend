@@ -10,16 +10,18 @@ datasource db {
 }
 
 model Store {
-  storeId          Int                @id @map("store_id")
-  uid              String             @unique
-  ssl              Boolean            @default(false)
-  timestamp        DateTime           @default(now())
-  status           StoreStatus
-  description      String?
-  expiresAt        DateTime?          @map("expires_at")
-  features         Json
-  name             String
-  plan             String
+  storeId     Int         @id @map("store_id")
+  uid         String      @unique // Store domain e.g validpanel.com
+  ssl         Boolean     @default(false)
+  timestamp   DateTime    @default(now())
+  status      StoreStatus
+  description String?
+  expiresAt   DateTime?   @map("expires_at")
+  startedAt   DateTime?   @map("started_at")
+  features    Json
+  name        String
+  planId      Int
+
   Admin            Admin[]
   AdminEmail       AdminEmail[]
   AffiliateSetting AffiliateSetting[]
@@ -57,7 +59,7 @@ model User {
   image         String?
   password      String
   username      String
-  apiKey        String          @unique @map("api_key")
+  apiKey        String          @unique @default(uuid()) @map("api_key")
   storeId       Int             @map("store_id")
   balance       Decimal         @default(0.00) @db.Decimal(10, 2)
   spent         Decimal         @default(0.00) @db.Decimal(10, 2)
@@ -84,12 +86,12 @@ model User {
 
 model Admin {
   id        Int         @id @default(autoincrement())
-  uid       String      @unique
+  uid       String      @unique @default(uuid())
   email     String
   image     String?
   password  String
   username  String
-  apiKey    String      @unique @map("api_key")
+  apiKey    String      @unique @default(uuid()) @map("api_key")
   storeId   Int         @map("store_id")
   timestamp DateTime    @default(now())
   lastSeen  DateTime    @default(now()) @map("last_seen")
@@ -104,7 +106,7 @@ model Admin {
 model Service {
   id               Int           @id @default(autoincrement())
   storeScopedId    Int           @map("store_scoped_id")
-  uid              String        @unique
+  uid              String        @unique @default(uuid())
   name             String
   description      String?
   category         String
@@ -141,7 +143,7 @@ model Service {
 model Order {
   id                 Int         @id @default(autoincrement())
   storeScopedId      Int         @map("store_scoped_id")
-  uid                String      @unique
+  uid                String      @unique @default(uuid())
   timestamp          DateTime    @default(now())
   userUid            String      @map("user_uid")
   currency           String      @default("USD")
@@ -179,7 +181,7 @@ model Order {
 
 model AdminEmail {
   id        Int      @id @default(autoincrement())
-  uid       String   @unique
+  uid       String   @unique @default(uuid())
   emails    String[]
   storeId   Int      @map("store_id")
   timestamp DateTime @default(now())
@@ -190,7 +192,7 @@ model AdminEmail {
 
 model AffiliateSetting {
   id      Int    @map("id")
-  uid     String @id
+  uid     String @id @default(uuid())
   percent Int
   mode    String @default("percentage")
   storeId Int    @map("store_id")
@@ -206,7 +208,7 @@ model Blog {
   content       String
   position      Int
   slug          String
-  uid           String     @unique
+  uid           String     @unique @default(uuid())
   storeId       Int        @map("store_id")
   coverImage    String     @default("") @map("cover_image")
   status        BlogStatus @default(ACTIVE)
@@ -222,7 +224,7 @@ model Blog {
 model Cancel {
   id              Int          @id @default(autoincrement())
   storeScopedId   Int          @map("store_scoped_id")
-  uid             String       @unique
+  uid             String       @unique @default(uuid())
   timestamp       DateTime     @default(now())
   userUid         String       @map("user_uid")
   providerId      Int          @map("provider_id")
@@ -245,7 +247,7 @@ model Category {
   timestamp     DateTime       @default(now())
   description   String         @default("")
   position      Int
-  uid           String         @unique @map("uid")
+  uid           String         @unique @default(uuid()) @map("uid")
   storeId       Int            @map("store_id")
   status        CategoryStatus @default(ACTIVE)
   icon          String?
@@ -258,7 +260,7 @@ model Category {
 model DesignStyle {
   id            Int     @id @default(autoincrement())
   storeScopedId Int     @map("store_scoped_id")
-  uid           String  @unique
+  uid           String  @unique @default(uuid())
   storeId       Int     @map("store_id")
   hex           String
   schema        Json
@@ -272,7 +274,7 @@ model DesignStyle {
 model EmailLog {
   id            Int      @id @default(autoincrement())
   storeScopedId Int      @map("store_scoped_id")
-  uid           String   @unique
+  uid           String   @unique @default(uuid())
   sender        String
   receiver      String
   subject       String
@@ -291,7 +293,7 @@ model EmailLog {
 model EmailTemplate {
   id            Int               @id @default(autoincrement())
   storeScopedId Int               @map("store_scoped_id")
-  uid           String            @unique
+  uid           String            @unique @default(uuid())
   content       String
   storeId       Int               @map("store_id")
   timestamp     DateTime          @default(now())
@@ -309,7 +311,7 @@ model Faq {
   answer        String
   position      Int
   slug          String
-  uid           String    @unique
+  uid           String    @unique @default(uuid())
   storeId       Int       @map("store_id")
   timestamp     DateTime  @default(now())
   status        FaqStatus @default(ACTIVE)
@@ -321,8 +323,8 @@ model Faq {
 
 model Setting {
   id                    Int      @id @default(autoincrement())
-  uid                   String   @unique
-  storeId               Int      @map("store_id")
+  uid                   String   @unique @default(uuid())
+  storeId               Int      @unique @map("store_id")
   storeName             String   @default("My Store") @map("store_name")
   storeDescription      String?  @map("store_description")
   logoUrl               String?  @map("logo_url")
@@ -348,7 +350,7 @@ model InternalApiSession {
 model PaymentGateway {
   id            Int                    @id @default(autoincrement())
   storeScopedId Int                    @map("store_scoped_id")
-  uid           String                 @unique
+  uid           String                 @unique @default(uuid())
   name          String
   description   String?
   secretKey     Json?                  @map("secret_key")
@@ -372,7 +374,7 @@ model PaymentGateway {
 model Provider {
   id            Int       @id @default(autoincrement())
   storeScopedId Int       @map("store_scoped_id")
-  uid           String    @unique
+  uid           String    @unique @default(uuid())
   name          String
   url           String
   sync          Boolean   @default(false)
@@ -391,7 +393,7 @@ model Provider {
 model ReferralOrder {
   id            Int      @id @default(autoincrement())
   storeScopedId Int      @map("store_scoped_id")
-  uid           String   @unique
+  uid           String   @unique @default(uuid())
   refId         Int      @unique @map("ref_id")
   timestamp     DateTime @default(now())
   username      String
@@ -407,7 +409,7 @@ model ReferralOrder {
 model Refill {
   id              Int          @id @default(autoincrement())
   storeScopedId   Int          @map("store_scoped_id")
-  uid             String       @unique
+  uid             String       @unique @default(uuid())
   timestamp       DateTime     @default(now())
   userUid         String       @map("user_uid")
   providerId      Int          @map("provider_id")
@@ -497,7 +499,7 @@ model TicketMessage {
 model Transaction {
   id            Int             @id @default(autoincrement())
   storeScopedId Int             @map("store_scoped_id")
-  uid           String          @unique
+  uid           String          @unique @default(uuid())
   amount        Decimal         @db.Decimal(10, 2)
   timestamp     DateTime        @default(now())
   currency      String          @default("USD")
@@ -534,7 +536,7 @@ model Payment {
 model UploadLog {
   id            Int      @id @default(autoincrement())
   storeScopedId Int      @map("store_scoped_id")
-  uid           String   @unique
+  uid           String   @unique @default(uuid())
   size          Int
   url           String
   collection    String

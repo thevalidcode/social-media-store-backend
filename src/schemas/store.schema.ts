@@ -7,7 +7,7 @@ extendZodWithOpenApi(z);
 export const StoreDataSchema = z
   .object({
     storeId: z.number().describe("Unique identifier for the store"),
-    plan: z.string().describe("The plan associated with the store"),
+    planId: z.number().describe("The plan id associated with the store"),
     status: z.nativeEnum(StoreStatus).describe("The status of the store"),
     timestamp: z.string().describe("Timestamp when the store was created"),
   })
@@ -65,3 +65,6 @@ export const UpdateStylesRequestSchema = z
     }),
   })
   .strict();
+
+export const storeIdQuerySchema = z.object({ domain: z.string().min(1) });
+export const storeIdSchema = z.object({ storeId: z.coerce.number() });

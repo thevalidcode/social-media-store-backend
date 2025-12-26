@@ -3,15 +3,13 @@ import type { Request, Response } from "express";
 import { prisma } from "../config/db.config";
 import {
   StoreGeneralDataRequestSchema,
+  storeIdQuerySchema,
+  storeIdSchema,
   UpdateGeneralDataRequestSchema,
   UpdateStylesRequestSchema,
 } from "../schemas/store.schema";
-import { v4 as uuidv4 } from "uuid";
 import { Prisma } from "../../prisma/generated";
 import { AdminAuthSchema } from "../schemas/admin.schema";
-
-const storeIdQuerySchema = z.object({ domain: z.string().min(1) });
-const storeIdSchema = z.object({ storeId: z.coerce.number() });
 
 export const getStoreData = async (
   req: Request,
@@ -28,7 +26,7 @@ export const getStoreData = async (
   try {
     const store = await prisma.store.findUnique({
       where: { uid: domain },
-      select: { storeId: true, plan: true, timestamp: true },
+      select: { storeId: true, planId: true, timestamp: true },
     });
 
     if (!store) {
@@ -94,18 +92,28 @@ export const updateStoreGeneralData = async (
   const bodyData = bodyParsed.data;
 
   try {
-    const existing = await prisma.setting.findFirst({ where: { storeId } });
+    await prisma.setting.upsert({
+      where: {
+        storeId
+      },
+      create: {
+        ...bodyData,
+        storeId,
+      },
+      update: {
+        ...bodyData,
+      },
+    });
 
-    if (!existing) {
-      await prisma.setting.create({
-        data: { ...bodyData, storeId, uid: uuidv4() },
-      });
-    } else {
-      await prisma.setting.update({
-        where: { id: existing.id },
-        data: bodyData,
-      });
-    }
+    await prisma.store.update({
+      where: {
+        storeId,
+      },
+      data: {
+        name: bodyData.storeName,
+        description: bodyData.storeDescription,
+      },
+    });
 
     res.json({ success: "Successfully updated the data." });
   } catch (err: any) {
@@ -157,7 +165,7 @@ export const updateStoreStyles = async (
 
     if (!existing) {
       await prisma.designStyle.create({
-        data: { ...bodyData, storeId, storeScopedId: 1, uid: uuidv4() },
+        data: { ...bodyData, storeId, storeScopedId: 1 },
       });
     } else {
       await prisma.designStyle.update({

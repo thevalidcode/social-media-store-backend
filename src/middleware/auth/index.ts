@@ -78,17 +78,6 @@ export const authenticateInternalAdmin = async (
   try {
     const payload = verifyInternalAdminAuth(req, res);
     if (!payload) return;
-
-    const store = await prisma.store.findFirst({
-      where: { uid: "validpanel.com" },
-    });
-    if (!store) {
-      res
-        .status(401)
-        .json({ error: "The main store (validpanel.com) can't be found" });
-      return;
-    }
-
     next();
   } catch (err: any) {
     res.status(401).json({ error: "Invalid or expired token" });
@@ -137,6 +126,45 @@ export const authenticateAnyone = async (
 
     next();
   } catch (err: any) {
+    res.status(401).json({ error: "Invalid or expired token" });
+  }
+};
+
+export const authenticateInternalAnyone = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    // 1. Try internal admin (service-level trust)
+    const adminPayload = verifyInternalAdminAuth(req, res);
+    if (adminPayload) {
+      next();
+      return;
+    }
+
+    // 2. Try internal user (store-scoped identity)
+    const userPayload = verifyInternalUserAuth(req, res);
+    if (!userPayload) return;
+
+    const { uid, storeId } = userPayload;
+
+    const admin = await prisma.admin.findFirst({ where: { uid, storeId } });
+
+    if (!admin) {
+      res.status(401).json({ error: "Invalid or expired token" });
+      return;
+    }
+
+    req.auth = {
+      type: "admin",
+      uid,
+      storeId,
+      user: admin,
+    };
+
+    next();
+  } catch {
     res.status(401).json({ error: "Invalid or expired token" });
   }
 };
