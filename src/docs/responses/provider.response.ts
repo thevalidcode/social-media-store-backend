@@ -1,6 +1,7 @@
 import {
   ProviderSchema,
   ProviderServiceSchema,
+  ServiceProviderSchema,
 } from "../../schemas/provider.schema";
 import { z } from "zod";
 
@@ -18,16 +19,7 @@ export const ServiceApiProviderListResponse = {
   content: {
     "application/json": {
       schema: z.object({
-        providers: z.array(
-          z.object({
-            name: z.string(),
-            url: z.string(),
-            is: z.number(),
-            uid: z.string(),
-            image: z.string().url(),
-            createdAt: z.date(),
-          })
-        ),
+        providers: z.array(ServiceProviderSchema),
       }),
     },
   },

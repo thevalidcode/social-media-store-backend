@@ -57,11 +57,11 @@ registry.registerPath({
   },
 });
 
-// GET /providers/service-api-providers/all
+// GET /providers/all
 registry.registerPath({
   method: "get",
-  path: "/providers/service-api-providers/all",
-  summary: "Get all service api providers from the core platform",
+  path: "/providers/all",
+  summary: "Get all service providers",
   tags: ["Providers"],
   security: [{ CookieAuth: [] }],
   responses: {

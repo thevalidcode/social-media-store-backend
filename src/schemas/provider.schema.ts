@@ -101,3 +101,15 @@ export const ProviderServiceSchema = z
     cancel: z.boolean().optional(),
   })
   .openapi("ProviderService");
+
+export const ServiceProviderSchema = z
+  .object({
+    id: z.number(),
+    uid: z.string(),
+    name: z.string(),
+    image: z.string().nullable(),
+    url: z.string(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+  })
+  .openapi("ServiceProvider");

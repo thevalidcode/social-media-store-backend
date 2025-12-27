@@ -296,17 +296,33 @@ export const addProvider = async (
   try {
     const encrypted_key = encryptKey(reqData.apiKey);
 
+    const parsedUrl = reqData.url
+      .replace(/^https?:\/\//, "") // remove http:// or https://
+      .replace(/\/$/, "");
+
+    // Check if serviceProvider exists, if not, create it
+    const existingServiceProvider = await prisma.serviceProvider.findUnique({
+      where: { url: parsedUrl },
+    });
+
+    if (!existingServiceProvider) {
+      await prisma.serviceProvider.create({
+        data: {
+          name: reqData.name,
+          url: parsedUrl,
+          image: reqData.image,
+        },
+      });
+    }
+
     const existingProvider = await prisma.provider.findFirst({
-      where: { storeId, url: reqData.url },
+      where: { storeId, url: parsedUrl },
     });
 
     if (existingProvider) {
       res.status(400).json({ error: "Provider already exists." });
       return;
     }
-    const parsedUrl = reqData.url
-      .replace(/^https?:\/\//, "") // remove http:// or https://
-      .replace(/\/$/, "");
 
     await prisma.$transaction(async (tx) => {
       const counter = await tx.storeCounter.update({
@@ -338,7 +354,7 @@ export const addProvider = async (
   }
 };
 
-export const gerSeviceProvidersFromCorePlatform = async (
+export const getAllSeviceProviders = async (
   req: Request,
   res: Response
 ) => {
@@ -350,10 +366,24 @@ export const gerSeviceProvidersFromCorePlatform = async (
 
   const { page = 1, limit = 20, search } = parsed.data;
   try {
-    const response = await coreApiRequest({
-      endpoint: `/service-api-providers/active?page=${page}&limit=${limit}&search=${search}`,
+    const skip = (page - 1) * limit;
+    const where:any = search
+      ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            { url: { contains: search, mode: "insensitive" } },
+          ],
+        }
+      : {};
+
+    const providers = await prisma.serviceProvider.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" },
     });
-    res.status(200).json({ providers: response.providers });
+
+    res.status(200).json({ providers });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

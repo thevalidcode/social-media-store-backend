@@ -8,10 +8,10 @@ import {
 } from "../middleware/ratelimit/provider.ratelimit";
 
 router.get(
-  "/service-api-providers/all",
+  "/all",
   authenticateAdmin,
   limitProviderActions,
-  providers.gerSeviceProvidersFromCorePlatform
+  providers.getAllSeviceProviders
 );
 router.post(
   "/services/import",

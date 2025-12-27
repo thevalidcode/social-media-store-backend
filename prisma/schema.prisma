@@ -551,6 +551,18 @@ model UploadLog {
   @@map("upload_logs")
 }
 
+model ServiceProvider {
+  id        Int      @id @default(autoincrement())
+  uid       String   @unique @default(uuid())
+  name      String
+  url       String   @unique
+  image     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("service_provders")
+}
+
 enum StoreStatus {
   ACTIVE   @map("active")
   CANCELED @map("canceled")
