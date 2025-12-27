@@ -8,7 +8,6 @@ import {
   UpdateGeneralDataRequestSchema,
   UpdateStylesRequestSchema,
 } from "../schemas/store.schema";
-import { Prisma } from "../../prisma/generated";
 import { AdminAuthSchema } from "../schemas/admin.schema";
 
 export const getStoreData = async (
@@ -94,7 +93,7 @@ export const updateStoreGeneralData = async (
   try {
     await prisma.setting.upsert({
       where: {
-        storeId
+        storeId,
       },
       create: {
         ...bodyData,
@@ -202,87 +201,26 @@ export const getSiteData = async (
   }
 };
 
-export const getCurrentUser = async (
+export const completeOnboarding = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  if (!req.auth) {
-    res.status(401).json({ error: "Unauthorized: auth info missing" });
+  const parsed = StoreGeneralDataRequestSchema.safeParse(req.params);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
 
-  const { uid, storeId } = req.auth;
+  const { storeId } = parsed.data;
 
   try {
-    const user = await prisma.user.findFirst({
-      where: { storeId, uid },
-      select: {
-        password: false,
-        apiKey: false,
-        fullName: true,
-        storeScopedId: true,
-        ref: true,
-        balance: true,
-        spent: true,
-        timestamp: true,
-        username: true,
-        currency: true,
-        role: true,
-        image: true,
-        email: true,
-        uid: true,
-        id: true,
-        lastSeen: true,
-      } as Prisma.UserSelect,
+    const setting = await prisma.setting.update({
+      where: { storeId },
+      data: { onboardingCompleted: true },
     });
 
-    if (!user) {
-      res.status(404).json({ error: "User not found" });
-      return;
-    }
-
-    res.json(user);
+    res.status(200).json({ success: "Onboarding completed", setting });
   } catch (err: any) {
-    console.error("Error fetching current user:", err);
-    res.status(500).json({ error: "Failed to fetch current user." });
-  }
-};
-
-export const getCurrentAdmin = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  if (!req.auth) {
-    res.status(401).json({ error: "Unauthorized: auth info missing" });
-    return;
-  }
-
-  const { uid, storeId } = req.auth;
-
-  try {
-    const admin = await prisma.admin.findFirst({
-      where: { storeId, uid },
-      select: {
-        password: false,
-        apiKey: false,
-        timestamp: true,
-        username: true,
-        role: true,
-        uid: true,
-        id: true,
-        image: true,
-        lastSeen: true,
-      },
-    });
-
-    if (!admin) {
-      res.status(404).json({ error: "Admin not found" });
-      return;
-    }
-
-    res.json(admin);
-  } catch (err: any) {
-    console.error("Error fetching current admin:", err);
-    res.status(500).json({ error: "Failed to fetch current admin." });
+    res.status(500).json({ error: "Failed to update onboarding status" });
   }
 };

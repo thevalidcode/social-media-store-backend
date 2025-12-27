@@ -91,7 +91,10 @@ export const updateAdmin = async (
       where: { uid: uid },
       data: parsed.data,
     });
-    res.status(200).json({ success: "Successfully updated admin", admin });
+    const { password: _, ...safeAdmin } = admin;
+    res
+      .status(200)
+      .json({ success: "Successfully updated admin", admin: safeAdmin });
   } catch {
     res.status(500).json({ error: "Failed to update admin" });
   }

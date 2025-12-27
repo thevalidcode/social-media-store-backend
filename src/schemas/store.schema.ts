@@ -23,7 +23,8 @@ export const StoreGeneralDataResponseSchema = z
     logoUrl: z.string().url(),
     faviconUrl: z.string().url(),
     storeName: z.string(),
-    showBanner: z.boolean().optional(),
+    showBanner: z.boolean(),
+    onboardingCompleted: z.boolean(),
     storeDescription: z.string(),
     defaultClientCurrency: z.string().length(3).toUpperCase(),
   })

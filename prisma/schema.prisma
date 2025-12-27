@@ -332,6 +332,7 @@ model Setting {
   faviconUrl            String?  @map("favicon_url")
   defaultClientCurrency String?  @map("default_client_currency")
   showBanner            Boolean? @default(true) @map("show_banner")
+  onboardingCompleted   Boolean? @default(false) @map("onboarding_completed")
   store                 Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@map("settings")

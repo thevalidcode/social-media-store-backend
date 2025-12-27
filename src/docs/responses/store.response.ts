@@ -44,30 +44,24 @@ export const ExchangeRatesResponse = {
   },
 };
 
-export const CurrentUserResponse = {
-  description: "Current user record",
-  content: {
-    "application/json": {
-      schema: UserPublicSchema,
-    },
-  },
-};
-
-export const CurrentAdminResponse = {
-  description: "Current admin record",
-  content: {
-    "application/json": {
-      schema: AdminSchema,
-    },
-  },
-};
-
 export const NotFound = {
   description: "Resource not found",
   content: {
     "application/json": {
       schema: z.object({
         error: z.string().describe("Error message"),
+      }),
+    },
+  },
+};
+
+export const OnboardingCompletedResponse = {
+  description: "Onboarding completed successfully",
+  content: {
+    "application/json": {
+      schema: z.object({
+        success: z.literal("Onboarding completed"),
+        setting: StoreGeneralDataResponseSchema,
       }),
     },
   },

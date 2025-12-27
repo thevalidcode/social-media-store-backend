@@ -3,10 +3,9 @@ import {
   StoreDataResponse,
   DesignStylesResponse,
   ExchangeRatesResponse,
-  CurrentUserResponse,
-  CurrentAdminResponse,
   NotFound,
   GeneralDataResponse,
+  OnboardingCompletedResponse,
 } from "../responses/store.response";
 import {
   ServerError,
@@ -14,6 +13,7 @@ import {
   SuccessResponse,
 } from "../responses/common.response";
 import {
+  StoreGeneralDataRequestSchema,
   UpdateGeneralDataRequestSchema,
   UpdateStylesRequestSchema,
 } from "../../schemas/store.schema";
@@ -138,31 +138,17 @@ registry.registerPath({
   },
 });
 
-// GET /stores/current-user
+// Complete onboarding
 registry.registerPath({
-  method: "get",
-  path: "/stores/current-user",
-  summary: "Get the currently authenticated user",
-  tags: ["Store"],
-  security: [{ CookieAuth: [] }],
-  responses: {
-    200: CurrentUserResponse,
-    404: NotFound,
-    500: ServerError,
+  method: "put",
+  path: "/stores/{storeId}/onboarding-completed",
+  summary: "Mark onboarding as completed",
+  tags: ["Admins"],
+  request: {
+    params: StoreGeneralDataRequestSchema,
   },
-});
-
-// GET /stores/current-admin
-registry.registerPath({
-  method: "get",
-  path: "/stores/current-admin",
-  summary: "Get the currently authenticated admin",
-  tags: ["Store"],
-  security: [{ CookieAuth: [] }],
   responses: {
-    200: CurrentAdminResponse,
-    403: Forbidden,
-    404: NotFound,
+    200: OnboardingCompletedResponse,
     500: ServerError,
   },
 });

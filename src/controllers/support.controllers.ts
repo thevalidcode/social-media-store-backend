@@ -57,6 +57,7 @@ export const getAllTicketsForUser = async (
       select: {
         uid: true,
         status: true,
+        subject: true,
         priority: true,
         createdAt: true,
         updatedAt: true,
