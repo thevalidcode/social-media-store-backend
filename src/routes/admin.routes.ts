@@ -5,5 +5,6 @@ const router = express.Router();
 
 router.post("/me", admins.authenticateAdmin);
 router.patch("/", authenticateAdmin, admins.updateAdmin);
+router.put("/onboarding-completed", authenticateAdmin, admins.completeOnboarding);
 
 export default router;

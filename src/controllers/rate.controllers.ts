@@ -1,17 +1,13 @@
-import axios from "axios";
 import { Request, Response } from "express";
+import { coreApiRequest } from "../lib/apiClient";
 
 export const getRates = async () => {
   try {
-    const response = await axios.get(
-      `https://validpanel.com/core-platform/backend/api/v1/rates`,
-      {
-        headers: {
-          Origin: "https://validpanel.com",
-        },
-      }
-    );
-    const rates = response.data.rates;
+    const response = await coreApiRequest({
+      endpoint: "/rates",
+    });
+
+    const rates = response.rates;
     return rates;
   } catch (error: any) {
     console.error("Error fetching rates:", error);

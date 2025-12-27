@@ -200,14 +200,11 @@ export const me = async (req: Request, res: Response): Promise<void> => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
+    const { password: _, ...safeUser } = account;
     res.status(200).json({
       success: "Logged in successfully",
       role,
-      user: {
-        id: account.id,
-        email: account.email,
-        username: account.username,
-      },
+      user: safeUser,
     });
   } catch (err: any) {
     res.status(500).json({ error: "Login failed " + err.message });

@@ -68,11 +68,7 @@ export const AuthenticateUserSchema = z.object({
 
 export const AuthenticateUserResponseSchema = z.object({
   success: z.literal("Logged in successfully"),
-  user: z.object({
-    id: z.coerce.number().describe("User id"),
-    email: z.string().email().describe("User email"),
-    username: z.string().describe("User username"),
-  }),
+  user: UserPublicSchema,
 });
 
 export const CreateUserInputSchema = z.object({

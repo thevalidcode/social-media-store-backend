@@ -79,6 +79,12 @@ export const ProviderServicesSchema = z.object({
     .describe("API base URL of the provider (e.g., api.example.com/api/v2/)"),
 });
 
+export const GetAllServiceProvidersQuerySchema = z.object({
+  page: z.number().optional(),
+  limit: z.number().optional(),
+  search: z.string().optional(),
+});
+
 export const ProviderServiceSchema = z
   .object({
     service: z.coerce.number(),

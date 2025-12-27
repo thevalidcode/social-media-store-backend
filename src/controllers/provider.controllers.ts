@@ -9,11 +9,13 @@ import {
   ImportProviderServicesRequestSchema,
   ProviderServicesSchema,
   ProviderUpdateRequestSchema,
+  GetAllServiceProvidersQuerySchema,
 } from "../schemas/provider.schema";
 import { v4 as uuidv4 } from "uuid";
 import { AdminAuthSchema } from "../schemas/admin.schema";
 import { Decimal } from "@prisma/client/runtime/library";
 import { ServiceType } from "../../prisma/generated";
+import { coreApiRequest } from "../lib/apiClient";
 
 export const getProviderServices = async (
   req: Request,
@@ -331,6 +333,27 @@ export const addProvider = async (
 
     res.status(200).json({ success: "Added Provider successfully." });
     return;
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const gerSeviceProvidersFromCorePlatform = async (
+  req: Request,
+  res: Response
+) => {
+  const parsed = GetAllServiceProvidersQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const { page = 1, limit = 20, search } = parsed.data;
+  try {
+    const response = await coreApiRequest({
+      endpoint: `/service-api-providers/active?page=${page}&limit=${limit}&search=${search}`,
+    });
+    res.status(200).json({ providers: response.providers });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

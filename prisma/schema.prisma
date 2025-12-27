@@ -85,20 +85,21 @@ model User {
 }
 
 model Admin {
-  id        Int         @id @default(autoincrement())
-  uid       String      @unique @default(uuid())
-  email     String
-  image     String?
-  password  String
-  username  String
-  apiKey    String      @unique @default(uuid()) @map("api_key")
-  storeId   Int         @map("store_id")
-  timestamp DateTime    @default(now())
-  lastSeen  DateTime    @default(now()) @map("last_seen")
-  role      AdminRole   @default(BASIC)
-  status    AdminStatus @default(ACTIVE)
-  fullName  String?     @map("full_name")
-  store     Store       @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  id                  Int         @id @default(autoincrement())
+  uid                 String      @unique @default(uuid())
+  email               String
+  image               String?
+  password            String
+  username            String
+  apiKey              String      @unique @default(uuid()) @map("api_key")
+  storeId             Int         @map("store_id")
+  timestamp           DateTime    @default(now())
+  lastSeen            DateTime    @default(now()) @map("last_seen")
+  role                AdminRole   @default(BASIC)
+  status              AdminStatus @default(ACTIVE)
+  fullName            String?     @map("full_name")
+  onboardingCompleted Boolean?    @default(false) @map("onboarding_completed")
+  store               Store       @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@map("admins")
 }

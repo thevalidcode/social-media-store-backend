@@ -14,6 +14,7 @@ export const AdminSchema: z.ZodType<Admin> = z
     username: z.string(),
     fullName: z.string(),
     apiKey: z.string(),
+    onboardingCompleted: z.boolean(),
     role: z.nativeEnum(AdminRole),
     status: z.nativeEnum(AdminStatus),
     storeId: z.number(),
@@ -38,11 +39,7 @@ export const AuthenticateAdminSchema = z.object({
 export const AuthenticateAdminResponseSchema = z.object({
   success: z.literal("Logged in successfully"),
   role: z.nativeEnum(AdminRole),
-  user: z.object({
-    id: z.coerce.number().describe("User id"),
-    email: z.string().email().describe("User email"),
-    username: z.string().describe("User username"),
-  }),
+  admin: AdminSchema,
 });
 
 export const internalTokenPayloadSchema = z.object({

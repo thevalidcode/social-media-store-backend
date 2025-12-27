@@ -24,3 +24,15 @@ export const UpdateSuccess = {
     },
   },
 };
+
+export const OnboardingCompletedResponse = {
+  description: "Onboarding completed successfully",
+  content: {
+    "application/json": {
+      schema: z.object({
+        success: z.literal("Onboarding completed"),
+        admin: AdminSchema,
+      }),
+    },
+  },
+};

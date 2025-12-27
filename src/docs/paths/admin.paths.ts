@@ -11,6 +11,7 @@ import {
 import {
   AuthenticateAdminResponse,
   UpdateSuccess,
+  OnboardingCompletedResponse,
 } from "../responses/admin.response";
 
 // Authenticate admin
@@ -53,6 +54,18 @@ registry.registerPath({
   responses: {
     200: UpdateSuccess,
     400: InvalidData,
+    500: ServerError,
+  },
+});
+
+// Complete onboarding
+registry.registerPath({
+  method: "put",
+  path: "/admins/onboarding-completed",
+  summary: "Mark onboarding as completed",
+  tags: ["Admins"],
+  responses: {
+    200: OnboardingCompletedResponse,
     500: ServerError,
   },
 });

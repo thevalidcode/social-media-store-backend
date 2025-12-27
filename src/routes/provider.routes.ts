@@ -7,6 +7,12 @@ import {
   limitProviderActions,
 } from "../middleware/ratelimit/provider.ratelimit";
 
+router.get(
+  "/service-api-providers/all",
+  authenticateAdmin,
+  limitProviderActions,
+  providers.gerSeviceProvidersFromCorePlatform
+);
 router.post(
   "/services/import",
   authenticateAdmin,

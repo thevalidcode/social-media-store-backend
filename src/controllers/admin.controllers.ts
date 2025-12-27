@@ -64,14 +64,11 @@ export const authenticateAdmin = async (
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
+    const { password: _, ...safeAdmin } = account;
     res.status(200).json({
       success: "Logged in successfully",
       role,
-      user: {
-        id: account.id,
-        email: account.email,
-        username: account.username,
-      },
+      admin: safeAdmin,
     });
   } catch (err: any) {
     res.status(500).json({ error: "Login failed " + err.message });
@@ -97,5 +94,24 @@ export const updateAdmin = async (
     res.status(200).json({ success: "Successfully updated admin", admin });
   } catch {
     res.status(500).json({ error: "Failed to update admin" });
+  }
+};
+
+export const completeOnboarding = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { uid } = req.auth!;
+
+  try {
+    const admin = await prisma.admin.update({
+      where: { uid },
+      data: { onboardingCompleted: true },
+    });
+
+    const { password: _, ...safeAdmin } = admin;
+    res.status(200).json({ success: "Onboarding completed", admin: safeAdmin });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to update onboarding status" });
   }
 };

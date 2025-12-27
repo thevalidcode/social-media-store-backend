@@ -14,6 +14,7 @@ import {
 import {
   ProviderListResponse,
   ProviderServicesListResponse,
+  ServiceApiProviderListResponse,
   successWithProvider,
 } from "../responses/provider.response";
 
@@ -50,6 +51,21 @@ registry.registerPath({
   security: [{ CookieAuth: [] }],
   responses: {
     200: ProviderListResponse,
+    400: BadRequest,
+    403: Forbidden,
+    500: ServerError,
+  },
+});
+
+// GET /providers/service-api-providers/all
+registry.registerPath({
+  method: "get",
+  path: "/providers/service-api-providers/all",
+  summary: "Get all service api providers from the core platform",
+  tags: ["Providers"],
+  security: [{ CookieAuth: [] }],
+  responses: {
+    200: ServiceApiProviderListResponse,
     400: BadRequest,
     403: Forbidden,
     500: ServerError,
