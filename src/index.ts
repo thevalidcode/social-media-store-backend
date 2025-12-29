@@ -24,7 +24,7 @@ async function startServer() {
       origin: true,
       credentials: true,
     },
-    path: "/socket.io", // keep default unless you change it in Caddy
+    path: "/social-media-store/backend/socket.io", // keep default unless you change it in Caddy
   });
 
   setupSocket(io);
