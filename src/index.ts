@@ -1,56 +1,30 @@
 import http from "http";
-import https from "https";
 import { Server } from "socket.io";
 import app from "./app";
 import { updateAllowedHosts } from "./config/cors.config";
-import { SNICallback } from "./config/ssl.config";
-import { startCronJobs } from "./cronJobs/index";
-import { setupSocket } from "./socket/index";
+import { startCronJobs } from "./cronJobs";
+import { setupSocket } from "./socket";
 import { env } from "./config/env.config";
 
-let mainServer: http.Server | https.Server;
+const server = http.createServer(app);
 
 setInterval(updateAllowedHosts, 5 * 60 * 1000);
 
 async function startServer() {
   await updateAllowedHosts();
 
-  if (env.NODE_ENV === "production") {
-    const serverOptions: https.ServerOptions = {
-      SNICallback,
-    };
-
-    mainServer = https.createServer(serverOptions, app);
-
-    mainServer.listen(env.PRIMARY_PORT, () => {
-      console.log(
-        `HTTPS server running on https://validpanel.com:${env.PRIMARY_PORT}/`
-      );
-    });
-
-    const secondaryHttpServer = http.createServer(app);
-    secondaryHttpServer.listen(env.SECONDARY_PORT, () => {
-      console.log(
-        `HTTP fallback running on http://validpanel.com:${env.SECONDARY_PORT}/`
-      );
-    });
-  } else {
-    mainServer = http.createServer(app);
-
-    mainServer.listen(env.PRIMARY_PORT, () => {
-      console.log(
-        `Development server running on http://localhost:${env.PRIMARY_PORT}/`
-      );
-    });
-  }
+  server.listen(env.PRIMARY_PORT, () => {
+    console.log(`Backend running on http://localhost:${env.PRIMARY_PORT}`);
+  });
 
   startCronJobs();
 
-  const io = new Server(mainServer, {
+  const io = new Server(server, {
     cors: {
-      origin: "*",
+      origin: true,
+      credentials: true,
     },
-    pingTimeout: 5000,
+    path: "/socket.io", // keep default unless you change it in Caddy
   });
 
   setupSocket(io);

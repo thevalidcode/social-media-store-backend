@@ -9,7 +9,6 @@ const envSchema = z.object({
     .enum(["development", "test", "production"])
     .default("development"),
   PRIMARY_PORT: z.string().default("6060"),
-  SECONDARY_PORT: z.string().default("4040"),
   DB_HOST: z.string().default("localhost"),
   MASTER_KEY: z.string(),
   JWT_SECRET: z.string(),
