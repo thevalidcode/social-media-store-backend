@@ -7,11 +7,27 @@ import {
   UpdateStoreSchema,
 } from "../schemas/internal.schema";
 import { CreateStore, DeleteStore } from "../services/store";
+import { StoreError } from "../errors/store.error";
 
 /**
- * 📦 Get all orders (for internal admins)
- * Supports pagination with `?page=1&limit=20`
+ * Standardized error response format for API callers
  */
+const sendErrorResponse = (
+  res: Response,
+  statusCode: number,
+  message: string,
+  code?: string,
+  details?: any
+) => {
+  res.status(statusCode).json({
+    error: {
+      message,
+      code: code || "UNKNOWN_ERROR",
+      ...(details && { details }),
+    },
+  });
+};
+
 export const getOrdersForInternalAdmins = async (
   req: Request,
   res: Response
@@ -20,7 +36,13 @@ export const getOrdersForInternalAdmins = async (
     const parsed = PaginationQuerySchema.safeParse(req.query);
 
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.flatten() });
+      sendErrorResponse(
+        res,
+        400,
+        "Invalid pagination parameters",
+        "VALIDATION_ERROR",
+        parsed.error.flatten()
+      );
       return;
     }
 
@@ -51,7 +73,8 @@ export const getOrdersForInternalAdmins = async (
       orders,
     });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error("Error fetching orders:", error);
+    sendErrorResponse(res, 500, "Failed to fetch orders", "DATABASE_ERROR");
   }
 };
 
@@ -61,16 +84,38 @@ export const createStore = async (
 ): Promise<void> => {
   const parsed = createStoreSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    sendErrorResponse(
+      res,
+      400,
+      "Invalid store creation parameters",
+      "VALIDATION_ERROR",
+      parsed.error.flatten()
+    );
     return;
   }
 
   try {
-    await CreateStore(parsed.data);
-    res.json({ success: "Store created successfully" });
+    const result = await CreateStore(parsed.data);
+    res.status(201).json({
+      success: true,
+      message: "Store created successfully",
+      data: result,
+    });
   } catch (err: any) {
     console.error("Error creating store:", err);
-    res.status(500).json({ error: "Failed to create store." + err.message });
+
+    if (err instanceof StoreError) {
+      const statusCode =
+        err.code === "DOMAIN_TAKEN" || err.code === "ADMIN_EMAIL_TAKEN"
+          ? 409
+          : err.code === "CLI_ERROR"
+            ? 500
+            : 400;
+
+      sendErrorResponse(res, statusCode, err.message, err.code);
+    } else {
+      sendErrorResponse(res, 500, "Failed to create store", "DATABASE_ERROR");
+    }
   }
 };
 
@@ -80,7 +125,13 @@ export const deleteStore = async (
 ): Promise<void> => {
   const parsed = UidSchema.safeParse(req.params);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    sendErrorResponse(
+      res,
+      400,
+      "Invalid store UID",
+      "VALIDATION_ERROR",
+      parsed.error.flatten()
+    );
     return;
   }
   const { uid } = parsed.data;
@@ -88,15 +139,23 @@ export const deleteStore = async (
     const store = await prisma.store.findUnique({ where: { uid } });
 
     if (!store) {
-      res.status(404).json({ error: "Store not found." });
+      sendErrorResponse(res, 404, "Store not found", "STORE_NOT_FOUND");
       return;
     }
 
     await DeleteStore({ uid });
-    res.json({ success: "Store deleted successfully" });
+    res.json({
+      success: true,
+      message: "Store deleted successfully",
+    });
   } catch (err: any) {
     console.error("Error deleting store:", err);
-    res.status(500).json({ error: "Failed to delete store." + err.message });
+
+    if (err instanceof StoreError) {
+      sendErrorResponse(res, 500, err.message, err.code);
+    } else {
+      sendErrorResponse(res, 500, "Failed to delete store", "DATABASE_ERROR");
+    }
   }
 };
 
@@ -106,21 +165,33 @@ export const updateStore = async (
 ): Promise<void> => {
   const paramsParsed = UidSchema.safeParse(req.params);
   if (!paramsParsed.success) {
-    res.status(400).json({ error: paramsParsed.error.flatten() });
+    sendErrorResponse(
+      res,
+      400,
+      "Invalid store UID",
+      "VALIDATION_ERROR",
+      paramsParsed.error.flatten()
+    );
     return;
   }
   const { uid } = paramsParsed.data;
 
-  const parsed = UpdateStoreSchema.safeParse(req.params);
+  const parsed = UpdateStoreSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+    sendErrorResponse(
+      res,
+      400,
+      "Invalid store update parameters",
+      "VALIDATION_ERROR",
+      parsed.error.flatten()
+    );
     return;
   }
   try {
     const store = await prisma.store.findUnique({ where: { uid } });
 
     if (!store) {
-      res.status(404).json({ error: "Store not found." });
+      sendErrorResponse(res, 404, "Store not found", "STORE_NOT_FOUND");
       return;
     }
 
@@ -146,9 +217,12 @@ export const updateStore = async (
         description: parsed.data.storeDescription,
       },
     });
-    res.json({ success: "Store updated successfully" });
+    res.json({
+      success: true,
+      message: "Store updated successfully",
+    });
   } catch (err: any) {
     console.error("Error updating store:", err);
-    res.status(500).json({ error: "Failed to update store." + err.message });
+    sendErrorResponse(res, 500, "Failed to update store", "DATABASE_ERROR");
   }
 };
