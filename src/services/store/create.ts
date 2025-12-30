@@ -4,6 +4,7 @@ import { CreateStoreParams } from "../../schemas/internal.schema";
 import { assertValidDomain } from "../../utils/domain.guard";
 import { exec } from "child_process";
 import { StoreError } from "../../errors/store.error";
+import { env } from "../../config/env.config";
 
 export function runStoreCreateCLI(domain: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -27,7 +28,6 @@ export async function CreateStore(params: CreateStoreParams) {
     planId,
     features = {},
     adminEmail,
-    adminPassword,
     adminUsername,
     fullName,
     logoUrl,
@@ -39,7 +39,7 @@ export async function CreateStore(params: CreateStoreParams) {
 
   try {
     // Step 0: Validate domain rules
-    assertValidDomain(storeDomain);
+    if (!storeDomain.startsWith("localhost")) assertValidDomain(storeDomain);
 
     const response = await prisma.$transaction(async (tx) => {
       // Step 1: Ensure store domain is unique
@@ -108,7 +108,7 @@ export async function CreateStore(params: CreateStoreParams) {
           email: adminEmail,
           image: adminImage || null,
           username: adminUsername || fullName,
-          password: adminPassword,
+          password: crypto.randomUUID(),
           fullName: fullName || null,
           storeId: store.storeId,
         },
@@ -118,7 +118,8 @@ export async function CreateStore(params: CreateStoreParams) {
     });
 
     // Step 7: Run CLI to provision store
-    await runStoreCreateCLI(storeDomain);
+    if (!storeDomain.startsWith("localhost") && env.NODE_ENV === "production")
+      await runStoreCreateCLI(storeDomain);
 
     return response;
   } catch (err: any) {

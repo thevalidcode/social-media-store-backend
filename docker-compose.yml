@@ -9,6 +9,10 @@ services:
       POSTGRES_PASSWORD: social_media_store_pass
       POSTGRES_DB: social_media_store
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
-      - "5432:5432"
+      - "5433:5432"
+
+volumes:
+  postgres_data:

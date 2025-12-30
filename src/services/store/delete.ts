@@ -4,6 +4,7 @@ import { DeleteStoreParams } from "../../schemas/internal.schema";
 import { assertValidDomain } from "../../utils/domain.guard";
 import { exec } from "child_process";
 import { StoreError } from "../../errors/store.error";
+import { env } from "../../config/env.config";
 
 export function runStoreDeleteCLI(domain: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -23,7 +24,7 @@ export async function DeleteStore(params: DeleteStoreParams) {
 
   try {
     // Step 0: Validate domain rules
-    assertValidDomain(storeDomain);
+    if (!storeDomain.startsWith("localhost")) assertValidDomain(storeDomain);
 
     const existingStore = await prisma.store.findFirst({
       where: { uid: storeDomain },
@@ -36,7 +37,8 @@ export async function DeleteStore(params: DeleteStoreParams) {
       );
     }
 
-    await runStoreDeleteCLI(storeDomain);
+    if (!storeDomain.startsWith("localhost") && env.NODE_ENV === "production")
+      await runStoreDeleteCLI(storeDomain);
 
     await prisma.store.delete({ where: { uid: storeDomain } });
 

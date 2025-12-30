@@ -109,8 +109,8 @@ export const createStore = async (
         err.code === "DOMAIN_TAKEN" || err.code === "ADMIN_EMAIL_TAKEN"
           ? 409
           : err.code === "CLI_ERROR"
-            ? 500
-            : 400;
+          ? 500
+          : 400;
 
       sendErrorResponse(res, statusCode, err.message, err.code);
     } else {
