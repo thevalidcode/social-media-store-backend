@@ -15,7 +15,7 @@ export async function updateAllowedHosts(): Promise<void> {
     const domains = stores.map((shop: any) => shop.uid);
     allowedHosts = [
       "localhost:3000",
-      ...domains.map((domain: string) => `${domain}`), // no https://, just host
+      ...domains.map((domain: string) => `${domain}`),
     ];
   } catch (error) {
     console.error("Failed to update allowed hosts:", error);
@@ -25,26 +25,23 @@ export async function updateAllowedHosts(): Promise<void> {
 // Open CORS (dev/debug)
 export const openCors = cors({ origin: true, credentials: true });
 
-// Host-based dynamic CORS
-export const dynamicCors = function (
+// Host-based dynamic Host
+export const dynamicHost = (
   req: CorsRequest,
   callback: (err: Error | null, options?: CorsOptions) => void
-) {
-  const host = req.headers.host; // ✅ always present
+) => {
+  const host = req.headers.host;
 
   if (env.NODE_ENV === "development") {
     return callback(null, { origin: true, credentials: true });
   }
 
-  if (!host) {
-    return callback(new Error("Host header is required"), { origin: false });
+  if (!host || !allowedHosts.includes(host)) {
+    return callback(null, {
+      origin: false,
+      credentials: false,
+    });
   }
 
-  if (allowedHosts.includes(host)) {
-    return callback(null, { origin: true, credentials: true });
-  }
-
-  return callback(new Error(`Host ${host} not allowed by CORS`), {
-    origin: false,
-  });
+  return callback(null, { origin: true, credentials: true });
 };

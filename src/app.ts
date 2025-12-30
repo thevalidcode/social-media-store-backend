@@ -7,7 +7,7 @@ import cookieParser from "cookie-parser";
 import path from "path";
 import { apiLimiter } from "./middleware/ratelimit";
 import PrismaSessionStore from "./utils/PrismaSessionStore";
-import { dynamicCors } from "./config/cors.config";
+import { dynamicHost } from "./config/cors.config";
 
 // Routes
 import swaggerRouter from "./docs/swagger";
@@ -62,25 +62,25 @@ app.use(
 );
 
 // --- Public Routes ---
-app.use("/api/v1/users", cors(dynamicCors), userRouter);
-app.use("/api/v1/stores", cors(dynamicCors), storeRoutes);
-app.use("/api/v1/blogs", cors(dynamicCors), blogRoutes);
-app.use("/api/v1/faqs", cors(dynamicCors), faqRoutes);
-app.use("/api/v1/services", cors(dynamicCors), serviceRoutes);
-app.use("/api/v1/providers", cors(dynamicCors), providerRoutes);
-app.use("/api/v1/categories", cors(dynamicCors), categoryRoutes);
-app.use("/api/v1/orders", cors(dynamicCors), orderRoutes);
-app.use("/api/v1/refills", cors(dynamicCors), refillRoutes);
-app.use("/api/v1/version", cors(dynamicCors), versionRouter);
-app.use("/api/v1/files", cors(dynamicCors), filesRouter);
-app.use("/api/v1/webhooks", cors(dynamicCors), webhookRouter);
-app.use("/api/v1/payments", cors(dynamicCors), paymentRouter);
-app.use("/api/v1/supports", cors(dynamicCors), supportRouter);
-app.use("/api/v1/statistics", cors(dynamicCors), statisticsRouter);
-app.use("/api/v1/payment-gateways", cors(dynamicCors), paymentGatewayRouter);
-app.use("/api/v1/admins", cors(dynamicCors), adminRoutes);
-app.use("/api/v1/rates", cors(dynamicCors), ratesRouter);
-app.use("/api/v1/transactions", cors(dynamicCors), transactionRouter);
+app.use("/api/v1/users", cors(dynamicHost), userRouter);
+app.use("/api/v1/stores", cors(dynamicHost), storeRoutes);
+app.use("/api/v1/blogs", cors(dynamicHost), blogRoutes);
+app.use("/api/v1/faqs", cors(dynamicHost), faqRoutes);
+app.use("/api/v1/services", cors(dynamicHost), serviceRoutes);
+app.use("/api/v1/providers", cors(dynamicHost), providerRoutes);
+app.use("/api/v1/categories", cors(dynamicHost), categoryRoutes);
+app.use("/api/v1/orders", cors(dynamicHost), orderRoutes);
+app.use("/api/v1/refills", cors(dynamicHost), refillRoutes);
+app.use("/api/v1/version", cors(dynamicHost), versionRouter);
+app.use("/api/v1/files", cors(dynamicHost), filesRouter);
+app.use("/api/v1/webhooks", cors(dynamicHost), webhookRouter);
+app.use("/api/v1/payments", cors(dynamicHost), paymentRouter);
+app.use("/api/v1/supports", cors(dynamicHost), supportRouter);
+app.use("/api/v1/statistics", cors(dynamicHost), statisticsRouter);
+app.use("/api/v1/payment-gateways", cors(dynamicHost), paymentGatewayRouter);
+app.use("/api/v1/admins", cors(dynamicHost), adminRoutes);
+app.use("/api/v1/rates", cors(dynamicHost), ratesRouter);
+app.use("/api/v1/transactions", cors(dynamicHost), transactionRouter);
 
 // Internal Routes
 app.use("/internal", internalRouter);
