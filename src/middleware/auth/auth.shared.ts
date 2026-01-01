@@ -54,7 +54,7 @@ export const verifyBrowserAuth = (req: Request, res: Response) => {
     }
 
     return parsed.data;
-  } catch {
+  } catch (error) {
     res.status(401).json({ error: "Invalid or expired token" });
     return null;
   }

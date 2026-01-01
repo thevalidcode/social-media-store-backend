@@ -16,10 +16,9 @@ export const authenticateUser = async (
     if (!payload) return;
 
     const { storeId, uid } = payload;
-
     const user = await prisma.user.findFirst({ where: { storeId, uid } });
     if (!user) {
-      res.status(401).json({ error: "Invalid or expired token" });
+      res.status(401).json({ error: "User not found." });
       return;
     }
 
@@ -33,6 +32,7 @@ export const authenticateUser = async (
 
     next();
   } catch (err: any) {
+    console.log(err);
     res.status(401).json({ error: "Invalid or expired token" });
   }
 };
@@ -51,7 +51,7 @@ export const authenticateAdmin = async (
 
     const admin = await prisma.admin.findFirst({ where: { storeId, uid } });
     if (!admin) {
-      res.status(401).json({ error: "Invalid or expired token" });
+      res.status(401).json({ error: "Admin not found." });
       return;
     }
 
@@ -106,7 +106,7 @@ export const authenticateAnyone = async (
     const account = admin || user;
 
     if (!account) {
-      res.status(401).json({ error: "Invalid or expired token" });
+      res.status(401).json({ error: "No admin or user found" });
       return;
     }
 
@@ -156,7 +156,7 @@ export const authenticateInternalAnyone = async (
     const admin = await prisma.admin.findFirst({ where: { uid, storeId } });
 
     if (!admin) {
-      res.status(401).json({ error: "Invalid or expired token" });
+      res.status(401).json({ error: "No admin or user found" });
       return;
     }
     const { password, resetToken, resetTokenExpiry, ...safeAdmin } = admin;
