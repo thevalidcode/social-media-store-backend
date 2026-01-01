@@ -12,7 +12,7 @@ import {
 import type { Request } from "express";
 import { Decimal } from "@prisma/client/runtime/library";
 
-export const createPayment = async (user: User, input: CreatePaymentInput) => {
+export const createPayment = async (user: Partial<User>, input: CreatePaymentInput) => {
   const { platform, currency, amount, redirect_url } = input;
 
   const gateway = await prisma.paymentGateway.findFirst({

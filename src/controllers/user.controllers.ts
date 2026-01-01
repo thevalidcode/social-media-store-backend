@@ -1,4 +1,3 @@
-import { z } from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
@@ -22,26 +21,6 @@ import { Decimal } from "@prisma/client/runtime/library";
 import { AdminAuthSchema } from "../schemas/admin.schema";
 import { sendUserEmail } from "../emails";
 
-// ✅ Get all users
-export const getUsers = async (req: Request, res: Response): Promise<void> => {
-  const parsed = AdminAuthSchema.safeParse(req.auth);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
-    return;
-  }
-  const { storeId } = parsed.data;
-
-  try {
-    const allUsers = await prisma.user.findMany({
-      where: { storeId },
-    });
-    res.status(200).json(allUsers);
-  } catch {
-    res.status(500).json({ error: "Failed to fetch users" });
-  }
-};
-
-// ✅ Create a new user
 async function getNextStoreScopedId(
   storeId: number,
   tx: Prisma.TransactionClient
@@ -54,6 +33,39 @@ async function getNextStoreScopedId(
 
   return counter.userCounter;
 }
+
+export const getUsers = async (req: Request, res: Response): Promise<void> => {
+  const parsed = AdminAuthSchema.safeParse(req.auth);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+  const { storeId } = parsed.data;
+
+  try {
+    const allUsers = await prisma.user.findMany({
+      where: { storeId },
+      select: {
+        id: true,
+        uid: true,
+        email: true,
+        username: true,
+        balance: true,
+        status: true,
+        spent: true,
+        fullName: true,
+        refCode: true,
+        ref: true,
+        timestamp: true,
+        updatedAt: true,
+        storeScopedId: true,
+      },
+    });
+    res.status(200).json(allUsers);
+  } catch {
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+};
 
 export const createUser = async (
   req: Request,
@@ -145,7 +157,6 @@ export const createUser = async (
   }
 };
 
-// ✅ Login User
 export const me = async (req: Request, res: Response): Promise<void> => {
   const parsed = AuthenticateUserSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -200,7 +211,7 @@ export const me = async (req: Request, res: Response): Promise<void> => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    const { password: _, ...safeUser } = account;
+    const { password: _, resetToken, resetTokenExpiry, ...safeUser } = account;
     res.status(200).json({
       success: "Logged in successfully",
       role,
@@ -211,7 +222,6 @@ export const me = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// ✅ Get user by UID
 export const getUserByUid = async (
   req: Request,
   res: Response
@@ -241,7 +251,6 @@ export const getUserByUid = async (
   }
 };
 
-// ✅ Get user affiliate data
 export const getAffiliateData = async (
   req: Request,
   res: Response
@@ -318,7 +327,6 @@ export const getAffiliateData = async (
   }
 };
 
-// ✅ Verify Session
 export const verifySession = async (
   req: Request,
   res: Response
@@ -331,7 +339,6 @@ export const verifySession = async (
   res.status(200).send({ role: authParsed.data.user.role });
 };
 
-// ✅ Delete one user
 export const deleteUser = async (
   req: Request,
   res: Response
@@ -349,7 +356,6 @@ export const deleteUser = async (
   }
 };
 
-// ✅ Delete multiple users
 export const deleteUsers = async (
   req: Request,
   res: Response
@@ -367,7 +373,6 @@ export const deleteUsers = async (
   }
 };
 
-// ✅ Update user
 export const updateUser = async (
   req: Request,
   res: Response
@@ -383,6 +388,21 @@ export const updateUser = async (
     const user = await prisma.user.update({
       where: { uid: uid },
       data: parsed.data,
+      select: {
+        id: true,
+        uid: true,
+        email: true,
+        username: true,
+        balance: true,
+        status: true,
+        spent: true,
+        fullName: true,
+        refCode: true,
+        ref: true,
+        timestamp: true,
+        updatedAt: true,
+        storeScopedId: true,
+      },
     });
     res.status(200).json({ success: "Successfully updated user", user });
   } catch {
@@ -407,6 +427,21 @@ export const updateUserByAdmin = async (
     await prisma.user.update({
       where: { uid: uid },
       data: { ...parsed.data, balance: parsedBalance },
+      select: {
+        id: true,
+        uid: true,
+        email: true,
+        username: true,
+        balance: true,
+        status: true,
+        spent: true,
+        fullName: true,
+        refCode: true,
+        ref: true,
+        timestamp: true,
+        updatedAt: true,
+        storeScopedId: true,
+      },
     });
 
     res.status(200).json({ success: "Successfully updated user" });
