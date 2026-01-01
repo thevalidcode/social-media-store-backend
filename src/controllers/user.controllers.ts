@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import { Request, Response } from "express";
 import { prisma } from "../config/db.config";
-import { sendEmail } from "../emails";
 import { env } from "../config/env.config";
 import {
   AuthenticateUserSchema,
@@ -14,11 +13,14 @@ import {
   DeleteUsersSchema,
   UpdateUserByAdminRequestSchema,
   UserUpdateRequestSchema,
+  resetPasswordSchema,
+  forgotPasswordSchema,
 } from "../schemas/user.schema";
 import crypto from "crypto";
 import { Prisma } from "../../prisma/generated";
 import { Decimal } from "@prisma/client/runtime/library";
 import { AdminAuthSchema } from "../schemas/admin.schema";
+import { sendUserEmail } from "../emails";
 
 // ✅ Get all users
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
@@ -127,8 +129,6 @@ export const createUser = async (
         sameSite: env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
-
-      await sendEmail(undefined, "NEWUSER", newUser, storeId);
 
       res.status(200).send({
         success: "Created Successfully",
@@ -413,5 +413,101 @@ export const updateUserByAdmin = async (
   } catch (error: any) {
     res.status(500).json({ error: "Failed to update user" });
     console.log(error.message);
+  }
+};
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  const input = forgotPasswordSchema.safeParse(req.body);
+  if (!input.success) {
+    res.status(400).json({ error: input.error.flatten() });
+    return;
+  }
+
+  const { email } = input.data;
+  const { storeId } = req.auth!;
+  try {
+    // Find user by email
+    const user = await prisma.user.findFirst({ where: { email, storeId } });
+    if (!user) {
+      res.status(404).json({ error: "User with this email not found." });
+      return;
+    }
+
+    // Generate reset token and expiry
+    const resetToken = uuidv4();
+    const resetTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+
+    // Save token to user record
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { resetToken, resetTokenExpiry },
+    });
+
+    // Send password reset email
+    await sendUserEmail(storeId, user.email, "FORGOT_PASSWORD", {
+      email: user.email,
+      token: resetToken,
+    });
+
+    res.status(200).json({
+      success: "A password reset link has been sent to your email.",
+    });
+  } catch (err: any) {
+    console.error("forgotPassword error:", err);
+    res.status(500).json({ error: "Failed to process password reset." });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const input = resetPasswordSchema.safeParse(req.body);
+  if (!input.success) {
+    res.status(400).json({ error: input.error.flatten() });
+    return;
+  }
+
+  const { password, token, email } = input.data;
+
+  const { storeId } = req.auth!;
+  try {
+    const user = await prisma.user.findFirst({
+      where: { email, storeId },
+    });
+
+    if (!user) {
+      res.status(400).json({ error: "User not found." });
+      return;
+    }
+
+    if (!user.resetToken || user.resetToken !== token) {
+      res.status(400).json({ error: "Invalid reset token." });
+      return;
+    }
+
+    if (
+      !user.resetTokenExpiry ||
+      new Date(user.resetTokenExpiry) < new Date()
+    ) {
+      res.status(400).json({ error: "Token expired." });
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpiry: null,
+      },
+    });
+
+    // Send password changed email
+    await sendUserEmail(storeId, user.email, "PASSWORD_CHANGED");
+    res.status(200).json({ success: "Password updated successfully." });
+  } catch (err: any) {
+    res
+      .status(500)
+      .json({ error: "Failed to update password: " + err.message });
   }
 };

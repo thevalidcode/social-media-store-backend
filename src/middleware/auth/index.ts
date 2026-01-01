@@ -23,11 +23,12 @@ export const authenticateUser = async (
       return;
     }
 
+    const { password, resetToken, resetTokenExpiry, ...safeUser } = user;
     req.auth = {
       storeId,
       uid,
       type: "user",
-      user,
+      user: safeUser,
     };
 
     next();
@@ -57,11 +58,12 @@ export const authenticateAdmin = async (
     admin.timestamp = new Date(admin.timestamp);
     admin.lastSeen = new Date(admin.lastSeen);
 
+    const { password, resetToken, resetTokenExpiry, ...safeAdmin } = admin;
     req.auth = {
       storeId,
       uid,
       type: "admin",
-      user: admin,
+      user: safeAdmin,
     };
 
     next();
@@ -108,22 +110,24 @@ export const authenticateAnyone = async (
       return;
     }
 
-    if (admin) {
-      req.auth = {
-        type: "admin",
-        storeId,
-        uid,
-        user: admin,
-      };
-    } else if (user) {
+    if (user) {
+      const { password, resetToken, resetTokenExpiry, ...safeUser } = user;
       req.auth = {
         type: "user",
         storeId,
         uid,
-        user,
+        user: safeUser,
       };
     }
-
+    if (admin) {
+      const { password, resetToken, resetTokenExpiry, ...safeAdmin } = admin;
+      req.auth = {
+        type: "admin",
+        storeId,
+        uid,
+        user: safeAdmin,
+      };
+    }
     next();
   } catch (err: any) {
     res.status(401).json({ error: "Invalid or expired token" });
@@ -155,12 +159,13 @@ export const authenticateInternalAnyone = async (
       res.status(401).json({ error: "Invalid or expired token" });
       return;
     }
+    const { password, resetToken, resetTokenExpiry, ...safeAdmin } = admin;
 
     req.auth = {
       type: "admin",
       uid,
       storeId,
-      user: admin,
+      user: safeAdmin,
     };
 
     next();

@@ -15,13 +15,13 @@ declare module "express" {
           type: "user";
           storeId: number;
           uid: string;
-          user: User;
+          user: Partial<User>;
         }
       | {
           type: "admin";
           storeId: number;
           uid: string;
-          user: Admin;
+          user: Partial<Admin>;
         };
   }
 }

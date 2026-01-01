@@ -11,7 +11,6 @@ if (require.main === module) {
       description: "A new production store",
       planId: 1,
       adminEmail: "admin@validpanel.com",
-      adminPassword: "$2a$12$lPZwvy1FFz87pdOWlpdlj.VEDuZ/FiyvDAUsako5iOlbt/rshjxCu", // Hash this password
       adminUsername: "validadmin",
       fullName: "Valid Admin",
     });

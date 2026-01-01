@@ -3,6 +3,8 @@ import { z } from "zod";
 import {
   AuthenticateUserSchema,
   CreateUserInputSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
   UpdateUserByAdminRequestSchema,
   UserUpdateRequestSchema,
 } from "../../schemas/user.schema";
@@ -220,6 +222,54 @@ registry.registerPath({
       },
     },
   },
+  responses: {
+    200: SuccessResponse,
+    400: BadRequest,
+    403: Forbidden,
+    500: ServerError,
+  },
+});
+
+// User's forgot password
+registry.registerPath({
+  method: "post",
+  path: "/users/forgot-password",
+  summary: "Send password reset link to user's email",
+  tags: ["Users"],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: forgotPasswordSchema,
+        },
+      },
+    },
+  },
+  security: [{ CookieAuth: [] }],
+  responses: {
+    200: SuccessResponse,
+    400: BadRequest,
+    403: Forbidden,
+    500: ServerError,
+  },
+});
+
+// User's reset password
+registry.registerPath({
+  method: "post",
+  path: "/users/reset-password",
+  summary: "Reset user's password",
+  tags: ["Users"],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: resetPasswordSchema,
+        },
+      },
+    },
+  },
+  security: [{ CookieAuth: [] }],
   responses: {
     200: SuccessResponse,
     400: BadRequest,

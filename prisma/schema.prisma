@@ -51,25 +51,29 @@ model Store {
 }
 
 model User {
-  id            Int             @id @default(autoincrement())
-  storeScopedId Int             @map("store_scoped_id")
-  refCode       Int?            @unique @default(autoincrement()) @map("ref_code")
-  uid           String          @unique
-  email         String
-  image         String?
-  password      String
-  username      String
-  apiKey        String          @unique @default(uuid()) @map("api_key")
-  storeId       Int             @map("store_id")
-  balance       Decimal         @default(0.00) @db.Decimal(10, 2)
-  spent         Decimal         @default(0.00) @db.Decimal(10, 2)
-  timestamp     DateTime        @default(now())
-  lastSeen      DateTime        @default(now()) @map("last_seen")
-  currency      String          @default("USD")
-  ref           Int?
-  role          UserRole        @default(BASIC)
-  status        UserStatus      @default(ACTIVE)
-  fullName      String?
+  id               Int        @id @default(autoincrement())
+  storeScopedId    Int        @map("store_scoped_id")
+  refCode          Int?       @unique @default(autoincrement()) @map("ref_code")
+  uid              String     @unique
+  email            String
+  image            String?
+  password         String
+  username         String
+  apiKey           String     @unique @default(uuid()) @map("api_key")
+  storeId          Int        @map("store_id")
+  balance          Decimal    @default(0.00) @db.Decimal(10, 2)
+  spent            Decimal    @default(0.00) @db.Decimal(10, 2)
+  timestamp        DateTime   @default(now())
+  lastSeen         DateTime   @default(now()) @map("last_seen")
+  currency         String     @default("USD")
+  ref              Int?
+  role             UserRole   @default(BASIC)
+  status           UserStatus @default(ACTIVE)
+  fullName         String?
+  resetToken       String?    @map("reset_token")
+  resetTokenExpiry DateTime?  @map("reset_token_expiry")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+
   Order         Order[]
   Payment       Payment[]
   SupportTicket SupportTicket[]
@@ -99,7 +103,11 @@ model Admin {
   status              AdminStatus @default(ACTIVE)
   fullName            String?     @map("full_name")
   onboardingCompleted Boolean?    @default(false) @map("onboarding_completed")
-  store               Store       @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  resetToken          String?     @map("reset_token")
+  resetTokenExpiry    DateTime?   @map("reset_token_expiry")
+  updatedAt           DateTime    @updatedAt @map("updated_at")
+
+  store Store @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@map("admins")
 }
@@ -273,33 +281,36 @@ model DesignStyle {
 }
 
 model EmailLog {
-  id            Int      @id @default(autoincrement())
-  storeScopedId Int      @map("store_scoped_id")
-  uid           String   @unique @default(uuid())
+  id            Int         @id @default(autoincrement())
+  storeScopedId Int         @map("store_scoped_id")
+  uid           String      @unique @default(uuid())
   sender        String
   receiver      String
   subject       String
   html          String
-  status        String
-  messageId     String?  @map("message_id")
+  status        EmailStatus
+  messageId     String?     @map("message_id")
   response      String?
-  storeId       Int      @map("store_id")
-  timestamp     DateTime @default(now())
-  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  storeId       Int         @map("store_id")
+  timestamp     DateTime    @default(now())
+  store         Store       @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@unique([storeId, storeScopedId])
   @@map("email_logs")
 }
 
 model EmailTemplate {
-  id            Int               @id @default(autoincrement())
-  storeScopedId Int               @map("store_scoped_id")
-  uid           String            @unique @default(uuid())
-  content       String
-  storeId       Int               @map("store_id")
-  timestamp     DateTime          @default(now())
-  type          EmailTemplateType
-  store         Store             @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  id            Int      @id @default(autoincrement())
+  storeScopedId Int      @map("store_scoped_id")
+  uid           String   @unique @default(uuid())
+  content       String // HTML template with {{variables}}
+  name          String? // human-readable name
+  storeId       Int      @map("store_id")
+  subject       String // optional default subject
+  type          String // e.g., "PASSWORD_RESET", "WELCOME_USER"
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  store         Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@unique([storeId, storeScopedId])
   @@map("email_templates")
@@ -447,6 +458,7 @@ model StoreCounter {
   categoryCounter       Int   @default(0) @map("category_counter")
   userCounter           Int   @default(0) @map("user_counter")
   emailLogCounter       Int   @default(0) @map("email_log_counter")
+  emailTemplateCounter  Int   @default(0) @map("email_template_counter")
   uploadLogCounter      Int   @default(0) @map("upload_log_counter")
   providerCounter       Int   @default(0) @map("provider_counter")
   refillCounter         Int   @default(0) @map("refill_counter")
@@ -590,6 +602,11 @@ enum AdminStatus {
   BANNED   @map("banned")
 }
 
+enum EmailStatus {
+  SUCCESS @map("success")
+  ERROR   @map("error")
+}
+
 enum AdminRole {
   SUPER            @map("super")
   BASIC            @map("basic")
@@ -651,19 +668,6 @@ enum CancelStatus {
 enum CategoryStatus {
   ACTIVE   @map("active")
   DISABLED @map("disabled")
-}
-
-enum EmailTemplateType {
-  NEWORDER        @map("new_order")
-  NEWPAYMENT      @map("new_payment")
-  NEWSERVICE      @map("new_service")
-  NEWUSER         @map("new_user")
-  NEWFAILEDORDER  @map("new_failed_order")
-  NEWSUPPORT      @map("new_support")
-  NEWMESSAGE      @map("new_message")
-  VERFICATIONCODE @map("verification_code")
-  NEWREFILL       @map("new_refill")
-  NEWFAILEDREFILL @map("new_failed_refill")
 }
 
 enum FaqStatus {

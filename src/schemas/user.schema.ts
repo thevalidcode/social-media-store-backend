@@ -25,6 +25,9 @@ export const UserSchema: z.ZodType<User> = z
     spent: z.custom<Decimal>(),
     timestamp: z.date(),
     lastSeen: z.date(),
+    updatedAt: z.coerce.date(),
+    resetToken: z.string(),
+    resetTokenExpiry: z.coerce.date(),
     ref: z.number().nullable(),
   })
   .openapi("User");
@@ -106,3 +109,13 @@ export const tokenPayloadSchema = z.object({
 
 export const DeleteUserSchema = z.object({ uid: z.string() });
 export const DeleteUsersSchema = z.object({ uids: z.array(z.string()) });
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string(),
+  email: z.string().email(),
+  password: z.string(),
+});

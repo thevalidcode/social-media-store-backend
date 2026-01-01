@@ -19,6 +19,9 @@ export const AdminSchema: z.ZodType<Admin> = z
     status: z.nativeEnum(AdminStatus),
     storeId: z.number(),
     timestamp: z.date(),
+    updatedAt: z.coerce.date(),
+    resetToken: z.string(),
+    resetTokenExpiry: z.coerce.date(),
     lastSeen: z.date(),
   })
   .openapi("Admin");
@@ -65,4 +68,14 @@ export const AdminUpdateRequestSchema = z.object({
   apiKey: z.string().describe("Admin api key").optional(),
   image: z.string().url().optional(),
   status: z.nativeEnum(AdminStatus).optional(),
+});
+
+export const forgotPasswordAdminSchema = z.object({
+  email: z.string().email(),
+});
+
+export const resetPasswordAdminSchema = z.object({
+  token: z.string(),
+  email: z.string().email(),
+  password: z.string(),
 });

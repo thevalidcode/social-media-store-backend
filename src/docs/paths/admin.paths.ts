@@ -2,11 +2,15 @@ import { registry } from "../components/registry";
 import {
   AdminUpdateRequestSchema,
   AuthenticateAdminSchema,
+  forgotPasswordAdminSchema,
+  resetPasswordAdminSchema,
 } from "../../schemas/admin.schema";
 import {
   BadRequest,
   ServerError,
   InvalidData,
+  SuccessResponse,
+  Forbidden,
 } from "../responses/common.response";
 import {
   AuthenticateAdminResponse,
@@ -66,6 +70,54 @@ registry.registerPath({
   tags: ["Admins"],
   responses: {
     200: OnboardingCompletedResponse,
+    500: ServerError,
+  },
+});
+
+// Admin's forgot password
+registry.registerPath({
+  method: "post",
+  path: "/admins/forgot-password",
+  summary: "Send password reset link to admin's email",
+  tags: ["Admins"],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: forgotPasswordAdminSchema,
+        },
+      },
+    },
+  },
+  security: [{ CookieAuth: [] }],
+  responses: {
+    200: SuccessResponse,
+    400: BadRequest,
+    403: Forbidden,
+    500: ServerError,
+  },
+});
+
+// Admin's reset password
+registry.registerPath({
+  method: "post",
+  path: "/admins/reset-password",
+  summary: "Reset admin's password",
+  tags: ["Admins"],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: resetPasswordAdminSchema,
+        },
+      },
+    },
+  },
+  security: [{ CookieAuth: [] }],
+  responses: {
+    200: SuccessResponse,
+    400: BadRequest,
+    403: Forbidden,
     500: ServerError,
   },
 });

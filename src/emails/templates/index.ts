@@ -1,45 +1,62 @@
-import { newFailedOrder, newOrder } from "./order.templates";
-import { newFailedRefill, newRefill } from "./refill.templates";
-import { newService } from "./service.templates";
-import { newMessage, newSupport } from "./support.templates";
-import { fundsAdded, newUser, verificationCode } from "./user.templates";
+import { LogoVars, TemplateResult } from "../components/EmailLayout";
+import {
+  forgotPassword,
+  passwordChanged,
+  ForgotPasswordVars,
+} from "./user.templates";
+import {
+  adminForgotPassword,
+  adminPasswordChanged,
+  AdminForgotPasswordVars,
+} from "./admin.templates";
 
-interface EmailTemplates {
-  [key: string]: ((v: any) => string) | undefined;
+interface StoreSettings {
+  logoUrl: string;
+  storeName: string;
+  storeUrl: string;
 }
 
-// Templates object
-const templates: EmailTemplates = {
-  verificationCode,
-  newUser,
-  newOrder,
-  newFailedOrder,
-  newRefill,
-  newFailedRefill,
-  newService,
-  newSupport,
-  newMessage,
-  fundsAdded,
-};
+// Map each template type string to the specific variable type it expects
+export interface EmailTemplateVars {
+  FORGOT_PASSWORD: ForgotPasswordVars;
+  PASSWORD_CHANGED: LogoVars;
+  ADMIN_FORGOT_PASSWORD: AdminForgotPasswordVars;
+  ADMIN_PASSWORD_CHANGED: LogoVars;
+  // Add more templates here
+}
 
-type TemplateVariables = Record<string, any>;
+// Typed templates for dev-time safety
+const typedTemplates: {
+  [K in keyof EmailTemplateVars]: (
+    vars: EmailTemplateVars[K],
+    storeSettings: StoreSettings
+  ) => TemplateResult;
+} = {
+  FORGOT_PASSWORD: forgotPassword,
+  PASSWORD_CHANGED: passwordChanged,
+  ADMIN_FORGOT_PASSWORD: adminForgotPassword,
+  ADMIN_PASSWORD_CHANGED: adminPasswordChanged,
+};
 
 /**
  * Retrieves and renders the email template for the specified type.
  *
- * @param type - The identifier for the template (e.g., 'welcome', 'resetPassword')
- * @param variables - A key-value map of variables to be injected into the template
- * @returns A rendered email template string
- * @throws If the template type is not found
+ * @param type - Template type as string
+ * @param variables - Variables specific to that template
+ * @param storeSettings - Store-specific settings (logo, name, url)
+ * @returns Rendered email HTML and subject
  */
-function getTemplate(type: string, variables: TemplateVariables): string {
-  const templateFn = templates[type];
-
+export function getTemplate<K extends keyof EmailTemplateVars>(
+  type: K,
+  variables: Record<string, any>,
+  storeSettings: StoreSettings
+): TemplateResult {
+  const templateFn = typedTemplates[type as keyof typeof typedTemplates] as
+    | ((vars: Record<string, any>, storeSettings: StoreSettings) => TemplateResult)
+    | undefined;
   if (!templateFn) {
     throw new Error(`Email template for type "${type}" not found.`);
   }
 
-  return templateFn(variables);
+  return templateFn(variables, storeSettings);
 }
-
-export { getTemplate };

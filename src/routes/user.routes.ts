@@ -7,6 +7,8 @@ import { strictLimiter } from "../middleware/ratelimit/user.ratelimit";
 router.get("/", authenticateAdmin, users.getUsers);
 router.post("/me", strictLimiter, users.me);
 router.post("/verify-session", users.verifySession);
+router.post("/reset-password", strictLimiter, users.resetPassword);
+router.post("/forgot-password", strictLimiter, users.forgotPassword);
 router.post("/", strictLimiter, users.createUser);
 router.get("/:uid", authenticateAdmin, users.getUserByUid);
 router.get("/affiliate", authenticateUser, users.getAffiliateData);
