@@ -10,11 +10,6 @@ interface DispatchEmailParams {
   storeId: number;
 }
 
-interface BuildTemplateResult {
-  subject: string;
-  html: string;
-}
-
 interface StoreSettings {
   logoUrl: string;
   storeName: string;

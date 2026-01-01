@@ -22,7 +22,7 @@ export const forgotPassword = (
   { email, token, logo }: ForgotPasswordVars,
   storeSettings: StoreSettings
 ): TemplateResult => {
-  const resetLink = `${storeSettings.storeUrl}/reset-password?email=${encodeURIComponent(
+  const resetLink = `${storeSettings.storeUrl}/auth/reset-password?email=${encodeURIComponent(
     email
   )}&token=${encodeURIComponent(token)}`;
 
