@@ -10,6 +10,7 @@ import "./auth.paths";
 import "./order.paths";
 import "./blog.paths";
 import "./faq.paths";
+import "./page.paths";
 import "./refill.paths";
 import "./files.paths";
 import "./paymentGateway.paths";

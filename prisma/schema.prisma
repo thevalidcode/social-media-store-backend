@@ -33,6 +33,7 @@ model Store {
   EmailTemplate    EmailTemplate[]
   Faq              Faq[]
   Order            Order[]
+  Page             Page[]
   PaymentGateway   PaymentGateway[]
   Payment          Payment[]
   Provider         Provider[]
@@ -333,6 +334,24 @@ model Faq {
   @@map("faqs")
 }
 
+model Page {
+  id            Int        @id @default(autoincrement())
+  storeScopedId Int        @map("store_scoped_id")
+  uid           String     @unique @default(uuid())
+  title         String
+  content       String
+  pageType      PageType   @map("page_type")
+  status        PageStatus @default(ACTIVE)
+  storeId       Int        @map("store_id")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  store         Store      @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  @@unique([storeId, storeScopedId])
+  @@unique([storeId, pageType])
+  @@map("pages")
+}
+
 model Setting {
   id                    Int      @id @default(autoincrement())
   uid                   String   @unique @default(uuid())
@@ -455,6 +474,7 @@ model StoreCounter {
   orderCounter          Int   @default(0) @map("order_counter")
   blogCounter           Int   @default(0) @map("blog_counter")
   faqCounter            Int   @default(0) @map("faq_counter")
+  pageCounter           Int   @default(0) @map("page_counter")
   categoryCounter       Int   @default(0) @map("category_counter")
   userCounter           Int   @default(0) @map("user_counter")
   emailLogCounter       Int   @default(0) @map("email_log_counter")
@@ -673,6 +693,19 @@ enum CategoryStatus {
 enum FaqStatus {
   ACTIVE   @map("active")
   DISABLED @map("disabled")
+}
+
+enum PageType {
+  SERVICES         @map("services")
+  ORDERS           @map("orders")
+  ORDER            @map("order")
+  TERMS_OF_SERVICE @map("terms_of_service")
+  PRIVACY_POLICY   @map("privacy_policy")
+}
+
+enum PageStatus {
+  ACTIVE   @map("active")
+  INACTIVE @map("inactive")
 }
 
 enum PaymentGatewayStatus {
