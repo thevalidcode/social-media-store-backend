@@ -6,16 +6,17 @@ import { prisma } from "../config/db.config";
 import { placeOrderSchema } from "../schemas/order.schema";
 import { z } from "zod";
 import { decryptKey } from "../utils/encrypt";
-import { v4 as uuidv4 } from "uuid";
 import { exchangeRates } from "../helpers/currency.helper";
+import { Decimal } from "@prisma/client/runtime/library";
+import { v4 as uuidv4 } from "uuid";
 
 const agent = new https.Agent({
   keepAlive: true,
   rejectUnauthorized: false,
 });
 
-const safeFloat = (n: any, d = 0): number =>
-  Number.isFinite(+n) ? parseFloat(n) : d;
+const toDecimal = (n: any, d = "0"): Decimal =>
+  new Decimal(Number.isFinite(+n) ? n : d);
 
 const safeInt = (n: any, d = 0): number =>
   Number.isFinite(+n) ? parseInt(n, 10) : d;
@@ -52,30 +53,32 @@ export const sendOrderToProvider = async (
     if (!user || !service || !provider)
       return { error: "There's either no user, service or provider." };
 
-    const pricePer1000 = convertCurrency(
-      safeFloat(service.price),
-      service.providerCurrency || "USD",
-      "USD",
-      rates
+    const pricePer1000 = toDecimal(
+      convertCurrency(
+        toDecimal(service.price).toNumber(),
+        service.providerCurrency || "USD",
+        "USD",
+        rates
+      )
     );
 
-    let chargeUSD = 0;
+    let chargeUSD = new Decimal(0);
     if (service.type === "PACKAGE") {
       chargeUSD = pricePer1000;
     } else {
-      const quantity = safeFloat(orderData.quantity);
-      chargeUSD = (quantity / 1000) * pricePer1000;
+      const quantity = toDecimal(orderData.quantity);
+      chargeUSD = quantity.div(1000).mul(pricePer1000);
     }
 
-    chargeUSD = parseFloat(chargeUSD.toFixed(2));
+    chargeUSD = chargeUSD.toDecimalPlaces(2);
 
-    const userBalance = safeFloat(user.balance);
-    if (userBalance < chargeUSD) {
+    const userBalance = toDecimal(user.balance);
+    if (userBalance.lt(chargeUSD)) {
       return { error: "User has insufficient balance" };
     }
 
     const userInitialBalance = userBalance;
-    const userFinalBalance = userBalance - chargeUSD;
+    const userFinalBalance = userBalance.minus(chargeUSD);
 
     const apiKeyData = provider.apiKey as {
       encrypted_key: string;
@@ -165,8 +168,8 @@ export const sendOrderToProvider = async (
         const percent = affiliate.percent || 0;
 
         if (refUser) {
-          const earned = parseFloat(((chargeUSD * percent) / 100).toFixed(2));
-          const newRefBalance = safeFloat(refUser.balance) + earned;
+          const earned = chargeUSD.mul(percent).div(100).toDecimalPlaces(2);
+          const newRefBalance = toDecimal(refUser.balance).add(earned);
 
           await tx.user.update({
             where: { uid: refUser.uid },
@@ -200,16 +203,11 @@ export const sendOrderToProvider = async (
       }
     });
 
-    await sendEmail(
-      undefined,
-      "NEWORDER",
-      {
-        ...orderData,
-        userBalance: userFinalBalance,
-        serviceId: service.id,
-      },
-      storeId
-    );
+    await sendEmail(undefined, "NEWORDER", {
+      ...orderData,
+      userBalance: userFinalBalance,
+      serviceId: service.id,
+    },storeId);
 
     return { success: "Order sent to provider successfully" };
   } catch (err: any) {
@@ -231,22 +229,23 @@ export const updateOrderStatus = async (
     });
     if (!provider) return;
 
-    const url = `${order.provider}`;
-
     const apiKeyData = provider.apiKey as {
       encrypted_key: string;
       iv: string;
     };
 
     const decryptedKey = decryptKey(apiKeyData.encrypted_key, apiKeyData.iv);
-    const data = {
-      key: decryptedKey,
-      action: "status",
-      order: order.providerOrderId,
-    };
-    const { data: resp } = await axios.post(`https://${url}`, data, {
-      httpsAgent: agent,
-    });
+
+    const { data: resp } = await axios.post(
+      `https://${order.provider}`,
+      {
+        key: decryptedKey,
+        action: "status",
+        order: order.providerOrderId,
+      },
+      { httpsAgent: agent }
+    );
+
     const rates = await exchangeRates();
 
     await prisma.order.update({
@@ -254,9 +253,9 @@ export const updateOrderStatus = async (
       data: {
         status: resp.status,
         providerCurrency: resp.currency?.toUpperCase(),
-        providerPrice: safeFloat(
+        providerPrice: toDecimal(
           convertCurrency(
-            safeFloat(resp.charge),
+            toDecimal(resp.charge).toNumber(),
             resp.currency?.toUpperCase(),
             "USD",
             rates
@@ -344,7 +343,9 @@ export const syncOrderDetails = async (
     const rates = await exchangeRates();
 
     if (resp.status === "Canceled" && orderData.status !== "Canceled") {
-      const newBalance = safeFloat(user.balance) + safeFloat(orderData.price);
+      const newBalance = toDecimal(user.balance).add(
+        toDecimal(orderData.price)
+      );
       await prisma.user.update({
         where: { uid: user.uid },
         data: { balance: newBalance },
@@ -358,18 +359,27 @@ export const syncOrderDetails = async (
     if (resp.status === "Partial" && orderData.status !== "Partial") {
       if (!service) return false;
 
-      const pricePer1000 =
+      const pricePer1000 = toDecimal(
         convertCurrency(
-          service.price,
+          toDecimal(service.price).toNumber(),
           service.providerCurrency || "USD",
           "USD",
           rates
-        ) || 0;
+        ) || 0
+      );
 
-      const refunded = safeFloat(orderData.number) - safeFloat(resp.remains);
-      const totalPrice = ((resp.remains / 1000) * pricePer1000).toFixed(2);
-      const orderPrice = ((refunded / 1000) * pricePer1000).toFixed(2);
-      const newBalance = safeFloat(user.balance) + safeFloat(totalPrice);
+      const refunded = toDecimal(orderData.number).minus(
+        toDecimal(resp.remains)
+      );
+      const totalPrice = toDecimal(resp.remains)
+        .div(1000)
+        .mul(pricePer1000)
+        .toDecimalPlaces(2);
+      const orderPrice = refunded
+        .div(1000)
+        .mul(pricePer1000)
+        .toDecimalPlaces(2);
+      const newBalance = toDecimal(user.balance).add(totalPrice);
 
       await prisma.user.update({
         where: { uid: user.uid },
@@ -379,7 +389,7 @@ export const syncOrderDetails = async (
         where: { uid: orderData.uid },
         data: {
           status: "PARTIAL",
-          price: safeFloat(orderPrice),
+          price: orderPrice,
           remains: safeInt(resp.remains),
         },
       });
@@ -388,18 +398,21 @@ export const syncOrderDetails = async (
     if (resp.status === "Completed" && orderData.status !== "Completed") {
       if (!service) return false;
 
-      const pricePer1000 = convertCurrency(
-        service.price,
-        service.providerCurrency || "USD",
-        "USD",
-        rates
+      const pricePer1000 = toDecimal(
+        convertCurrency(
+          toDecimal(service.price).toNumber(),
+          service.providerCurrency || "USD",
+          "USD",
+          rates
+        ) || 0
       );
 
       if (orderData.status === "Canceled") {
-        const totalPrice = ((orderData.number / 1000) * pricePer1000).toFixed(
-          2
-        );
-        const newBalance = safeFloat(user.balance) - safeFloat(totalPrice);
+        const totalPrice = toDecimal(orderData.number)
+          .div(1000)
+          .mul(pricePer1000)
+          .toDecimalPlaces(2);
+        const newBalance = toDecimal(user.balance).minus(totalPrice);
 
         await prisma.user.update({
           where: { uid: user.uid },
@@ -410,16 +423,19 @@ export const syncOrderDetails = async (
           data: {
             status: "COMPLETED",
             remains: 0,
-            price: safeFloat(totalPrice),
+            price: totalPrice,
           },
         });
       } else if (orderData.status === "Partial") {
-        const originalPrice = (
-          (orderData.number / 1000) *
-          pricePer1000
-        ).toFixed(2);
-        const refundPrice = ((resp.remains / 1000) * pricePer1000).toFixed(2);
-        const newBalance = safeFloat(user.balance) - safeFloat(refundPrice);
+        const originalPrice = toDecimal(orderData.number)
+          .div(1000)
+          .mul(pricePer1000)
+          .toDecimalPlaces(2);
+        const refundPrice = toDecimal(resp.remains)
+          .div(1000)
+          .mul(pricePer1000)
+          .toDecimalPlaces(2);
+        const newBalance = toDecimal(user.balance).minus(refundPrice);
 
         await prisma.user.update({
           where: { uid: user.uid },
@@ -430,7 +446,7 @@ export const syncOrderDetails = async (
           data: {
             status: "COMPLETED",
             remains: 0,
-            price: safeFloat(originalPrice),
+            price: originalPrice,
           },
         });
       } else {
@@ -447,9 +463,9 @@ export const syncOrderDetails = async (
         status: resp.status,
         remains: safeInt(resp.remains),
         start: safeInt(resp.startCount),
-        providerPrice: safeFloat(
+        providerPrice: toDecimal(
           convertCurrency(
-            safeFloat(resp.charge),
+            toDecimal(resp.charge).toNumber(),
             resp.currency.toUpperCase(),
             "USD",
             rates
@@ -567,7 +583,6 @@ export const processDripFeedOrders = async (): Promise<void> => {
                     price: order.price,
                     username: user.username,
                     refId: user.ref!,
-                    uid: uuidv4(),
                     storeScopedId: counter.referralOrderCounter,
                     storeId,
                   },
@@ -585,7 +600,7 @@ export const processDripFeedOrders = async (): Promise<void> => {
                     amount: earned,
                     currency: "USD",
                     userUid: user.uid,
-                    uid: uuidv4(),
+
                     storeScopedId: counter.transactionCounter,
                     storeId,
                   },
@@ -595,19 +610,18 @@ export const processDripFeedOrders = async (): Promise<void> => {
           }
 
           // 🆕 Create new order from drip feed
-          const price = (
-            (order.quantity / 1000) *
-            safeFloat(service.price)
-          ).toFixed(2);
+          const price = toDecimal(order.quantity)
+            .div(1000)
+            .mul(toDecimal(service.price))
+            .toDecimalPlaces(2);
 
           const newOrderData = {
             ...order,
             provider: service.provider?.url,
             syncOrder: true,
             providerOrderId: service.providerId,
-            price: parseFloat(price),
+            price,
             storeId,
-            uid: uuidv4(),
             dripFeed: undefined,
             runs: undefined,
             interval: undefined,

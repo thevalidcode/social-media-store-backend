@@ -12,8 +12,8 @@ const agent = new https.Agent({
   rejectUnauthorized: false,
 });
 
-const safeFloat = (n: any, d = 0): number =>
-  Number.isFinite(+n) ? parseFloat(n) : d;
+const toDecimal = (n: any, d = "0"): Decimal =>
+  new Decimal(Number.isFinite(+n) ? n : d);
 
 const safeInt = (n: any, d = 0): number =>
   Number.isFinite(+n) ? parseInt(n, 10) : d;
@@ -81,10 +81,11 @@ export const updateExistingServices = async (): Promise<void> => {
           continue;
         }
 
-        const calcPrice =
-          safeFloat(liveSvc.rate) +
-          (safeFloat(liveSvc.rate) * (svc.percentage ?? 0)) / 100;
-        const priceUSD = safeFloat(calcPrice).toFixed(3);
+        const providerRate = toDecimal(liveSvc.rate);
+        const pct = toDecimal(svc.percentage ?? 0);
+        const priceUSD = providerRate
+          .plus(providerRate.mul(pct).div(100))
+          .toDecimalPlaces(3);
 
         await prisma.service.update({
           where: { uid: svc.uid },
@@ -94,8 +95,8 @@ export const updateExistingServices = async (): Promise<void> => {
                 ? liveSvc.type.replace(/\s+/g, "_").toUpperCase()
                 : "DEFAULT"
             ) as ServiceType,
-            providerPrice: safeFloat(liveSvc.rate),
-            price: safeFloat(priceUSD),
+            providerPrice: providerRate,
+            price: priceUSD,
             cancel: liveSvc.cancel,
             providerCurrency: provCur,
             network: liveSvc.network || "None",
@@ -199,9 +200,11 @@ export const syncServices = async (): Promise<void> => {
               data: { serviceCounter: { increment: 1 } },
             });
 
-            const calcPrice =
-              safeFloat(s.rate) + (safeFloat(s.rate) * prov.percentage) / 100;
-            const endPrice = safeFloat(calcPrice).toFixed(3);
+            const providerRate = toDecimal(s.rate);
+            const pct = toDecimal(prov.percentage);
+            const endPrice = providerRate
+              .plus(providerRate.mul(pct).div(100))
+              .toDecimalPlaces(3);
 
             const newService = await tx.service.create({
               data: {
@@ -217,12 +220,12 @@ export const syncServices = async (): Promise<void> => {
                 max: safeInt(s.max),
                 providerId: safeInt(s.service),
                 description: s.description || "",
-                providerPrice: new Decimal(s.rate),
+                providerPrice: providerRate,
                 storeId,
                 status: "ACTIVE",
                 syncQuantity: true,
                 syncCatAndName: true,
-                price: new Decimal(endPrice),
+                price: endPrice,
                 position: serviceCounter.serviceCounter,
                 cancel: s.cancel,
                 network: s.network || "None",

@@ -10,6 +10,8 @@ import {
 } from "../schemas/order.schema";
 import { UserAuthSchema } from "../schemas/user.schema";
 import { AdminAuthSchema } from "../schemas/admin.schema";
+import { env } from "../config/env.config";
+import { sendOrderToProvider } from "../providers/order.providers";
 
 const publicFields = {
   storeScopedId: true,
@@ -273,6 +275,10 @@ export const placeOrder = async (
       return order;
     });
 
+    if (env.NODE_ENV === "production") {
+      await sendOrderToProvider(newOrder, storeId);
+    }
+
     res.status(200).json({
       success: "Order placed successfully",
       uid: newOrder.uid,
@@ -309,7 +315,7 @@ export const bulkCreateOrders = async (
           data: { orderCounter: { increment: 1 } },
         });
 
-        return prisma.order.create({
+        const newOrder = await prisma.order.create({
           data: {
             ...order,
             uid: uuidv4(),
@@ -317,6 +323,17 @@ export const bulkCreateOrders = async (
             storeScopedId: counter.orderCounter,
           },
         });
+
+        if (env.NODE_ENV === "production") {
+          try {
+            await sendOrderToProvider(newOrder, storeId);
+          } catch (err) {
+            // log but do NOT break bulk creation
+            console.error("Provider error:", err);
+          }
+        }
+
+        return newOrder;
       })
     );
 
