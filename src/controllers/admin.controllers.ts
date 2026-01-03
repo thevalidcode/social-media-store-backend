@@ -88,11 +88,11 @@ export const updateAdmin = async (
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
-  const { uid } = req.auth!;
+  const { uid, storeId } = req.auth!;
 
   try {
     const admin = await prisma.admin.update({
-      where: { uid: uid },
+      where: { uid, storeId },
       data: parsed.data,
     });
     const { password: _, ...safeAdmin } = admin;
@@ -108,11 +108,11 @@ export const completeOnboarding = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { uid } = req.auth!;
+  const { uid, storeId } = req.auth!;
 
   try {
     const admin = await prisma.admin.update({
-      where: { uid },
+      where: { uid, storeId },
       data: { onboardingCompleted: true },
     });
 
@@ -135,7 +135,7 @@ export const forgotPasswordAdmin = async (
 
   const { email } = input.data;
   const { storeId } = req.auth!;
-  
+
   try {
     // Find admin by email
     const admin = await prisma.admin.findFirst({ where: { email, storeId } });
@@ -150,7 +150,7 @@ export const forgotPasswordAdmin = async (
 
     // Save token to admin record
     await prisma.admin.update({
-      where: { id: admin.id },
+      where: { id: admin.id, storeId },
       data: { resetToken, resetTokenExpiry },
     });
 
@@ -181,7 +181,7 @@ export const resetPasswordAdmin = async (
 
   const { password, token, email } = input.data;
   const { storeId } = req.auth!;
-  
+
   try {
     const admin = await prisma.admin.findFirst({
       where: { email, storeId },
@@ -208,7 +208,7 @@ export const resetPasswordAdmin = async (
     const hashedPassword = await bcrypt.hash(password, 12);
 
     await prisma.admin.update({
-      where: { id: admin.id },
+      where: { id: admin.id, storeId },
       data: {
         password: hashedPassword,
         resetToken: null,

@@ -3,7 +3,7 @@ import { prisma } from "../config/db.config";
 if (require.main === module) {
   (async () => {
     const result = await prisma.admin.update({
-      where: { id: 1 },
+      where: { id: 1, storeId: 1 },
       data: {
         onboardingCompleted: false,
         password:
