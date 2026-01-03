@@ -125,8 +125,21 @@ export async function CreateStore(params: CreateStoreParams) {
     });
 
     // Step 7: Run CLI to provision store
-    if (!storeDomain.startsWith("localhost") && env.NODE_ENV === "production")
-      await runStoreCreateCLI(storeDomain);
+    if (!storeDomain.startsWith("localhost") && env.NODE_ENV === "production") {
+      try {
+        await runStoreCreateCLI(storeDomain);
+      } catch (cliError) {
+        // Rollback: Delete created records if CLI fails
+        await prisma.$transaction(async (tx) => {
+          await tx.admin.delete({ where: { id: adminId } });
+          await tx.setting.delete({ where: { storeId } });
+          await tx.storeCounter.delete({ where: { storeId } });
+          await tx.store.delete({ where: { storeId } });
+        });
+        
+        throw cliError;
+      }
+    }
 
     return response;
   } catch (err: any) {
