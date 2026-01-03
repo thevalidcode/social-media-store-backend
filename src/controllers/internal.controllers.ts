@@ -195,17 +195,23 @@ export const updateStore = async (
       return;
     }
 
+    const settingData = {
+      logoUrl: parsed.data.logoUrl,
+      faviconUrl: parsed.data.faviconUrl,
+      defaultClientCurrency: parsed.data.defaultClientCurrency,
+      showBanner: parsed.data.showBanner,
+      onboardingCompleted: parsed.data.onboardingCompleted,
+    };
+
     await prisma.setting.upsert({
       where: {
         storeId: store.storeId,
       },
       create: {
-        ...parsed.data,
+        ...settingData,
         storeId: store.storeId,
       },
-      update: {
-        ...parsed.data,
-      },
+      update: settingData,
     });
 
     await prisma.store.update({
@@ -215,6 +221,7 @@ export const updateStore = async (
       data: {
         name: parsed.data.storeName,
         description: parsed.data.storeDescription,
+        status: parsed.data.status,
       },
     });
     res.json({
