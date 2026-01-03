@@ -89,15 +89,17 @@ model User {
   @@map("users")
 }
 
+// This Admin model is the user in the core-platform, that's why most fields aren't unique.
+
 model Admin {
-  id                  Int         @id @default(autoincrement())
-  uid                 String      @unique @default(uuid())
+  id                  Int
+  uid                 String
   email               String
   image               String?
   password            String
   username            String
-  apiKey              String      @unique @default(uuid()) @map("api_key")
-  storeId             Int         @map("store_id")
+  apiKey              String      @map("api_key")
+  storeId             Int         @unique @map("store_id")
   timestamp           DateTime    @default(now())
   lastSeen            DateTime    @default(now()) @map("last_seen")
   role                AdminRole   @default(BASIC)

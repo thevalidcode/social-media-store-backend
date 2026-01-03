@@ -98,6 +98,7 @@ export async function CreateStore(params: CreateStoreParams) {
       const admin = await tx.admin.create({
         data: {
           uid: adminUid,
+          apiKey: crypto.randomUUID(),
           id: adminId,
           email: adminEmail,
           image: adminImage || null,
@@ -118,12 +119,12 @@ export async function CreateStore(params: CreateStoreParams) {
       } catch (cliError) {
         // Rollback: Delete created records if CLI fails
         await prisma.$transaction(async (tx) => {
-          await tx.admin.delete({ where: { id: adminId } });
+          await tx.admin.delete({ where: { storeId } });
           await tx.setting.delete({ where: { storeId } });
           await tx.storeCounter.delete({ where: { storeId } });
           await tx.store.delete({ where: { storeId } });
         });
-        
+
         throw cliError;
       }
     }
