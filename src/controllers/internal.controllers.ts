@@ -198,6 +198,7 @@ export const updateStore = async (
     const settingData = {
       logoUrl: parsed.data.logoUrl,
       faviconUrl: parsed.data.faviconUrl,
+      status: parsed.data.status,
       defaultClientCurrency: parsed.data.defaultClientCurrency,
       showBanner: parsed.data.showBanner,
       onboardingCompleted: parsed.data.onboardingCompleted,
