@@ -12,8 +12,15 @@ export function runStoreCreateCLI(domain: string): Promise<void> {
 
     exec(cmd, (error, stdout, stderr) => {
       if (error) {
-        return reject(new StoreError("CLI_ERROR", stderr || error.message));
+        return reject(
+          new StoreError("CLI_ERROR", stderr || stdout || error.message)
+        );
       }
+
+      if (stderr) {
+        return reject(new StoreError("CLI_STDERR", stderr));
+      }
+
       resolve();
     });
   });
