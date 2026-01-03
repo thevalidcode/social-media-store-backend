@@ -198,7 +198,6 @@ export const updateStore = async (
     const settingData = {
       logoUrl: parsed.data.logoUrl,
       faviconUrl: parsed.data.faviconUrl,
-      status: parsed.data.status,
       defaultClientCurrency: parsed.data.defaultClientCurrency,
       showBanner: parsed.data.showBanner,
       onboardingCompleted: parsed.data.onboardingCompleted,
@@ -212,7 +211,10 @@ export const updateStore = async (
         ...settingData,
         storeId: store.storeId,
       },
-      update: settingData,
+      update: {
+        logoUrl: settingData.logoUrl,
+        faviconUrl: settingData.faviconUrl,
+      },
     });
 
     await prisma.store.update({
