@@ -12,6 +12,7 @@ import {
   resetPasswordAdminSchema,
 } from "../schemas/admin.schema";
 import { sendUserEmail } from "../emails";
+import { StoreIdSchema } from "../schemas/common.schema";
 
 export const authenticateAdmin = async (
   req: Request,
@@ -134,7 +135,12 @@ export const forgotPasswordAdmin = async (
   }
 
   const { email } = input.data;
-  const { storeId } = req.auth!;
+  const parsed = StoreIdSchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+  const { storeId } = parsed.data;
 
   try {
     // Find admin by email
@@ -180,7 +186,12 @@ export const resetPasswordAdmin = async (
   }
 
   const { password, token, email } = input.data;
-  const { storeId } = req.auth!;
+  const parsed = StoreIdSchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+  const { storeId } = parsed.data;
 
   try {
     const admin = await prisma.admin.findFirst({

@@ -17,6 +17,7 @@ import {
   UpdateSuccess,
   OnboardingCompletedResponse,
 } from "../responses/admin.response";
+import { StoreIdSchema } from "../../schemas/common.schema";
 
 // Authenticate admin
 registry.registerPath({
@@ -81,6 +82,7 @@ registry.registerPath({
   summary: "Send password reset link to admin's email",
   tags: ["Admins"],
   request: {
+    query: StoreIdSchema,
     body: {
       content: {
         "application/json": {
@@ -105,6 +107,7 @@ registry.registerPath({
   summary: "Reset admin's password",
   tags: ["Admins"],
   request: {
+    query: StoreIdSchema,
     body: {
       content: {
         "application/json": {

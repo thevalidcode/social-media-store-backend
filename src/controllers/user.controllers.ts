@@ -20,6 +20,7 @@ import { Prisma } from "../../prisma/generated";
 import { Decimal } from "@prisma/client/runtime/library";
 import { AdminAuthSchema } from "../schemas/admin.schema";
 import { sendUserEmail } from "../emails";
+import { StoreIdSchema } from "../schemas/common.schema";
 
 async function getNextStoreScopedId(
   storeId: number,
@@ -457,9 +458,13 @@ export const forgotPassword = async (req: Request, res: Response) => {
     res.status(400).json({ error: input.error.flatten() });
     return;
   }
-
+  const parsed = StoreIdSchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+  const { storeId } = parsed.data;
   const { email } = input.data;
-  const { storeId } = req.auth!;
   try {
     // Find user by email
     const user = await prisma.user.findFirst({ where: { email, storeId } });
@@ -502,7 +507,12 @@ export const resetPassword = async (req: Request, res: Response) => {
 
   const { password, token, email } = input.data;
 
-  const { storeId } = req.auth!;
+  const parsed = StoreIdSchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+  const { storeId } = parsed.data;
   try {
     const user = await prisma.user.findFirst({
       where: { email, storeId },

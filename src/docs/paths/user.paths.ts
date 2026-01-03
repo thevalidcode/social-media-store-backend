@@ -26,6 +26,7 @@ import {
   InvalidData,
   SuccessResponse,
 } from "../responses/common.response";
+import { StoreIdSchema } from "../../schemas/common.schema";
 
 // Authenticate user
 registry.registerPath({
@@ -237,6 +238,7 @@ registry.registerPath({
   summary: "Send password reset link to user's email",
   tags: ["Users"],
   request: {
+    query: StoreIdSchema,
     body: {
       content: {
         "application/json": {
@@ -261,6 +263,7 @@ registry.registerPath({
   summary: "Reset user's password",
   tags: ["Users"],
   request: {
+    query: StoreIdSchema,
     body: {
       content: {
         "application/json": {
