@@ -62,19 +62,6 @@ export async function CreateStore(params: CreateStoreParams) {
         );
       }
 
-      // Step 2: Ensure admin email is unique
-      const existingAdmin = await tx.admin.findFirst({
-        where: { email: adminEmail },
-        select: { id: true },
-      });
-
-      if (existingAdmin) {
-        throw new StoreError(
-          "ADMIN_EMAIL_TAKEN",
-          "Admin email has already been used"
-        );
-      }
-
       // Step 3: Create store
       const store = await tx.store.create({
         data: {
