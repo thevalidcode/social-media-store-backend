@@ -1,7 +1,7 @@
 import express from "express";
 const router = express.Router();
 import * as stores from "../controllers/store.controllers";
-import { authenticateAdmin, authenticateUser } from "../middleware/auth";
+import { authenticateAdmin } from "../middleware/auth";
 
 router.get("/data", stores.getStoreData);
 router.put("/:storeId/onboarding-completed", stores.completeOnboarding);

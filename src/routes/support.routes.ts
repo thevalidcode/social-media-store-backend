@@ -4,13 +4,14 @@ const router = express.Router();
 import * as tickets from "../controllers/support.controllers";
 import { authenticateAdmin, authenticateUser } from "../middleware/auth";
 import {
-  limittAdd,
-  limittActions,
-} from "../middleware/ratelimit/common.ratelimit";
+  createTicketLimiter,
+  addMessageLimiter,
+  adminActionLimiter,
+} from "../middleware/ratelimit/support.ratelimit";
 
 router.get("/tickets/admin", authenticateAdmin, tickets.getAllTickets);
 router.get("/tickets", authenticateUser, tickets.getAllTicketsForUser);
-router.post("/tickets", authenticateUser, limittAdd, tickets.createTicket);
+router.post("/tickets", authenticateUser, createTicketLimiter, tickets.createTicket);
 router.get("/tickets/:uid", authenticateUser, tickets.getTicketByUid);
 router.get(
   "/tickets/admin/:uid",
@@ -19,28 +20,28 @@ router.get(
 );
 router.patch(
   "/tickets/:uid",
-  limittActions,
+  adminActionLimiter,
   authenticateAdmin,
   tickets.updateTicket
 );
 router.delete(
   "/tickets/:uid",
-  limittActions,
+  adminActionLimiter,
   authenticateAdmin,
   tickets.deleteTicket
 );
 
-router.post("/:uid/messages", authenticateUser, limittAdd, tickets.addMessage);
+router.post("/:uid/messages", authenticateUser, addMessageLimiter, tickets.addMessage);
 router.post(
   "/:uid/messages/admin",
   authenticateAdmin,
-  limittAdd,
+  addMessageLimiter,
   tickets.addMessageForAdmin
 );
 router.delete(
   "/messages/:uid",
   authenticateAdmin,
-  limittActions,
+  adminActionLimiter,
   tickets.deleteMessage
 );
 
