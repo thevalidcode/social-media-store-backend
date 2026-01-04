@@ -43,9 +43,21 @@ export const authenticateAdmin = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const payload =
-      verifyBrowserAuth(req, res) || verifyInternalUserAuth(req, res);
-    if (!payload) return;
+    const hasBrowserToken = Boolean(req.cookies?.auth_token);
+    const hasAuthHeader = Boolean(req.headers["authorization"]);
+
+    const payload = hasBrowserToken
+      ? verifyBrowserAuth(req, res)
+      : hasAuthHeader
+      ? verifyInternalUserAuth(req, res)
+      : null;
+
+    if (!payload) {
+      if (!hasBrowserToken && !hasAuthHeader) {
+        res.status(401).json({ error: "Missing authentication token" });
+      }
+      return;
+    }
 
     const { storeId, uid } = payload;
 
@@ -91,9 +103,21 @@ export const authenticateAnyone = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const payload =
-    verifyBrowserAuth(req, res) || verifyInternalUserAuth(req, res);
-  if (!payload) return;
+  const hasBrowserToken = Boolean(req.cookies?.auth_token);
+  const hasAuthHeader = Boolean(req.headers["authorization"]);
+
+  const payload = hasBrowserToken
+    ? verifyBrowserAuth(req, res)
+    : hasAuthHeader
+    ? verifyInternalUserAuth(req, res)
+    : null;
+
+  if (!payload) {
+    if (!hasBrowserToken && !hasAuthHeader) {
+      res.status(401).json({ error: "Missing authentication token" });
+    }
+    return;
+  }
 
   const { storeId, uid } = payload;
 

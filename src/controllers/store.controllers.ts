@@ -25,7 +25,15 @@ export const getStoreData = async (
   try {
     const store = await prisma.store.findUnique({
       where: { uid: domain, status: "ACTIVE" },
-      select: { storeId: true, planId: true, timestamp: true, features: true },
+      select: {
+        storeId: true,
+        planId: true,
+        timestamp: true,
+        features: true,
+        name: true,
+        description: true,
+        status: true,
+      },
     });
 
     if (!store) {
