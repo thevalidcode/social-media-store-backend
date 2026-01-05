@@ -48,12 +48,12 @@ export const UidSchema = z.object({
 export type DeleteStoreParams = z.infer<typeof UidSchema>;
 
 export const UpdateStoreSchema = z.object({
-  logoUrl: z.string().url().optional().or(z.literal("")),
-  faviconUrl: z.string().url().optional().or(z.literal("")),
+  logoUrl: z.string().url().optional().or(z.literal("")).nullable(),
+  faviconUrl: z.string().url().optional().or(z.literal("")).nullable(),
   storeName: z.string().optional(),
   storeDescription: z.string().optional(),
   status: z.nativeEnum(StoreStatus).optional(),
   defaultClientCurrency: z.string().optional().nullable().default("USD"),
-  showBanner: z.boolean().optional().default(true),
-  onboardingCompleted: z.boolean().optional().default(false),
+  showBanner: z.boolean().optional().default(true).nullable(),
+  onboardingCompleted: z.boolean().optional().default(false).nullable(),
 });

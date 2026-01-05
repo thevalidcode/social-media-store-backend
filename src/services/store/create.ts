@@ -66,7 +66,7 @@ export async function CreateStore(params: CreateStoreParams) {
       const store = await tx.store.create({
         data: {
           uid: storeDomain,
-          status: "ACTIVE",
+          status: "DISABLED",
           storeId,
           description: description || null,
           features,

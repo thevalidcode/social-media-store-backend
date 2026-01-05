@@ -280,6 +280,21 @@ const RESERVED_SUBDOMAINS = new Set([
   "tmp",
 ]);
 
+/**
+ * Validates a domain name to ensure it follows proper formatting rules.
+ *
+ * For general domains, checks that they match standard domain naming conventions.
+ *
+ * For validpanel.com subdomains, performs additional validation:
+ * - Ensures subdomain segments are not reserved (like "admin", "api", etc.)
+ * - Verifies each segment uses only lowercase letters, numbers, and hyphens
+ *
+ * @param domain - The domain name to validate
+ * @returns true if the domain is valid
+ * @throws StoreError with code "INVALID_DOMAIN" if the domain format is invalid
+ * @throws StoreError with code "RESERVED_SUBDOMAIN" if a subdomain segment is reserved
+ * @throws StoreError with code "INVALID_SUBDOMAIN_SEGMENT" if a subdomain segment has invalid characters
+ */
 export function assertValidDomain(domain: string) {
   const normalized = domain.toLowerCase().trim();
 
@@ -301,7 +316,7 @@ export function assertValidDomain(domain: string) {
       if (RESERVED_SUBDOMAINS.has(segment)) {
         throw new StoreError(
           "RESERVED_SUBDOMAIN",
-          `The subdomain segment "${segment}" is reserved and cannot be used`
+          `The subdomain "${segment}" is reserved and cannot be used for your store`
         );
       }
 
