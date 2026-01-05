@@ -21,6 +21,7 @@ interface StoreSettings {
   storeUrl: string;
   domain: string;
   faviconUrl: string;
+  adminEmail: string;
   designColors?: DesignColors;
   features: {
     store_email_notifications: boolean;
@@ -56,8 +57,12 @@ async function loadStoreSettings(storeId: number): Promise<StoreSettings> {
     include: { store: true },
   });
 
-  if (!setting) {
-    throw new Error(`Settings not found for store ID: ${storeId}`);
+  const admin = await prisma.admin.findUnique({
+    where: { storeId },
+  });
+
+  if (!setting || !admin) {
+    throw new Error(`Settings or admin not found forthis store`);
   }
 
   const storeUrl = setting.store.ssl
@@ -74,9 +79,7 @@ async function loadStoreSettings(storeId: number): Promise<StoreSettings> {
 
   // Check if email notifications are enabled for this store
   if (!storeEmailNotifications) {
-    throw new Error(
-      `Email notifications are disabled for store ID: ${storeId}`
-    );
+    throw new Error(`Email notifications are disabled for this store`);
   }
 
   // Fetch design styles for the store
@@ -90,7 +93,7 @@ async function loadStoreSettings(storeId: number): Promise<StoreSettings> {
     try {
       designColors = extractColorsFromSchema(designStyle.schema);
     } catch (error) {
-      console.error(`Failed to extract colors for store ${storeId}:`, error);
+      console.error(`Failed to extract colors for this store`, error);
       // designColors will remain undefined, templates will use defaults
     }
   }
@@ -102,6 +105,7 @@ async function loadStoreSettings(storeId: number): Promise<StoreSettings> {
     domain,
     faviconUrl: setting.faviconUrl || "",
     designColors,
+    adminEmail: admin.email,
     features: {
       store_email_notifications: storeEmailNotifications,
       store_custom_emails: storeCustomEmails,
@@ -159,7 +163,7 @@ async function dispatchEmail({
     });
 
     if (!counter) {
-      throw new Error(`Store counter not found for store ID: ${storeId}`);
+      throw new Error(`Store counter not found for this store`);
     }
 
     // Increment and get new counter value
@@ -259,9 +263,7 @@ export async function sendEmailToAdmins(
       await dispatchEmail({ from, to, subject, html, storeId });
     }
   } catch (err: any) {
-    console.error(
-      `sendEmailToAdmins error for store ${storeId}: ${err.message}`
-    );
+    throw err;
   }
 }
 
@@ -290,9 +292,7 @@ export async function sendUserEmail(
 
     await dispatchEmail({ from, to, subject, html, storeId });
   } catch (err: any) {
-    console.error(
-      `sendUserEmail error for ${to} in store ${storeId}: ${err.message}`
-    );
+    throw err;
   }
 }
 

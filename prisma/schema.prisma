@@ -195,7 +195,7 @@ model AdminEmail {
   id        Int      @id @default(autoincrement())
   uid       String   @unique @default(uuid())
   emails    String[]
-  storeId   Int      @map("store_id")
+  storeId   Int      @unique @map("store_id")
   timestamp DateTime @default(now())
   store     Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 

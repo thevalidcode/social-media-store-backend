@@ -109,6 +109,13 @@ export async function CreateStore(params: CreateStoreParams) {
         },
       });
 
+      await tx.adminEmail.create({
+        data: {
+          emails: [adminEmail],
+          storeId: store.storeId,
+        },
+      });
+
       return { store, setting, admin };
     });
 
@@ -121,6 +128,7 @@ export async function CreateStore(params: CreateStoreParams) {
         await prisma.$transaction(async (tx) => {
           await tx.admin.delete({ where: { storeId } });
           await tx.setting.delete({ where: { storeId } });
+          await tx.adminEmail.delete({ where: { storeId } });
           await tx.storeCounter.delete({ where: { storeId } });
           await tx.store.delete({ where: { storeId } });
         });
