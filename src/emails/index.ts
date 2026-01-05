@@ -5,6 +5,7 @@ import {
   extractColorsFromSchema,
   DesignColors,
 } from "./components/EmailLayout";
+import { parse as parseDomain } from "tldts";
 
 interface DispatchEmailParams {
   from: string;
@@ -18,6 +19,7 @@ interface StoreSettings {
   logoUrl: string;
   storeName: string;
   storeUrl: string;
+  domain: string;
   faviconUrl: string;
   designColors?: DesignColors;
   features: {
@@ -62,6 +64,9 @@ async function loadStoreSettings(storeId: number): Promise<StoreSettings> {
     ? `https://${setting.store.uid}`
     : `http://${setting.store.uid}`;
 
+  const parsed = parseDomain(setting.store.uid);
+  const domain = parsed.domain || setting.store.uid;
+
   // Extract features from store
   const features = (setting.store.features as any) || {};
   const storeEmailNotifications = features.store_email_notifications ?? false;
@@ -94,6 +99,7 @@ async function loadStoreSettings(storeId: number): Promise<StoreSettings> {
     logoUrl: setting.logoUrl || "",
     storeName: setting.storeName || "My Store",
     storeUrl,
+    domain,
     faviconUrl: setting.faviconUrl || "",
     designColors,
     features: {
@@ -120,6 +126,7 @@ export async function buildEmailTemplate(
     logo: storeSettings.logoUrl,
     storeName: storeSettings.storeName,
     storeUrl: storeSettings.storeUrl,
+    domain: storeSettings.domain,
     ...data,
   };
 
@@ -237,10 +244,7 @@ export async function sendEmailToAdmins(
 
     // Determine sender email based on store_custom_emails feature
     const from = storeSettings.features.store_custom_emails
-      ? `"${storeSettings.storeName}" <noreply@${storeSettings.storeUrl.replace(
-          /^https?:\/\//,
-          ""
-        )}>`
+      ? `"${storeSettings.storeName}" <noreply@${storeSettings.domain}>`
       : `"${storeSettings.storeName}" <social-media-store@validpanel.com>`;
 
     const recipients = adminEmails?.emails || [];
@@ -281,10 +285,7 @@ export async function sendUserEmail(
 
     // Determine sender email based on store_custom_emails feature
     const from = storeSettings.features.store_custom_emails
-      ? `"${storeSettings.storeName}" <noreply@${storeSettings.storeUrl.replace(
-          /^https?:\/\//,
-          ""
-        )}>`
+      ? `"${storeSettings.storeName}" <noreply@${storeSettings.domain}>`
       : `"${storeSettings.storeName}" <social-media-store@validpanel.com>`;
 
     await dispatchEmail({ from, to, subject, html, storeId });
