@@ -1,6 +1,10 @@
 import nodemailer from "nodemailer";
 import { prisma } from "../config/db.config";
 import { EmailTemplateVars, getTemplate } from "./templates";
+import {
+  extractColorsFromSchema,
+  DesignColors,
+} from "./components/EmailLayout";
 
 interface DispatchEmailParams {
   from: string;
@@ -15,6 +19,11 @@ interface StoreSettings {
   storeName: string;
   storeUrl: string;
   faviconUrl: string;
+  designColors?: DesignColors;
+  features: {
+    store_email_notifications: boolean;
+    store_custom_emails: boolean;
+  };
 }
 
 // ----------------------------
@@ -53,11 +62,44 @@ async function loadStoreSettings(storeId: number): Promise<StoreSettings> {
     ? `https://${setting.store.uid}`
     : `http://${setting.store.uid}`;
 
+  // Extract features from store
+  const features = (setting.store.features as any) || {};
+  const storeEmailNotifications = features.store_email_notifications ?? true;
+  const storeCustomEmails = features.store_custom_emails ?? true;
+
+  // Check if email notifications are enabled for this store
+  if (!storeEmailNotifications) {
+    throw new Error(
+      `Email notifications are disabled for store ID: ${storeId}`
+    );
+  }
+
+  // Fetch design styles for the store
+  const designStyle = await prisma.designStyle.findFirst({
+    where: { storeId },
+  });
+
+  // Extract colors from design schema if available
+  let designColors: DesignColors | undefined;
+  if (designStyle && designStyle.schema) {
+    try {
+      designColors = extractColorsFromSchema(designStyle.schema);
+    } catch (error) {
+      console.error(`Failed to extract colors for store ${storeId}:`, error);
+      // designColors will remain undefined, templates will use defaults
+    }
+  }
+
   return {
     logoUrl: setting.logoUrl || "",
     storeName: setting.storeName || "My Store",
     storeUrl,
     faviconUrl: setting.faviconUrl || "",
+    designColors,
+    features: {
+      store_email_notifications: storeEmailNotifications,
+      store_custom_emails: storeCustomEmails,
+    },
   };
 }
 
@@ -193,9 +235,14 @@ export async function sendEmailToAdmins(
       where: { storeId },
     });
 
-    const from = `"${
-      storeSettings.storeName
-    }" <noreply@${storeSettings.storeUrl.replace(/^https?:\/\//, "")}>`;
+    // Determine sender email based on store_custom_emails feature
+    const from = storeSettings.features.store_custom_emails
+      ? `"${storeSettings.storeName}" <noreply@${storeSettings.storeUrl.replace(
+          /^https?:\/\//,
+          ""
+        )}>`
+      : `"${storeSettings.storeName}" <social-media-store@validpanel.com>`;
+
     const recipients = adminEmails?.emails || [];
 
     if (recipients.length === 0) {
@@ -232,9 +279,14 @@ export async function sendUserEmail(
       storeId
     );
 
-    const from = `"${
-      storeSettings.storeName
-    }" <noreply@${storeSettings.storeUrl.replace(/^https?:\/\//, "")}>`;
+    // Determine sender email based on store_custom_emails feature
+    const from = storeSettings.features.store_custom_emails
+      ? `"${storeSettings.storeName}" <noreply@${storeSettings.storeUrl.replace(
+          /^https?:\/\//,
+          ""
+        )}>`
+      : `"${storeSettings.storeName}" <social-media-store@validpanel.com>`;
+
     await dispatchEmail({ from, to, subject, html, storeId });
   } catch (err: any) {
     console.error(

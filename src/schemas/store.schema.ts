@@ -5,29 +5,37 @@ import { StoreStatus } from "../../prisma/generated";
 extendZodWithOpenApi(z);
 
 // Convert features type to Zod schema
-export const SubscriptionPlanFeaturesSchema = z
-  .object({
-    stores: z.number(),
-    products: z.number().nullable(),
-    analytics: z.boolean(),
-    custom_branding: z.boolean(),
-    priority_support: z.boolean(),
-    store_analytics: z.boolean(),
-    unlimited_products: z.boolean(),
-    hide_banner: z.boolean(),
-    api_access: z.boolean(),
-    custom_domain: z.boolean(),
-    ai_features: z.boolean(),
-    customer_emails: z.boolean(),
-    free_ssl: z.boolean(),
-    available_templates: z.number(),
-    custom_templates: z.boolean(),
-    payment_gateways: z.number(),
-    default_template: z.boolean(),
-    staff_accounts: z.number(),
-    order_syncing_for_social_media_store: z.boolean(),
-  })
-  .catchall(z.any()); // Allow for future extensions
+export const SubscriptionPlanFeaturesSchema = z.object({
+  // Capacity limits
+  stores: z.number(),
+  products: z.number().nullable(), // null = unlimited
+  staff_accounts: z.number(),
+  payment_gateways: z.number(),
+  available_templates: z.number(),
+
+  // Core capabilities
+  analytics: z.boolean(),
+  api_access: z.boolean(),
+  ai_features: z.boolean(),
+  priority_support: z.boolean(),
+
+  // Store customization
+  custom_branding: z.boolean(),
+  custom_domain: z.boolean(),
+  free_ssl: z.boolean(),
+  hide_platform_banner: z.boolean(),
+  custom_templates: z.boolean(),
+
+  // Product & order management
+  unlimited_products: z.boolean(),
+  social_store_order_sync: z.boolean(),
+  social_store_service_sync: z.boolean(),
+
+  // Communication features (store-level)
+  store_email_notifications: z.boolean(),
+  store_custom_emails: z.boolean(),
+  store_newsletters: z.boolean(),
+});
 
 export type SubscriptionPlanFeatures = z.infer<
   typeof SubscriptionPlanFeaturesSchema

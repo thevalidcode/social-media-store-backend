@@ -1,4 +1,4 @@
-import { LogoVars, TemplateResult } from "../components/EmailLayout";
+import { LogoVars, TemplateResult, DesignColors } from "../components/EmailLayout";
 import {
   forgotPassword,
   passwordChanged,
@@ -14,6 +14,7 @@ interface StoreSettings {
   logoUrl: string;
   storeName: string;
   storeUrl: string;
+  designColors?: DesignColors;
 }
 
 // Map each template type string to the specific variable type it expects

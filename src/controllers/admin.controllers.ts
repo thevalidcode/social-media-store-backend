@@ -170,8 +170,9 @@ export const forgotPasswordAdmin = async (
       success: "A password reset link has been sent to your email.",
     });
   } catch (err: any) {
-    console.error("forgotPasswordAdmin error:", err);
-    res.status(500).json({ error: "Failed to process password reset." });
+    res
+      .status(500)
+      .json({ error: "Failed to process password reset." + err.message });
   }
 };
 

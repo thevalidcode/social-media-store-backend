@@ -1,9 +1,16 @@
-import { Layout, LogoVars, TemplateResult } from "../components/EmailLayout";
+import {
+  Layout,
+  LogoVars,
+  TemplateResult,
+  DesignColors,
+} from "../components/EmailLayout";
+import { DEFAULT_EMAIL_COLORS } from "../constants/defaultColors";
 
 interface StoreSettings {
   logoUrl: string;
   storeName: string;
   storeUrl: string;
+  designColors?: DesignColors;
 }
 
 export interface ForgotPasswordVars {
@@ -22,31 +29,56 @@ export const forgotPassword = (
   { email, token, logo }: ForgotPasswordVars,
   storeSettings: StoreSettings
 ): TemplateResult => {
-  const resetLink = `${storeSettings.storeUrl}/auth/reset-password?email=${encodeURIComponent(
+  const resetLink = `${
+    storeSettings.storeUrl
+  }/auth/reset-password?email=${encodeURIComponent(
     email
   )}&token=${encodeURIComponent(token)}`;
 
+  const c = storeSettings.designColors || DEFAULT_EMAIL_COLORS;
+
   const bodyContent = `
-    <p style="font-size:16px; margin-bottom:20px;">Hello,</p>
-    <p style="font-size:16px; margin-bottom:20px;">
+    <h1 style="margin:0 0 24px; font-size:28px; font-weight:700; line-height:34px; color:${c.foreground}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+      Reset Your Password
+    </h1>
+    
+    <p style="margin:0 0 16px; font-size:16px; line-height:24px; color:${c.foreground};">
+      Hello,
+    </p>
+    
+    <p style="margin:0 0 24px; font-size:16px; line-height:24px; color:${c.foreground};">
       We received a request to reset your password for your ${storeSettings.storeName} account. Click the button below to set a new password.
     </p>
-    <p style="text-align:center; margin-bottom:30px;">
-      <a href="${resetLink}" style="
-        background:#7C3AED;
-        color:#fff;
-        text-decoration:none;
-        padding:12px 25px;
-        border-radius:6px;
-        font-weight:bold;
-        display:inline-block;
-      ">Reset Password</a>
+    
+    <!-- CTA Button -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 32px;">
+      <tr>
+        <td align="center" style="border-radius:6px; background-color:${c.primary};">
+          <a href="${resetLink}" target="_blank" style="display:inline-block; padding:14px 32px; font-size:16px; font-weight:600; line-height:20px; color:${c.primaryForeground}; text-decoration:none; border-radius:6px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+            Reset Password
+          </a>
+        </td>
+      </tr>
+    </table>
+    
+    <!-- Info box -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px; border-radius:6px; background-color:${c.muted}; border:1px solid ${c.border};">
+      <tr>
+        <td style="padding:16px 20px;">
+          <p style="margin:0; font-size:14px; line-height:20px; color:${c.mutedForeground};">
+            <strong style="display:block; margin-bottom:4px; color:${c.foreground};">Security Notice</strong>
+            This link will expire in <strong>1 hour</strong> for security reasons. If you didn't request this password reset, you can safely ignore this email.
+          </p>
+        </td>
+      </tr>
+    </table>
+    
+    <!-- Alternative link -->
+    <p style="margin:0; font-size:14px; line-height:20px; color:${c.mutedForeground};">
+      If the button above doesn't work, copy and paste this link into your browser:
     </p>
-    <p style="font-size:14px; color:#666;">
-      If you did not request a password reset, you can safely ignore this email.
-    </p>
-    <p style="font-size:12px; color:#999; margin-top:20px;">
-      This link will expire in 1 hour for security reasons.
+    <p style="margin:8px 0 0; font-size:14px; line-height:20px; word-break:break-all;">
+      <a href="${resetLink}" style="color:${c.primary}; text-decoration:underline;">${resetLink}</a>
     </p>
   `;
 
@@ -56,6 +88,7 @@ export const forgotPassword = (
     logoUrl: storeSettings.logoUrl || logo,
     storeName: storeSettings.storeName,
     storeUrl: storeSettings.storeUrl,
+    designColors: c,
   });
 };
 
@@ -67,24 +100,108 @@ export const passwordChanged = (
   { logo }: LogoVars,
   storeSettings: StoreSettings
 ): TemplateResult => {
-  const bodyContent = `
-    <p style="font-size:16px; margin-bottom:20px;">Hello,</p>
+  const c = storeSettings.designColors || DEFAULT_EMAIL_COLORS;
 
-    <p style="font-size:16px; margin-bottom:20px;">
-      Your password for your ${storeSettings.storeName} account has been successfully changed. If you initiated this change, no further action is needed.
+  const bodyContent = `
+    <h1 style="margin:0 0 24px; font-size:28px; font-weight:700; line-height:34px; color:${
+      c.foreground
+    }; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+      Password Changed Successfully
+    </h1>
+    
+    <p style="margin:0 0 16px; font-size:16px; line-height:24px; color:${
+      c.foreground
+    };">
+      Hello,
     </p>
 
-    <table role="presentation" style="width:100%; margin:20px 0; border-collapse:collapse;">
+    <p style="margin:0 0 24px; font-size:16px; line-height:24px; color:${
+      c.foreground
+    };">
+      Your password for your ${
+        storeSettings.storeName
+      } account has been successfully changed. If you initiated this change, no further action is needed.
+    </p>
+
+    <!-- Success indicator -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px; border-radius:6px; background-color:${
+      c.accent
+    }; border:1px solid ${c.border};">
       <tr>
-        <td style="background:#EDE9FE; padding:15px; border-radius:8px; text-align:center;">
-          <span style="color:#7C3AED; font-weight:bold; font-size:16px;">Password Changed Successfully</span>
+        <td style="padding:20px 24px; text-align:center;">
+          <div style="display:inline-block; width:48px; height:48px; border-radius:50%; background-color:${
+            c.primary
+          }; margin-bottom:12px;">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+              <path d="M20 24.5L22.5 27L28 21.5" stroke="${
+                c.primaryForeground
+              }" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <p style="margin:0; font-size:16px; font-weight:600; line-height:24px; color:${
+            c.foreground
+          };">
+            Your password has been updated
+          </p>
+          <p style="margin:8px 0 0; font-size:14px; line-height:20px; color:${
+            c.mutedForeground
+          };">
+            ${new Date().toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
         </td>
       </tr>
     </table>
 
-    <p style="font-size:14px; color:#666;">
-      If you did NOT change your password, please <a href="${storeSettings.storeUrl}/contact" style="color:#7C3AED; text-decoration:none;">contact support immediately</a> to secure your account.
-    </p>
+    <!-- Security alert -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px; border-radius:6px; background-color:${
+      c.muted
+    }; border-left:4px solid ${c.primary};">
+      <tr>
+        <td style="padding:16px 20px;">
+          <p style="margin:0; font-size:14px; line-height:20px; color:${
+            c.foreground
+          };">
+            <strong style="display:block; margin-bottom:4px;">Didn't make this change?</strong>
+            <span style="color:${
+              c.mutedForeground
+            };">If you did NOT change your password, please </span>
+            <a href="${storeSettings.storeUrl}/contact" style="color:${
+    c.primary
+  }; text-decoration:none; font-weight:600;">contact support immediately</a>
+            <span style="color:${
+              c.mutedForeground
+            };"> to secure your account.</span>
+          </p>
+        </td>
+      </tr>
+    </table>
+    
+    <!-- Best practices tip -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0; border-radius:6px; background-color:${
+      c.accent
+    }; border:1px solid ${c.border};">
+      <tr>
+        <td style="padding:16px 20px;">
+          <p style="margin:0 0 8px; font-size:14px; font-weight:600; line-height:20px; color:${
+            c.foreground
+          };">
+            Security Tips
+          </p>
+          <ul style="margin:0; padding-left:20px; font-size:13px; line-height:20px; color:${
+            c.mutedForeground
+          };">
+            <li style="margin-bottom:4px;">Use a strong, unique password for your account</li>
+            <li style="margin-bottom:4px;">Never share your password with anyone</li>
+            <li>Enable two-factor authentication for extra security</li>
+          </ul>
+        </td>
+      </tr>
+    </table>
   `;
 
   return Layout({
@@ -93,5 +210,6 @@ export const passwordChanged = (
     logoUrl: storeSettings.logoUrl || logo,
     storeName: storeSettings.storeName,
     storeUrl: storeSettings.storeUrl,
+    designColors: c,
   });
 };

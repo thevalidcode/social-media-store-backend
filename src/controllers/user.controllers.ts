@@ -493,8 +493,9 @@ export const forgotPassword = async (req: Request, res: Response) => {
       success: "A password reset link has been sent to your email.",
     });
   } catch (err: any) {
-    console.error("forgotPassword error:", err);
-    res.status(500).json({ error: "Failed to process password reset." });
+    res
+      .status(500)
+      .json({ error: "Failed to process password reset." + err.message });
   }
 };
 
