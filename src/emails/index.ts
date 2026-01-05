@@ -64,8 +64,8 @@ async function loadStoreSettings(storeId: number): Promise<StoreSettings> {
 
   // Extract features from store
   const features = (setting.store.features as any) || {};
-  const storeEmailNotifications = features.store_email_notifications ?? true;
-  const storeCustomEmails = features.store_custom_emails ?? true;
+  const storeEmailNotifications = features.store_email_notifications ?? false;
+  const storeCustomEmails = features.store_custom_emails ?? false;
 
   // Check if email notifications are enabled for this store
   if (!storeEmailNotifications) {

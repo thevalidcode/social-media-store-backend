@@ -195,12 +195,18 @@ export const updateStore = async (
       return;
     }
 
+    const setting = await prisma.setting.findUnique({
+      where: { storeId: store.storeId },
+    });
+
     const settingData = {
-      logoUrl: parsed.data.logoUrl,
-      faviconUrl: parsed.data.faviconUrl,
-      defaultClientCurrency: parsed.data.defaultClientCurrency,
-      showBanner: parsed.data.showBanner,
-      onboardingCompleted: parsed.data.onboardingCompleted,
+      logoUrl: parsed.data.logoUrl || setting?.logoUrl,
+      faviconUrl: parsed.data.faviconUrl || setting?.faviconUrl,
+      defaultClientCurrency:
+        parsed.data.defaultClientCurrency || setting?.defaultClientCurrency,
+      showBanner: parsed.data.showBanner || setting?.showBanner,
+      onboardingCompleted:
+        parsed.data.onboardingCompleted || setting?.onboardingCompleted,
     };
 
     await prisma.setting.upsert({
@@ -223,6 +229,7 @@ export const updateStore = async (
       },
       data: {
         name: parsed.data.storeName,
+        features: parsed.data.features,
         description: parsed.data.storeDescription,
         status: parsed.data.status,
       },

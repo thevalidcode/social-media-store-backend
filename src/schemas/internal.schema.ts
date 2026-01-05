@@ -53,7 +53,8 @@ export const UpdateStoreSchema = z.object({
   storeName: z.string().optional(),
   storeDescription: z.string().optional().nullable(),
   status: z.nativeEnum(StoreStatus).optional(),
-  defaultClientCurrency: z.string().optional().nullable().default("USD"),
-  showBanner: z.boolean().optional().default(true).nullable(),
-  onboardingCompleted: z.boolean().optional().default(false).nullable(),
+  defaultClientCurrency: z.string().optional().nullable(),
+  showBanner: z.boolean().optional().nullable(),
+  onboardingCompleted: z.boolean().optional().nullable(),
+  features: z.record(z.any()).optional(),
 });

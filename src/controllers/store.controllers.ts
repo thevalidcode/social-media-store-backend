@@ -9,6 +9,7 @@ import {
   UpdateStylesRequestSchema,
 } from "../schemas/store.schema";
 import { AdminAuthSchema } from "../schemas/admin.schema";
+import { coreApiRequest } from "../lib/apiClient";
 
 export const getStoreData = async (
   req: Request,
@@ -35,13 +36,46 @@ export const getStoreData = async (
         status: true,
       },
     });
-
     if (!store) {
       res.status(404).json({ error: "Store not found for the given domain" });
       return;
     }
 
-    res.json(store);
+    try {
+      const subscriptionPlan = await coreApiRequest<{
+        features: unknown;
+      }>({
+        endpoint: `/subscription-plans/${store.planId}`,
+      });
+
+      // Check if features is a valid JSON object
+      if (
+        subscriptionPlan.features &&
+        typeof subscriptionPlan.features === "object"
+      ) {
+        // Update store features in DB
+        await prisma.store.update({
+          where: { storeId: store.storeId },
+          data: { features: subscriptionPlan.features },
+        });
+
+        // Return store with updated features
+        res.json({
+          ...store,
+          features: subscriptionPlan.features,
+        });
+      } else {
+        // If subscription plan features are invalid, return existing store features
+        res.json(store);
+      }
+    } catch (apiError: any) {
+      // If API call fails, return existing store features
+      console.warn(
+        "Warning: Failed to fetch subscription plan, using existing store features:",
+        apiError.message
+      );
+      res.json(store);
+    }
   } catch (err: any) {
     console.error("Error fetching store data:", err);
     res.status(500).json({ error: "Failed to fetch store data." });
