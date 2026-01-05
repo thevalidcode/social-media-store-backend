@@ -51,7 +51,7 @@ export const UpdateStoreSchema = z.object({
   logoUrl: z.string().url().optional().or(z.literal("")).nullable(),
   faviconUrl: z.string().url().optional().or(z.literal("")).nullable(),
   storeName: z.string().optional(),
-  storeDescription: z.string().optional(),
+  storeDescription: z.string().optional().nullable(),
   status: z.nativeEnum(StoreStatus).optional(),
   defaultClientCurrency: z.string().optional().nullable().default("USD"),
   showBanner: z.boolean().optional().default(true).nullable(),
