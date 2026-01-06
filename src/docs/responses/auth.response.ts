@@ -19,7 +19,8 @@ export const SessionVerifiedResponse = {
   content: {
     "application/json": {
       schema: z.object({
-        role: z.enum(["admin", "user"]),
+        user: z.object({}).catchall(z.any()),
+        success: z.string(),
       }),
     },
   },

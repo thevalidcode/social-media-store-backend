@@ -7,6 +7,10 @@ import {
   UserInvalidSessionResponse,
   InvalidSessionResponse,
 } from "../responses/auth.response";
+import {
+  RedirectToGoogleQuerySchema,
+  VerifySessionCodeBodySchema,
+} from "../../schemas/auth.schema";
 
 registry.registerPath({
   method: "get",
@@ -29,22 +33,9 @@ registry.registerPath({
     "https://your-frontend.com/login/callback?session_code=abc123\n" +
     "```",
   tags: ["Auth"],
-  parameters: [
-    {
-      name: "redirect",
-      in: "query",
-      required: true,
-      description: "Frontend URL to redirect to after successful Google login.",
-      schema: { type: "string", format: "uri" },
-    },
-    {
-      name: "storeId",
-      in: "query",
-      required: true,
-      description: "Store ID initiating the login process.",
-      schema: { type: "integer" },
-    },
-  ],
+  request: {
+    query: RedirectToGoogleQuerySchema,
+  },
   responses: {
     302: GoogleAuthResponse,
     400: InvalidGoogleAuthResponse,
@@ -63,9 +54,8 @@ registry.registerPath({
     "- Verifies it, then issues an `auth_token` and `csrf_token` as HTTP cookies\n\n" +
     "### 🔐 Security:\n" +
     "- Cookies are sent with `HttpOnly`, `Secure`, and `SameSite=None`\n" +
-    "- `csrf_token` must be included in a custom header (`X-CSRF-Token`) for subsequent authenticated requests\n\n" +
     "### ✅ On Success:\n" +
-    "- Returns the role of the authenticated user (`user` or `admin`)\n" +
+    "- Returns the data of the authenticated user (`user` or `admin`)\n" +
     "- Sets cookies for authentication",
   tags: ["Auth"],
   request: {
@@ -73,9 +63,7 @@ registry.registerPath({
       required: true,
       content: {
         "application/json": {
-          schema: z.object({
-            sessionCode: z.string().describe("One-time session code"),
-          }),
+          schema: VerifySessionCodeBodySchema,
         },
       },
     },
