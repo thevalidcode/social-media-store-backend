@@ -262,18 +262,23 @@ export const verifySessionCode = async (
   );
   const csrfToken = crypto.randomBytes(32).toString("hex");
 
-  res.cookie("csrf_token", csrfToken, {
-    httpOnly: false,
+  const cookieBase = {
+    domain: ".validpanel.com",
+    path: "/",
     secure: env.NODE_ENV === "production",
-    sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+    sameSite:
+      env.NODE_ENV === "production" ? ("none" as const) : ("lax" as const),
     maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
+
+  res.cookie("csrf_token", csrfToken, {
+    ...cookieBase,
+    httpOnly: false,
   });
 
   res.cookie("auth_token", token, {
+    ...cookieBase,
     httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
   const { password: _, resetToken, resetTokenExpiry, ...safeUser } = user;
