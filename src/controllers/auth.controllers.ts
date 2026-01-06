@@ -4,16 +4,19 @@ import { v4 as uuidv4 } from "uuid";
 import type { Request, Response } from "express";
 import { verifyGoogleIdToken } from "../helpers/googleverify";
 import axios from "axios";
-import { randomBytes } from "crypto";
+import crypto from "crypto";
 import bcrypt from "bcrypt";
 import { env } from "../config/env.config";
 
 const isValidStoreDomain = async (url: string): Promise<boolean> => {
-  const match = url.match(/^https?:\/\/([^/]+)/i);
-  if (!match) return false;
-  const domain = match[1];
-  const store = await prisma.store.findUnique({ where: { uid: domain } });
-  return !!store;
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+    const domain = hostname.split(":")[0];
+    const store = await prisma.store.findUnique({ where: { uid: domain } });
+    return !!store;
+  } catch {
+    return false;
+  }
 };
 
 export const redirectToGoogle = async (
@@ -37,7 +40,7 @@ export const redirectToGoogle = async (
     `&response_type=code` +
     `&scope=openid%20email%20profile` +
     `&redirect_uri=${encodeURIComponent(
-      "https://auth.validpanel.com/api/auth/store/callback/google"
+      "https://auth.validpanel.com/api/auth/social-media-store/callback/google"
     )}` +
     `&state=${state}`;
 
@@ -72,17 +75,30 @@ export const googleCallback = async (
   }
 
   try {
-    const tokenRes = await axios.post("https://oauth2.googleapis.com/token", {
-      code,
-      client_id: env.GOOGLE_CLIENT_ID,
-      client_secret: env.GOOGLE_CLIENT_SECRET,
-      redirect_uri:
-        "https://auth.validpanel.com/api/auth/store/callback/google",
-      grant_type: "authorization_code",
-    });
+    const params = new URLSearchParams();
+    params.append("code", String(code));
+    params.append("client_id", env.GOOGLE_CLIENT_ID);
+    params.append("client_secret", env.GOOGLE_CLIENT_SECRET);
+    params.append(
+      "redirect_uri",
+      "https://auth.validpanel.com/api/auth/social-media-store/callback/google"
+    );
+    params.append("grant_type", "authorization_code");
 
-    const { idToken } = tokenRes.data;
-    const googleUser = await verifyGoogleIdToken(idToken);
+    const tokenRes = await axios.post(
+      "https://oauth2.googleapis.com/token",
+      params.toString(),
+      { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+    );
+
+    const { id_token } = tokenRes.data;
+    if (!id_token) throw new Error("No id_token returned from Google");
+    const googleUser = await verifyGoogleIdToken(id_token);
+
+    if (!googleUser || !googleUser.email) {
+      res.status(400).send("Google user info missing email");
+      return;
+    }
 
     let user = await prisma.user.findFirst({
       where: { email: googleUser.email, storeId },
@@ -100,8 +116,9 @@ export const googleCallback = async (
             storeScopedId: counter.userCounter,
             email: googleUser.email,
             username:
-              googleUser.name.replace(/\s/g, "").toLowerCase() +
-              counter.userCounter,
+              (googleUser.name
+                ? googleUser.name.replace(/\s/g, "").toLowerCase()
+                : googleUser.email.split("@")[0]) + counter.userCounter,
             image: googleUser.picture,
             password: await bcrypt.hash(Date.now().toString(), 10),
             apiKey: uuidv4(),
@@ -115,7 +132,7 @@ export const googleCallback = async (
     }
 
     const sessionCode = uuidv4();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
     await prisma.sessionCode.create({
       data: {
@@ -138,7 +155,7 @@ export const verifySessionCode = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { sessionCode } = req.body;
+  const { sessionCode, storeId } = req.body;
 
   if (!sessionCode || typeof sessionCode !== "string") {
     res.status(400).json({ error: "Invalid session code" });
@@ -146,10 +163,10 @@ export const verifySessionCode = async (
   }
 
   const session = await prisma.sessionCode.findUnique({
-    where: { code: sessionCode },
+    where: { code: sessionCode, storeId },
   });
 
-  if (!session || session.used || session.expiresAt < new Date()) {
+  if (!session || session.used || new Date(session.expiresAt) < new Date()) {
     res.status(400).json({ error: "Session code expired or invalid" });
     return;
   }
@@ -169,16 +186,13 @@ export const verifySessionCode = async (
   });
 
   const token = jwt.sign(
-    {
-      email: user.email,
-      storeId: user.storeId,
-      apiKey: user.apiKey,
-      role: user.role,
-    },
+    { uid: user.uid, storeId, apiKey: user.apiKey },
     env.JWT_SECRET,
-    { expiresIn: "7d" }
+    {
+      expiresIn: "7d",
+    }
   );
-  const csrfToken = randomBytes(32).toString("hex");
+  const csrfToken = crypto.randomBytes(32).toString("hex");
 
   res.cookie("csrf_token", csrfToken, {
     httpOnly: false,
@@ -194,5 +208,9 @@ export const verifySessionCode = async (
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
-  res.status(200).json({ role: user.role });
+  const { password: _, resetToken, resetTokenExpiry, ...safeUser } = user;
+
+  res
+    .status(200)
+    .json({ success: "User authenticated successfully", user: safeUser });
 };

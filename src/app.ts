@@ -87,7 +87,9 @@ app.use("/api/v1/transactions", cors(dynamicHost), transactionRouter);
 // Internal Routes
 app.use("/internal", internalRouter);
 app.use("/api/v2", publicApiRoutes);
-app.use("/api/auth/store", authRoutes);
 app.use("/swagger", swaggerRouter);
+
+// Auth Routes (this is for the auth.vaalidpanel.com domain to handle OAuth)
+app.use("/api/auth/social-media-store", authRoutes);
 
 export default app;
