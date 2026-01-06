@@ -7,6 +7,12 @@ import axios from "axios";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import { env } from "../config/env.config";
+import {
+  GoogleCallbackQuerySchema,
+  RedirectToGoogleQuerySchema,
+  VerifySessionCodeBodySchema,
+  RoleEnum,
+} from "../schemas/auth.schema";
 
 const isValidStoreDomain = async (url: string): Promise<boolean> => {
   try {
@@ -23,15 +29,20 @@ export const redirectToGoogle = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { redirect, storeId } = req.query;
-
-  if (!redirect || !storeId) {
-    res.status(400).send("Missing redirect or storeId");
+  const parsed = RedirectToGoogleQuerySchema.safeParse(req.query as any);
+  if (!parsed.success) {
+    res.status(400).send("Missing or invalid redirect/storeId");
     return;
   }
 
+  const { redirect, storeId, role } = parsed.data;
+
   const state = encodeURIComponent(
-    JSON.stringify({ redirect, storeId: Number(storeId) })
+    JSON.stringify({
+      redirect,
+      storeId: Number(storeId),
+      role: role,
+    })
   );
 
   const authUrl =
@@ -51,18 +62,20 @@ export const googleCallback = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { code, state } = req.query;
-
-  if (!code || !state) {
+  const parsedQuery = GoogleCallbackQuerySchema.safeParse(req.query as any);
+  if (!parsedQuery.success) {
     res.status(400).send("Missing code or state");
     return;
   }
 
-  let redirectDomain: string, storeId: number;
+  const { code, state } = parsedQuery.data;
+
+  let redirectDomain: string, storeId: number, role: string;
   try {
     const parsed = JSON.parse(decodeURIComponent(state as string));
     redirectDomain = parsed.redirect;
     storeId = parseInt(parsed.storeId);
+    role = parsed.role;
   } catch {
     res.status(400).send("Invalid state");
     return;
@@ -100,6 +113,35 @@ export const googleCallback = async (
       return;
     }
 
+    // For ADMIN role, check admin model; do NOT auto-create admins
+    if (role === RoleEnum.enum.ADMIN) {
+      const admin = await prisma.admin.findFirst({
+        where: { email: googleUser.email, storeId },
+      });
+      if (!admin) {
+        res.status(404).send("Admin not found");
+        return;
+      }
+
+      // use admin as the authenticated account for session creation
+      const sessionCode = uuidv4();
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+      await prisma.sessionCode.create({
+        data: {
+          code: sessionCode,
+          email: admin.email,
+          storeId,
+          expiresAt,
+          used: false,
+        },
+      });
+
+      res.redirect(`${redirectDomain}?session_code=${sessionCode}`);
+      return;
+    }
+
+    // Default: USER flow (same as before)
     let user = await prisma.user.findFirst({
       where: { email: googleUser.email, storeId },
     });
@@ -155,7 +197,13 @@ export const verifySessionCode = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { sessionCode, storeId } = req.body;
+  const parsed = VerifySessionCodeBodySchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid request body" });
+    return;
+  }
+
+  const { sessionCode, storeId, role } = parsed.data;
 
   if (!sessionCode || typeof sessionCode !== "string") {
     res.status(400).json({ error: "Invalid session code" });
@@ -171,12 +219,32 @@ export const verifySessionCode = async (
     return;
   }
 
-  const user = await prisma.user.findFirst({
-    where: { email: session.email, storeId: session.storeId },
-  });
+  let account: any = null;
+  if (role === RoleEnum.enum.ADMIN) {
+    account = await prisma.admin.findFirst({
+      where: { email: session.email, storeId: session.storeId },
+    });
+    if (!account) {
+      res.status(404).json({ error: "Admin not found" });
+      return;
+    }
+  } else {
+    account = await prisma.user.findFirst({
+      where: { email: session.email, storeId: session.storeId },
+    });
+    if (!account) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+  }
+
+  const user = account;
 
   if (!user) {
-    res.status(404).json({ error: "User not found" });
+    res.status(404).json({
+      error:
+        role === RoleEnum.enum.ADMIN ? "Admin not found" : "User not found",
+    });
     return;
   }
 
