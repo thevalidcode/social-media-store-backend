@@ -62,7 +62,7 @@ export const googleCallback = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const parsedQuery = GoogleCallbackQuerySchema.safeParse(req.query as any);
+  const parsedQuery = GoogleCallbackQuerySchema.safeParse(req.query);
   if (!parsedQuery.success) {
     res.status(400).send("Missing code or state");
     return;
