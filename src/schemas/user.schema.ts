@@ -44,13 +44,14 @@ export const UserPublicSchema = z
   })
   .openapi("UserPublic");
 
-export const UserUpdateRequestSchema = z.object({
-  username: z.string().describe("Username").optional(),
-  fullName: z.string().describe("Full name").optional().nullable(),
-  email: z.string().email().describe("User email").optional(),
-  image: z.string().url().describe("User image").optional().nullable(),
-  apiKey: z.string().describe("User api key").optional(),
-});
+export const UserUpdateRequestSchema = z
+  .object({
+    username: z.string().describe("Username").optional(),
+    fullName: z.string().describe("Full name").optional().nullable(),
+    image: z.string().url().describe("User image").optional().nullable(),
+    apiKey: z.string().describe("User api key").optional(),
+  })
+  .strict();
 
 export const UpdateUserByAdminRequestSchema = UserUpdateRequestSchema.extend({
   balance: z

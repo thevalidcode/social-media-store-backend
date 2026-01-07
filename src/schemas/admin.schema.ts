@@ -58,14 +58,15 @@ export const internalAdminTokenPayloadSchema = z.object({
   }),
 });
 
-export const AdminUpdateRequestSchema = z.object({
-  username: z.string().describe("Username").optional(),
-  fullName: z.string().describe("Full name").optional(),
-  email: z.string().email().describe("Admin email").optional(),
-  apiKey: z.string().describe("Admin api key").optional(),
-  image: z.string().url().optional(),
-  status: z.nativeEnum(AdminStatus).optional(),
-});
+export const AdminUpdateRequestSchema = z
+  .object({
+    username: z.string().describe("Username").optional(),
+    fullName: z.string().describe("Full name").optional(),
+    apiKey: z.string().describe("Admin api key").optional(),
+    image: z.string().url().optional(),
+    status: z.nativeEnum(AdminStatus).optional(),
+  })
+  .strict();
 
 export const forgotPasswordAdminSchema = z.object({
   email: z.string().email(),
