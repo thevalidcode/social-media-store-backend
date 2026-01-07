@@ -4,6 +4,7 @@ import {
   AuthenticateAdminSchema,
   forgotPasswordAdminSchema,
   resetPasswordAdminSchema,
+  VerifySessionCodeBodySchema,
 } from "../../schemas/admin.schema";
 import {
   BadRequest,
@@ -16,8 +17,13 @@ import {
   AuthenticateAdminResponse,
   UpdateSuccess,
   OnboardingCompletedResponse,
+  SessionVerifiedResponse,
 } from "../responses/admin.response";
 import { StoreIdSchema } from "../../schemas/common.schema";
+import {
+  InvalidSessionResponse,
+  UserInvalidSessionResponse,
+} from "../responses/auth.response";
 
 // Authenticate admin
 registry.registerPath({
@@ -122,5 +128,37 @@ registry.registerPath({
     400: BadRequest,
     403: Forbidden,
     500: ServerError,
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/admins/verify-session",
+  summary: "Exchange Session Code for Auth Token",
+  description:
+    "This endpoint completes the login process after Google OAuth.\n\n" +
+    "### 🔁 What It Does:\n" +
+    "- Accepts a one-time `session_code`\n" +
+    "- Verifies it, then issues an `auth_token` and `csrf_token` as HTTP cookies\n\n" +
+    "### 🔐 Security:\n" +
+    "- Cookies are sent with `HttpOnly`, `Secure`, and `SameSite=None`\n" +
+    "### ✅ On Success:\n" +
+    "- Returns the data of the authenticated user (`user` or `admin`)\n" +
+    "- Sets cookies for authentication",
+  tags: ["Auth"],
+  request: {
+    body: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: VerifySessionCodeBodySchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: SessionVerifiedResponse,
+    400: InvalidSessionResponse,
+    404: UserInvalidSessionResponse,
   },
 });

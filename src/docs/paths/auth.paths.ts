@@ -1,16 +1,9 @@
 import { registry } from "../components/registry";
-import { z } from "zod";
 import {
   GoogleAuthResponse,
   InvalidGoogleAuthResponse,
-  SessionVerifiedResponse,
-  UserInvalidSessionResponse,
-  InvalidSessionResponse,
 } from "../responses/auth.response";
-import {
-  RedirectToGoogleQuerySchema,
-  VerifySessionCodeBodySchema,
-} from "../../schemas/auth.schema";
+import { RedirectToGoogleQuerySchema } from "../../schemas/auth.schema";
 
 registry.registerPath({
   method: "get",
@@ -39,38 +32,5 @@ registry.registerPath({
   responses: {
     302: GoogleAuthResponse,
     400: InvalidGoogleAuthResponse,
-  },
-});
-
-// Registration for POST /session/verify
-registry.registerPath({
-  method: "post",
-  path: "/session/verify",
-  summary: "Exchange Session Code for Auth Token",
-  description:
-    "This endpoint completes the login process after Google OAuth.\n\n" +
-    "### 🔁 What It Does:\n" +
-    "- Accepts a one-time `session_code`\n" +
-    "- Verifies it, then issues an `auth_token` and `csrf_token` as HTTP cookies\n\n" +
-    "### 🔐 Security:\n" +
-    "- Cookies are sent with `HttpOnly`, `Secure`, and `SameSite=None`\n" +
-    "### ✅ On Success:\n" +
-    "- Returns the data of the authenticated user (`user` or `admin`)\n" +
-    "- Sets cookies for authentication",
-  tags: ["Auth"],
-  request: {
-    body: {
-      required: true,
-      content: {
-        "application/json": {
-          schema: VerifySessionCodeBodySchema,
-        },
-      },
-    },
-  },
-  responses: {
-    200: SessionVerifiedResponse,
-    400: InvalidSessionResponse,
-    404: UserInvalidSessionResponse,
   },
 });

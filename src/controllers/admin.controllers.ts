@@ -13,6 +13,7 @@ import {
 } from "../schemas/admin.schema";
 import { sendUserEmail } from "../emails";
 import { StoreIdSchema } from "../schemas/common.schema";
+import { VerifySessionCodeBodySchema } from "../schemas/user.schema";
 
 export const authenticateAdmin = async (
   req: Request,
@@ -236,4 +237,77 @@ export const resetPasswordAdmin = async (
       .status(500)
       .json({ error: "Failed to update password: " + err.message });
   }
+};
+
+export const verifySession = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const parsed = VerifySessionCodeBodySchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid request body" });
+    return;
+  }
+
+  const { sessionCode, storeId } = parsed.data;
+
+  const session = await prisma.sessionCode.findUnique({
+    where: { code: sessionCode, storeId },
+  });
+
+  if (!session || session.used || new Date(session.expiresAt) < new Date()) {
+    res.status(400).json({ error: "Session code expired or invalid" });
+    return;
+  }
+
+  let account: any = null;
+  account = await prisma.admin.findFirst({
+    where: { email: session.email, storeId: session.storeId },
+  });
+  if (!account) {
+    res.status(404).json({ error: "Admin not found" });
+    return;
+  }
+
+  const admin = account;
+
+  if (!admin) {
+    res.status(404).json({
+      error: "Admin not found",
+    });
+    return;
+  }
+
+  await prisma.sessionCode.update({
+    where: { code: sessionCode },
+    data: { used: true },
+  });
+
+  const token = jwt.sign(
+    { uid: admin.uid, storeId, apiKey: admin.apiKey },
+    env.JWT_SECRET,
+    {
+      expiresIn: "7d",
+    }
+  );
+  const csrfToken = crypto.randomBytes(32).toString("hex");
+
+  res.cookie("csrf_token", csrfToken, {
+    httpOnly: false,
+    secure: env.NODE_ENV === "production",
+    sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  res.cookie("auth_token", token, {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+  const { password: _, resetToken, resetTokenExpiry, ...safeAdmin } = admin;
+
+  res
+    .status(200)
+    .json({ success: "Admin authenticated successfully", admin: safeAdmin });
 };

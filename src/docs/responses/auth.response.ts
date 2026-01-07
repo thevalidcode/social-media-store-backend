@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { UserSchema } from "../../schemas/user.schema";
 
 export const GoogleAuthResponse = {
   description:
@@ -19,7 +20,7 @@ export const SessionVerifiedResponse = {
   content: {
     "application/json": {
       schema: z.object({
-        user: z.object({}).catchall(z.any()),
+        user: UserSchema,
         success: z.string(),
       }),
     },

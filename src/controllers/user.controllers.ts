@@ -14,6 +14,7 @@ import {
   UserUpdateRequestSchema,
   resetPasswordSchema,
   forgotPasswordSchema,
+  VerifySessionCodeBodySchema,
 } from "../schemas/user.schema";
 import crypto from "crypto";
 import { Prisma } from "../../prisma/generated";
@@ -332,12 +333,75 @@ export const verifySession = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const authParsed = UserAuthSchema.safeParse(req.auth);
-  if (!authParsed.success) {
-    res.status(400).json({ error: authParsed.error.flatten() });
+  const parsed = VerifySessionCodeBodySchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid request body" });
     return;
   }
-  res.status(200).send({ role: authParsed.data.user.role });
+
+  const { sessionCode, storeId } = parsed.data;
+
+  const session = await prisma.sessionCode.findUnique({
+    where: { code: sessionCode, storeId },
+  });
+
+  if (!session || session.used || new Date(session.expiresAt) < new Date()) {
+    res.status(400).json({ error: "Session code expired or invalid" });
+    return;
+  }
+
+  let account: any = null;
+
+  account = await prisma.user.findFirst({
+    where: { email: session.email, storeId: session.storeId },
+  });
+  if (!account) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  const user = account;
+
+  if (!user) {
+    res.status(404).json({
+      error: "User not found",
+    });
+    return;
+  }
+
+  await prisma.sessionCode.update({
+    where: { code: sessionCode },
+    data: { used: true },
+  });
+
+  const token = jwt.sign(
+    { uid: user.uid, storeId, apiKey: user.apiKey },
+    env.JWT_SECRET,
+    {
+      expiresIn: "7d",
+    }
+  );
+  const csrfToken = crypto.randomBytes(32).toString("hex");
+
+  res.cookie("csrf_token", csrfToken, {
+    httpOnly: false,
+    secure: env.NODE_ENV === "production",
+    sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  res.cookie("auth_token", token, {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  const { password: _, resetToken, resetTokenExpiry, ...safeUser } = user;
+
+  res
+    .status(200)
+    .json({ success: "User authenticated successfully", user: safeUser });
 };
 
 export const deleteUser = async (

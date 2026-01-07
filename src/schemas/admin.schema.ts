@@ -77,3 +77,8 @@ export const resetPasswordAdminSchema = z.object({
   email: z.string().email(),
   password: z.string(),
 });
+
+export const VerifySessionCodeBodySchema = z.object({
+  sessionCode: z.string(),
+  storeId: z.coerce.number(),
+});

@@ -4,13 +4,11 @@ import { v4 as uuidv4 } from "uuid";
 import type { Request, Response } from "express";
 import { verifyGoogleIdToken } from "../helpers/googleverify";
 import axios from "axios";
-import crypto from "crypto";
 import bcrypt from "bcrypt";
 import { env } from "../config/env.config";
 import {
   GoogleCallbackQuerySchema,
   RedirectToGoogleQuerySchema,
-  VerifySessionCodeBodySchema,
   RoleEnum,
 } from "../schemas/auth.schema";
 
@@ -191,99 +189,4 @@ export const googleCallback = async (
     console.error("Google OAuth callback failed:", err);
     res.status(500).send("OAuth failed due to a server error.");
   }
-};
-
-export const verifySessionCode = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  const parsed = VerifySessionCodeBodySchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: "Invalid request body" });
-    return;
-  }
-
-  const { sessionCode, storeId, role } = parsed.data;
-
-  if (!sessionCode || typeof sessionCode !== "string") {
-    res.status(400).json({ error: "Invalid session code" });
-    return;
-  }
-
-  const session = await prisma.sessionCode.findUnique({
-    where: { code: sessionCode, storeId },
-  });
-
-  if (!session || session.used || new Date(session.expiresAt) < new Date()) {
-    res.status(400).json({ error: "Session code expired or invalid" });
-    return;
-  }
-
-  let account: any = null;
-  if (role === RoleEnum.enum.ADMIN) {
-    account = await prisma.admin.findFirst({
-      where: { email: session.email, storeId: session.storeId },
-    });
-    if (!account) {
-      res.status(404).json({ error: "Admin not found" });
-      return;
-    }
-  } else {
-    account = await prisma.user.findFirst({
-      where: { email: session.email, storeId: session.storeId },
-    });
-    if (!account) {
-      res.status(404).json({ error: "User not found" });
-      return;
-    }
-  }
-
-  const user = account;
-
-  if (!user) {
-    res.status(404).json({
-      error:
-        role === RoleEnum.enum.ADMIN ? "Admin not found" : "User not found",
-    });
-    return;
-  }
-
-  await prisma.sessionCode.update({
-    where: { code: sessionCode },
-    data: { used: true },
-  });
-
-  const token = jwt.sign(
-    { uid: user.uid, storeId, apiKey: user.apiKey },
-    env.JWT_SECRET,
-    {
-      expiresIn: "7d",
-    }
-  );
-  const csrfToken = crypto.randomBytes(32).toString("hex");
-
-  const cookieBase = {
-    domain: ".validpanel.com",
-    path: "/",
-    secure: env.NODE_ENV === "production",
-    sameSite:
-      env.NODE_ENV === "production" ? ("none" as const) : ("lax" as const),
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  };
-
-  res.cookie("csrf_token", csrfToken, {
-    ...cookieBase,
-    httpOnly: false,
-  });
-
-  res.cookie("auth_token", token, {
-    ...cookieBase,
-    httpOnly: true,
-  });
-
-  const { password: _, resetToken, resetTokenExpiry, ...safeUser } = user;
-
-  res
-    .status(200)
-    .json({ success: "User authenticated successfully", user: safeUser });
 };

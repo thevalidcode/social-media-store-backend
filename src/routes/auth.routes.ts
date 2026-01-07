@@ -6,6 +6,5 @@ const router = express.Router();
 
 router.get("/google", authRateLimit, auth.redirectToGoogle);
 router.get("/callback/google", authRateLimit, auth.googleCallback);
-router.post("/session/verify", authRateLimit, auth.verifySessionCode);
 
 export default router;

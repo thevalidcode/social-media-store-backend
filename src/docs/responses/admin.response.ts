@@ -36,3 +36,15 @@ export const OnboardingCompletedResponse = {
     },
   },
 };
+
+export const SessionVerifiedResponse = {
+  description: "Session verified, cookies set, admin authenticated.",
+  content: {
+    "application/json": {
+      schema: z.object({
+        admin: AdminSchema,
+        success: z.string(),
+      }),
+    },
+  },
+};

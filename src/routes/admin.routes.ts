@@ -6,7 +6,12 @@ const router = express.Router();
 
 router.post("/me", admins.authenticateAdmin);
 router.patch("/", authenticateAdmin, admins.updateAdmin);
-router.put("/onboarding-completed", authenticateAdmin, admins.completeOnboarding);
+router.post("/verify-session", strictLimiter, admins.verifySession);
+router.put(
+  "/onboarding-completed",
+  authenticateAdmin,
+  admins.completeOnboarding
+);
 router.post("/forgot-password", strictLimiter, admins.forgotPasswordAdmin);
 router.post("/reset-password", strictLimiter, admins.resetPasswordAdmin);
 
