@@ -19,15 +19,15 @@ jobs:
           npm ci
           npm run build
 
-      - name: Deploy to VPS
-        uses: appleboy/scp-action@master
+      - name: 📤 Upload project (excluding src/)
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 2022
-          source: "out/"
-          target: "~/social-media-store/frontend/"
+          source: "app,public,scripts,prisma,package.json"
+          target: "social-media-store/backend"
           overwrite: true
 
       - name: 🧠 Run post-deploy commands
