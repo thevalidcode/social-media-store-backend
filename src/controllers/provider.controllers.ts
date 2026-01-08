@@ -296,17 +296,32 @@ export const addProvider = async (
       .replace(/^https?:\/\//, "") // remove http:// or https://
       .replace(/\/$/, "");
 
-    const { data: providerUser } = await axios.post<{
-      currency: string;
-      balance: string;
-    }>(
-      `https://${parsedUrl}`,
-      { action: "balance", key: reqData.apiKey },
-      { httpsAgent: agent }
-    );
+    let providerUser;
 
-    if (!providerUser || !providerUser.currency) {
-      res.status(400).json({ error: "Unable to fetch balance from provider." });
+    try {
+      const response = await axios.post<{
+        currency: string;
+        balance: string;
+      }>(
+        `https://${parsedUrl}`,
+        { action: "balance", key: reqData.apiKey },
+        { httpsAgent: agent }
+      );
+      providerUser = response.data;
+
+      if (!providerUser || !providerUser.currency) {
+        res
+          .status(400)
+          .json({ error: "Unable to fetch balance from provider." });
+        return;
+      }
+    } catch (err: any) {
+      res
+        .status(400)
+        .json({
+          error: err.response.data.error || "Invalid provider URL or API key.",
+        });
+      return;
     }
 
     // Check if serviceProvider exists, if not, create it
