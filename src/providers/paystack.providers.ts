@@ -3,7 +3,6 @@ import convertCurrency from "../utils/ConvertCurrency";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import { decryptKey } from "../utils/encrypt";
-import { exchangeRates as getExchangeRates } from "../helpers/currency.helper";
 import { PaystackWebhookData } from "../schemas/webhook.schema";
 import type { Request } from "express";
 import { verifyPaystackSignature } from "../utils/webhook/verifySignatures";
@@ -33,12 +32,10 @@ export const initPaystackPayment = async (
   paymentData: any,
   secretKey: { encrypted_key: string; iv: string }
 ) => {
-  const exchangeRates = await getExchangeRates();
-  const convertedNGNAmount = convertCurrency(
+  const convertedNGNAmount = await convertCurrency(
     paymentData.amount,
     paymentData.currency,
-    "NGN",
-    exchangeRates
+    "NGN"
   );
   const response = await axios.post(
     "https://api.paystack.co/transaction/initialize",
