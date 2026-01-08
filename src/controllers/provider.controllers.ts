@@ -15,7 +15,8 @@ import { v4 as uuidv4 } from "uuid";
 import { AdminAuthSchema } from "../schemas/admin.schema";
 import { Decimal } from "@prisma/client/runtime/library";
 import { ServiceType } from "../../prisma/generated";
-import { coreApiRequest } from "../lib/apiClient";
+import { agent } from "../providers/service.providers";
+import convertCurrency from "../utils/ConvertCurrency";
 
 export const getProviderServices = async (
   req: Request,
@@ -53,23 +54,16 @@ export const getProviderServices = async (
 
     const decryptedKey = decryptKey(apiKeyData.encrypted_key, apiKeyData.iv);
 
-    const [{ data: balanceData }, { data: providerServicesResponse }] =
-      await Promise.all([
-        axios.post(`https://${provider}`, {
-          action: "balance",
-          key: decryptedKey,
-        }),
-        axios.post(`https://${provider}`, {
-          action: "services",
-          key: decryptedKey,
-        }),
-      ]);
-
-    const providerCurrency = balanceData.currency.toUpperCase();
+    const [{ data: providerServicesResponse }] = await Promise.all([
+      axios.post(`https://${provider}`, {
+        action: "services",
+        key: decryptedKey,
+      }),
+    ]);
 
     const providerServices = providerServicesResponse.map((service: any) => ({
       ...service,
-      currency: providerCurrency,
+      currency: providerData.currency,
     }));
 
     res.status(200).json(providerServices);
@@ -116,20 +110,15 @@ export const importServices = async (
 
     const decryptedKey = decryptKey(apiKeyData.encrypted_key, apiKeyData.iv);
 
-    const [{ data: balanceData }, { data: providerServices }] =
-      await Promise.all([
-        axios.post(`https://${provider}`, {
-          action: "balance",
-          key: decryptedKey,
-        }),
-        axios.post(`https://${provider}`, {
-          action: "services",
-          key: decryptedKey,
-        }),
-      ]);
+    const [{ data: providerServices }] = await Promise.all([
+      axios.post(`https://${provider}`, {
+        action: "services",
+        key: decryptedKey,
+      }),
+    ]);
 
     const providerCurrency = String(
-      balanceData.currency || "USD"
+      providerData.currency || "USD"
     ).toUpperCase();
 
     const newServices = await prisma.$transaction(async (tx) => {
@@ -164,9 +153,15 @@ export const importServices = async (
         const providerId = parseInt(service.service);
         if (existingProviderIds.has(providerId)) continue;
 
-        const baseRate = parseFloat(service.rate) || 0;
-        const finalPrice = new Decimal(
-          (baseRate + (baseRate * importPercent) / 100).toFixed(2)
+        const baseRate = new Decimal(service.rate || 0);
+        const newPrice = baseRate
+          .plus(baseRate.times(importPercent).dividedBy(100))
+          .toDecimalPlaces(2);
+
+        const finalPrice = await convertCurrency(
+          newPrice,
+          providerCurrency,
+          "USD"
         );
 
         currentServiceId++;
@@ -248,7 +243,8 @@ export const importServices = async (
           refill: formattedRefill,
           percentage: importPercent,
           dripFeed: formattedDripFeed,
-          providerCurrency,
+          providerCurrency: "USD",
+          syncWithProvider: true,
           uid: uuidv4(),
           storeScopedId: currentServiceId,
         });
@@ -300,6 +296,19 @@ export const addProvider = async (
       .replace(/^https?:\/\//, "") // remove http:// or https://
       .replace(/\/$/, "");
 
+    const { data: providerUser } = await axios.post<{
+      currency: string;
+      balance: string;
+    }>(
+      `https://${parsedUrl}`,
+      { action: "balance", key: reqData.apiKey },
+      { httpsAgent: agent }
+    );
+
+    if (!providerUser || !providerUser.currency) {
+      res.status(400).json({ error: "Unable to fetch balance from provider." });
+    }
+
     // Check if serviceProvider exists, if not, create it
     const existingServiceProvider = await prisma.serviceProvider.findUnique({
       where: { url: parsedUrl },
@@ -338,6 +347,7 @@ export const addProvider = async (
           name: reqData.name,
           url: parsedUrl,
           sync: reqData.sync,
+          currency: providerUser.currency.toUpperCase(),
           image: reqData.image,
           percentage: reqData.percentage,
           apiKey: JSON.parse(JSON.stringify(encrypted_key)),
@@ -354,10 +364,7 @@ export const addProvider = async (
   }
 };
 
-export const getAllSeviceProviders = async (
-  req: Request,
-  res: Response
-) => {
+export const getAllSeviceProviders = async (req: Request, res: Response) => {
   const parsed = GetAllServiceProvidersQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -367,7 +374,7 @@ export const getAllSeviceProviders = async (
   const { page = 1, limit = 20, search } = parsed.data;
   try {
     const skip = (page - 1) * limit;
-    const where:any = search
+    const where: any = search
       ? {
           OR: [
             { name: { contains: search, mode: "insensitive" } },

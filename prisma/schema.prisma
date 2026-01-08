@@ -135,6 +135,7 @@ model Service {
   network          String?
   refill           Boolean?
   percentage       Float?
+  syncWithProvider Boolean       @default(true)
   currency         String?
   dripFeed         Boolean?      @default(false) @map("drip_feed")
   providerCurrency String?       @map("provider_currency")
@@ -415,6 +416,7 @@ model Provider {
   percentage    Float     @default(0)
   createdAt     DateTime  @default(now()) @map("created_at")
   storeId       Int       @map("store_id")
+  currency      String    @default("USD")
   apiKey        Json      @map("api_key")
   image         String
   store         Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)

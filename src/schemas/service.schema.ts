@@ -68,6 +68,7 @@ export const ServiceCreateInputSchema = z.object({
   position: z.number().optional(),
   refillDays: z.number().optional(),
   syncQuantity: z.boolean().optional(),
+  syncWithProvider: z.boolean().optional().default(false),
   syncCatAndName: z.boolean().optional(),
   dripFeed: z.boolean().optional(),
   network: z.string().optional(),

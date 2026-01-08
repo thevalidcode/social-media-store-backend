@@ -24,9 +24,10 @@ export const sendRefillToMainServer = async (
     });
 
     if (!order) return false;
+    if (!order.provider) return false;
 
     const provider = await prisma.provider.findFirst({
-      where: { url: order.provider || "", storeId },
+      where: { url: order.provider, storeId },
     });
 
     if (!provider) return false;
@@ -65,16 +66,18 @@ export const sendRefillToMainServer = async (
     }
 
     // Transaction: create refill and update its status
-    const [refill] = await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       const counter = await tx.storeCounter.update({
         where: { storeId },
         data: { refillCounter: { increment: 1 } },
       });
+      
+      if (!order.provider) return false;
 
       const refillRow = await tx.refill.create({
         data: {
           providerId: safeInt(res.refill),
-          provider: order.provider || "",
+          provider: order.provider,
           orderUid: order.uid,
           storeScopedId: counter.refillCounter,
           userUid: order.userUid,

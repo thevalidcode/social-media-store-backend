@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 import { Decimal } from "@prisma/client/runtime/library";
 import { ServiceType } from "../../prisma/generated";
 
-const agent = new https.Agent({
+export const agent = new https.Agent({
   keepAlive: true,
   rejectUnauthorized: false,
 });
@@ -49,12 +49,7 @@ export const updateExistingServices = async (): Promise<void> => {
             apiKeyData.iv
           );
           const baseURL = `${prov.url}`;
-          const [balanceRes, servicesRes] = await Promise.all([
-            axios.post(
-              `https://${baseURL}`,
-              { action: "balance", key: decryptedKey },
-              { httpsAgent: agent }
-            ),
+          const [servicesRes] = await Promise.all([
             axios.post(
               `https://${baseURL}`,
               { action: "services", key: decryptedKey },
@@ -63,12 +58,11 @@ export const updateExistingServices = async (): Promise<void> => {
           ]);
 
           provCache[prov.url] = {
-            currency: balanceRes.data.currency.toUpperCase(),
             list: servicesRes.data,
           };
         }
 
-        const { currency: provCur, list } = provCache[prov.url];
+        const { list } = provCache[prov.url];
         const liveSvc = list.find(
           (x: any) => String(x.service) === String(svc.providerId)
         );
@@ -85,7 +79,7 @@ export const updateExistingServices = async (): Promise<void> => {
         const pct = toDecimal(svc.percentage ?? 0);
         const priceUSD = providerRate
           .plus(providerRate.mul(pct).div(100))
-          .toDecimalPlaces(3);
+          .toDecimalPlaces(2);
 
         await prisma.service.update({
           where: { uid: svc.uid },
@@ -98,7 +92,7 @@ export const updateExistingServices = async (): Promise<void> => {
             providerPrice: providerRate,
             price: priceUSD,
             cancel: liveSvc.cancel,
-            providerCurrency: provCur,
+            providerCurrency: prov.currency,
             network: liveSvc.network || "None",
             refill: liveSvc.refill,
             ...(liveSvc.description && { description: liveSvc.description }),
@@ -151,12 +145,7 @@ export const syncServices = async (): Promise<void> => {
         );
         const baseURL = `${prov.url}`;
 
-        const [{ data: balance }, { data: svcList }] = await Promise.all([
-          axios.post(
-            `https://${baseURL}`,
-            { action: "balance", key: decryptedKey },
-            { httpsAgent: agent }
-          ),
+        const [{ data: svcList }] = await Promise.all([
           axios.post(
             `https://${baseURL}`,
             { action: "services", key: decryptedKey },
@@ -164,7 +153,7 @@ export const syncServices = async (): Promise<void> => {
           ),
         ]);
 
-        const provCur = balance.currency.toUpperCase();
+        const provCur = prov.currency.toUpperCase();
 
         await prisma.$transaction(async (tx) => {
           for (const s of svcList) {
@@ -204,7 +193,7 @@ export const syncServices = async (): Promise<void> => {
             const pct = toDecimal(prov.percentage);
             const endPrice = providerRate
               .plus(providerRate.mul(pct).div(100))
-              .toDecimalPlaces(3);
+              .toDecimalPlaces(2);
 
             const newService = await tx.service.create({
               data: {

@@ -12,6 +12,7 @@ import { UserAuthSchema } from "../schemas/user.schema";
 import { AdminAuthSchema } from "../schemas/admin.schema";
 import { env } from "../config/env.config";
 import { sendOrderToProvider } from "../providers/order.providers";
+import { Decimal } from "@prisma/client/runtime/library";
 
 const publicFields = {
   storeScopedId: true,
@@ -254,9 +255,38 @@ export const placeOrder = async (
     return;
   }
 
-  const { storeId } = authParsed.data;
+  const { storeId, user } = authParsed.data;
 
   try {
+    // Fetch the service to calculate price
+    const service = await prisma.service.findUnique({
+      where: { uid: parsed.data.serviceUid },
+      select: { price: true, type: true },
+    });
+
+    if (!service) {
+      res.status(404).json({ error: "Service not found" });
+      return;
+    }
+
+    // Calculate order price
+    let orderPrice: Decimal;
+    if (service.type === "PACKAGE") {
+      orderPrice = new Decimal(service.price);
+    } else {
+      // Price is per 1000 quantity
+      orderPrice = new Decimal(service.price)
+        .mul(parsed.data.quantity)
+        .div(1000);
+    }
+
+    // Check user balance
+    const userBalance = new Decimal(user.balance);
+    if (userBalance.lt(orderPrice)) {
+      res.status(400).json({ error: "Insufficient balance" });
+      return;
+    }
+
     const newOrder = await prisma.$transaction(async (tx) => {
       const counter = await tx.storeCounter.update({
         where: { storeId },
@@ -305,9 +335,52 @@ export const bulkCreateOrders = async (
     return;
   }
 
-  const { storeId } = authParsed.data;
+  const { storeId, user } = authParsed.data;
 
   try {
+    // Fetch all unique services for the orders
+    const serviceUids = [
+      ...new Set(parsed.data.orders.map((o) => o.serviceUid)),
+    ];
+    const services = await prisma.service.findMany({
+      where: { uid: { in: serviceUids } },
+      select: { uid: true, price: true, type: true },
+    });
+
+    // Create a map for quick service lookup
+    const serviceMap = new Map(
+      services.map((s) => [s.uid, { price: s.price, type: s.type }])
+    );
+
+    // Calculate total price for all orders
+    let totalPrice = new Decimal(0);
+    for (const order of parsed.data.orders) {
+      const service = serviceMap.get(order.serviceUid);
+      if (!service) {
+        res
+          .status(404)
+          .json({ error: `Service not found: ${order.serviceUid}` });
+        return;
+      }
+
+      let orderPrice: Decimal;
+      if (service.type === "PACKAGE") {
+        orderPrice = new Decimal(service.price);
+      } else {
+        // Price is per 1000 quantity
+        orderPrice = new Decimal(service.price).mul(order.quantity).div(1000);
+      }
+
+      totalPrice = totalPrice.add(orderPrice);
+    }
+
+    // Check user balance
+    const userBalance = new Decimal(user.balance);
+    if (userBalance.lt(totalPrice)) {
+      res.status(400).json({ error: "Insufficient balance" });
+      return;
+    }
+
     const results = await Promise.all(
       parsed.data.orders.map(async (order) => {
         const counter = await prisma.storeCounter.update({
@@ -325,12 +398,7 @@ export const bulkCreateOrders = async (
         });
 
         if (env.NODE_ENV === "production") {
-          try {
-            await sendOrderToProvider(newOrder, storeId);
-          } catch (err) {
-            // log but do NOT break bulk creation
-            console.error("Provider error:", err);
-          }
+          await sendOrderToProvider(newOrder, storeId);
         }
 
         return newOrder;

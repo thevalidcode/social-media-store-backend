@@ -6,9 +6,9 @@ import { prisma } from "../config/db.config";
 import { placeOrderSchema } from "../schemas/order.schema";
 import { z } from "zod";
 import { decryptKey } from "../utils/encrypt";
-import { exchangeRates } from "../helpers/currency.helper";
 import { Decimal } from "@prisma/client/runtime/library";
-import { v4 as uuidv4 } from "uuid";
+import { Order } from "../../prisma/generated";
+import { env } from "../config/env.config";
 
 const agent = new https.Agent({
   keepAlive: true,
@@ -23,21 +23,25 @@ const safeInt = (n: any, d = 0): number =>
 
 type ProviderOrderResult = {
   success?: string;
-  error?: string | object;
+  error?: string;
 };
 
 export const sendOrderToProvider = async (
-  order: any,
+  order: Order,
   storeId: number
 ): Promise<ProviderOrderResult> => {
   try {
     const orderSchema = placeOrderSchema.extend({ uid: z.string().uuid() });
     const parsed = orderSchema.safeParse(order);
-    if (!parsed.success) return { error: parsed.error.flatten() };
+    if (!parsed.success) throw new Error("Invalid order data");
 
     const orderData = parsed.data;
 
-    const [user, service, provider, affiliate, rates] = await Promise.all([
+    if (!order.provider) {
+      throw new Error("No provider specified for this order.");
+    }
+
+    const [user, service, provider, affiliate] = await Promise.all([
       prisma.user.findUnique({ where: { storeId, uid: orderData.userUid } }),
       prisma.service.findUnique({
         where: { uid: orderData.serviceUid },
@@ -45,20 +49,19 @@ export const sendOrderToProvider = async (
           provider: true,
         },
       }),
+
       prisma.provider.findFirst({ where: { storeId, url: order.provider } }),
       prisma.affiliateSetting.findFirst({ where: { storeId } }),
-      exchangeRates(),
     ]);
 
     if (!user || !service || !provider)
-      return { error: "There's either no user, service or provider." };
+      throw new Error("There's either no user, service or provider.");
 
     const pricePer1000 = toDecimal(
       convertCurrency(
         toDecimal(service.price).toNumber(),
         service.providerCurrency || "USD",
-        "USD",
-        rates
+        "USD"
       )
     );
 
@@ -74,7 +77,7 @@ export const sendOrderToProvider = async (
 
     const userBalance = toDecimal(user.balance);
     if (userBalance.lt(chargeUSD)) {
-      return { error: "User has insufficient balance" };
+      throw new Error("User has insufficient balance");
     }
 
     const userInitialBalance = userBalance;
@@ -119,23 +122,25 @@ export const sendOrderToProvider = async (
         },
       });
 
-      try {
-        await sendEmail(
-          undefined,
-          "NEWFAILEDORDER",
-          {
-            ...orderData,
-            userBalance: userFinalBalance,
-            providerError: res.error,
-            serviceId: service.id,
-          },
-          storeId
-        );
-      } catch (e: any) {
-        console.error("Email error (failed order):", e.message);
+      if (env.NODE_ENV === "production") {
+        try {
+          await sendEmail(
+            undefined,
+            "NEWFAILEDORDER",
+            {
+              ...orderData,
+              userBalance: userFinalBalance,
+              providerError: res.error,
+              serviceId: service.id,
+            },
+            storeId
+          );
+        } catch (e: any) {
+          console.error("Email error (failed order):", e.message);
+        }
       }
 
-      return { error: res.error };
+      throw new Error(res.error);
     }
 
     await prisma.$transaction(async (tx) => {
@@ -154,7 +159,7 @@ export const sendOrderToProvider = async (
       });
 
       await tx.order.update({
-        where: { uid: orderData.uid },
+        where: { uid: orderData.uid, storeId },
         data: {
           providerOrderId: safeInt(res.order),
           provider: provider.url,
@@ -164,7 +169,9 @@ export const sendOrderToProvider = async (
       });
 
       if (user.ref && affiliate) {
-        const refUser = await tx.user.findUnique({ where: { id: user.ref } });
+        const refUser = await tx.user.findUnique({
+          where: { id: user.ref, storeId },
+        });
         const percent = affiliate.percent || 0;
 
         if (refUser) {
@@ -172,7 +179,7 @@ export const sendOrderToProvider = async (
           const newRefBalance = toDecimal(refUser.balance).add(earned);
 
           await tx.user.update({
-            where: { uid: refUser.uid },
+            where: { uid: refUser.uid, storeId },
             data: { balance: newRefBalance },
           });
 
@@ -181,7 +188,6 @@ export const sendOrderToProvider = async (
               price: chargeUSD,
               username: user.username,
               refId: user.ref,
-              uid: uuidv4(),
               storeScopedId: counter.referralOrderCounter,
               storeId,
             },
@@ -194,7 +200,6 @@ export const sendOrderToProvider = async (
               amount: earned,
               currency: "USD",
               storeScopedId: counter.transactionCounter,
-              uid: uuidv4(),
               userUid: user.uid,
               storeId,
             },
@@ -203,16 +208,23 @@ export const sendOrderToProvider = async (
       }
     });
 
-    await sendEmail(undefined, "NEWORDER", {
-      ...orderData,
-      userBalance: userFinalBalance,
-      serviceId: service.id,
-    },storeId);
+    if (env.NODE_ENV === "production") {
+      await sendEmail(
+        undefined,
+        "NEWORDER",
+        {
+          ...orderData,
+          userBalance: userFinalBalance,
+          serviceId: service.id,
+        },
+        storeId
+      );
+    }
 
     return { success: "Order sent to provider successfully" };
   } catch (err: any) {
     console.error("Error sending order to provider:", err.message);
-    return { error: err.message || "Unknown error" };
+    throw new Error(err.message || "Unknown error");
   }
 };
 
@@ -221,11 +233,13 @@ export const updateOrderStatus = async (
   storeId: number
 ): Promise<void> => {
   try {
-    const order = await prisma.order.findUnique({ where: { uid: orderUid } });
+    const order = await prisma.order.findUnique({
+      where: { uid: orderUid, storeId },
+    });
     if (!order || !order.provider) return;
 
     const provider = await prisma.provider.findFirst({
-      where: { url: order.provider },
+      where: { url: order.provider, storeId },
     });
     if (!provider) return;
 
@@ -246,10 +260,8 @@ export const updateOrderStatus = async (
       { httpsAgent: agent }
     );
 
-    const rates = await exchangeRates();
-
     await prisma.order.update({
-      where: { uid: order.uid },
+      where: { uid: order.uid, storeId },
       data: {
         status: resp.status,
         providerCurrency: resp.currency?.toUpperCase(),
@@ -257,8 +269,7 @@ export const updateOrderStatus = async (
           convertCurrency(
             toDecimal(resp.charge).toNumber(),
             resp.currency?.toUpperCase(),
-            "USD",
-            rates
+            "USD"
           )
         ),
         synced: true,
@@ -268,6 +279,7 @@ export const updateOrderStatus = async (
     console.error("Error updating order status:", err.message);
   }
 };
+
 const MAXRETRIES = 3;
 
 export const sendUnsyncedOrders = async (): Promise<void> => {
@@ -306,17 +318,19 @@ export const sendUnsyncedOrders = async (): Promise<void> => {
 };
 
 export const syncOrderDetails = async (
-  orderData: any,
+  orderData: Order,
   storeId: number
 ): Promise<boolean> => {
   try {
     const user = await prisma.user.findUnique({
-      where: { uid: orderData.userUid },
+      where: { uid: orderData.userUid, storeId },
     });
     if (!user) return false;
 
+    if (!orderData.provider) return false;
+
     const provider = await prisma.provider.findFirst({
-      where: { url: orderData.provider },
+      where: { url: orderData.provider, storeId },
     });
     if (!provider) return false;
 
@@ -338,37 +352,35 @@ export const syncOrderDetails = async (
     });
 
     const service = await prisma.service.findUnique({
-      where: { id: orderData.serviceId },
+      where: { uid: orderData.serviceUid, storeId },
     });
-    const rates = await exchangeRates();
 
-    if (resp.status === "Canceled" && orderData.status !== "Canceled") {
+    if (resp.status === "Canceled" && orderData.status !== "CANCELED") {
       const newBalance = toDecimal(user.balance).add(
         toDecimal(orderData.price)
       );
       await prisma.user.update({
-        where: { uid: user.uid },
+        where: { uid: user.uid, storeId },
         data: { balance: newBalance },
       });
       await prisma.order.update({
-        where: { uid: orderData.uid },
+        where: { uid: orderData.uid, storeId },
         data: { status: "CANCELED", price: 0 },
       });
     }
 
-    if (resp.status === "Partial" && orderData.status !== "Partial") {
+    if (resp.status === "Partial" && orderData.status !== "PARTIAL") {
       if (!service) return false;
 
       const pricePer1000 = toDecimal(
         convertCurrency(
           toDecimal(service.price).toNumber(),
           service.providerCurrency || "USD",
-          "USD",
-          rates
+          "USD"
         ) || 0
       );
 
-      const refunded = toDecimal(orderData.number).minus(
+      const refunded = toDecimal(orderData.quantity).minus(
         toDecimal(resp.remains)
       );
       const totalPrice = toDecimal(resp.remains)
@@ -395,39 +407,38 @@ export const syncOrderDetails = async (
       });
     }
 
-    if (resp.status === "Completed" && orderData.status !== "Completed") {
+    if (resp.status === "Completed" && orderData.status !== "COMPLETED") {
       if (!service) return false;
 
       const pricePer1000 = toDecimal(
         convertCurrency(
           toDecimal(service.price).toNumber(),
           service.providerCurrency || "USD",
-          "USD",
-          rates
+          "USD"
         ) || 0
       );
 
-      if (orderData.status === "Canceled") {
-        const totalPrice = toDecimal(orderData.number)
+      if (orderData.status === "CANCELED") {
+        const totalPrice = toDecimal(orderData.quantity)
           .div(1000)
           .mul(pricePer1000)
           .toDecimalPlaces(2);
         const newBalance = toDecimal(user.balance).minus(totalPrice);
 
         await prisma.user.update({
-          where: { uid: user.uid },
+          where: { uid: user.uid, storeId },
           data: { balance: newBalance },
         });
         await prisma.order.update({
-          where: { uid: orderData.uid },
+          where: { uid: orderData.uid, storeId },
           data: {
             status: "COMPLETED",
             remains: 0,
             price: totalPrice,
           },
         });
-      } else if (orderData.status === "Partial") {
-        const originalPrice = toDecimal(orderData.number)
+      } else if (orderData.status === "PARTIAL") {
+        const originalPrice = toDecimal(orderData.quantity)
           .div(1000)
           .mul(pricePer1000)
           .toDecimalPlaces(2);
@@ -438,11 +449,11 @@ export const syncOrderDetails = async (
         const newBalance = toDecimal(user.balance).minus(refundPrice);
 
         await prisma.user.update({
-          where: { uid: user.uid },
+          where: { uid: user.uid, storeId },
           data: { balance: newBalance },
         });
         await prisma.order.update({
-          where: { uid: orderData.uid },
+          where: { uid: orderData.uid, storeId },
           data: {
             status: "COMPLETED",
             remains: 0,
@@ -458,7 +469,7 @@ export const syncOrderDetails = async (
     }
 
     await prisma.order.update({
-      where: { uid: orderData.uid },
+      where: { uid: orderData.uid, storeId },
       data: {
         status: resp.status,
         remains: safeInt(resp.remains),
@@ -467,8 +478,7 @@ export const syncOrderDetails = async (
           convertCurrency(
             toDecimal(resp.charge).toNumber(),
             resp.currency.toUpperCase(),
-            "USD",
-            rates
+            "USD"
           )
         ),
         providerCurrency: resp.currency.toUpperCase(),
@@ -506,6 +516,7 @@ export const syncAllStoresOrderDetails = async () => {
     console.error("Error syncing order details", error);
   }
 };
+
 export const processDripFeedOrders = async (): Promise<void> => {
   try {
     const storeIds = await prisma.order.findMany({

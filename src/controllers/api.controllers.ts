@@ -64,7 +64,7 @@ export const apiRequests = async (req: Request, res: Response) => {
         type: data.type,
         category: data.category,
         rate: String(
-          convertCurrency(data.price, data.providerCurrency!, "USD", rates)
+          convertCurrency(data.price, data.providerCurrency!, "USD")
         ),
         min: String(data.min),
         max: String(data.max),
