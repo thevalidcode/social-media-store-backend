@@ -28,7 +28,6 @@ export const ProviderCreateRequestSchema = z.object({
 export const ProviderUpdateRequestSchema = z.object({
   uid: z.string(),
   name: z.string().optional(),
-  url: z.string().optional(),
   image: z.string().url(),
   percentage: z.number().optional(),
   apiKey: z.string(),

@@ -460,7 +460,10 @@ export const updateProvider = async (
     await prisma.provider.updateMany({
       where: { uid: reqData.uid, storeId },
       data: {
-        ...reqData,
+        image: reqData.image,
+        name: reqData.name,
+        percentage: reqData.percentage,
+        sync: reqData.sync,
         apiKey: JSON.parse(JSON.stringify(encrypted_key)),
       },
     });
