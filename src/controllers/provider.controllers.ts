@@ -164,6 +164,8 @@ export const importServices = async (
 
         // Category handling
         let serviceCategory = category.label;
+        let categoryUid: string;
+
         if (category.value === "createSameCategory") {
           const categoryName = (
             service.category || "Uncategorized"
@@ -189,6 +191,16 @@ export const importServices = async (
           }
 
           serviceCategory = categoryCache.get(categoryName)!.name;
+          categoryUid = categoryCache.get(categoryName)!.uid;
+        } else {
+          // Use predefined category - lookup by lowercase
+          const categoryLookup = categoryCache.get(
+            serviceCategory.toLowerCase()
+          );
+          if (!categoryLookup) {
+            throw new Error(`Category "${serviceCategory}" not found in store`);
+          }
+          categoryUid = categoryLookup.uid;
         }
 
         // Normalize all fields
@@ -244,7 +256,7 @@ export const importServices = async (
           syncWithProvider: true,
           uid: uuidv4(),
           storeScopedId: currentServiceId,
-          categoryUid: categoryCache.get(serviceCategory)!.uid,
+          categoryUid,
         });
 
         actualCreatedCount++;
