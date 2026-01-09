@@ -10,7 +10,7 @@ import {
   PaystackWebhookData,
 } from "../schemas/webhook.schema";
 import type { Request } from "express";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "@prisma/client/runtime/client";
 
 export const createPayment = async (user: Partial<User>, input: CreatePaymentInput) => {
   const { platform, currency, amount, redirect_url } = input;

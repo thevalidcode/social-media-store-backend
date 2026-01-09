@@ -12,7 +12,7 @@ import { UserAuthSchema } from "../schemas/user.schema";
 import { AdminAuthSchema } from "../schemas/admin.schema";
 import { env } from "../config/env.config";
 import { sendOrderToProvider } from "../providers/order.providers";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "@prisma/client/runtime/client";
 
 const publicFields = {
   storeScopedId: true,

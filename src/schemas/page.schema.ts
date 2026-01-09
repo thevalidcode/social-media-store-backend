@@ -9,12 +9,14 @@ export const pageTypeSchema = z.nativeEnum(PageType);
 export const createPageSchema = z.object({
   pageType: pageTypeSchema,
   title: z.string().min(1, "Title is required").max(255),
+  description: z.string().max(500).optional(),
   content: z.string().min(1, "Content is required"),
 });
 
 export const updatePageSchema = z.object({
   uid: z.string().uuid("Invalid page ID"),
   title: z.string().min(1, "Title is required").max(255).optional(),
+  description: z.string().max(500).optional(),
   content: z.string().min(1, "Content is required").optional(),
   status: z.nativeEnum(PageStatus).optional(),
 });

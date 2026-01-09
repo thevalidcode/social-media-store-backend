@@ -1,5 +1,4 @@
-import { Decimal } from "@prisma/client/runtime/library";
-import { Prisma } from "../../prisma/generated";
+import { Decimal } from "@prisma/client/runtime/client";
 import { exchangeRates } from "../helpers/currency.helper";
 
 /**

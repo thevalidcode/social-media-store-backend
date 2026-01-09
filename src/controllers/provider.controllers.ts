@@ -13,7 +13,7 @@ import {
 } from "../schemas/provider.schema";
 import { v4 as uuidv4 } from "uuid";
 import { AdminAuthSchema } from "../schemas/admin.schema";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "@prisma/client/runtime/client";
 import { ServiceType } from "../../prisma/generated";
 import { agent } from "../providers/service.providers";
 import convertCurrency from "../utils/ConvertCurrency";

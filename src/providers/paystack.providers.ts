@@ -6,7 +6,7 @@ import { decryptKey } from "../utils/encrypt";
 import { PaystackWebhookData } from "../schemas/webhook.schema";
 import type { Request } from "express";
 import { verifyPaystackSignature } from "../utils/webhook/verifySignatures";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "@prisma/client/runtime/client";
 
 const verifySignature = async (req: Request, storeId: number) => {
   const gateway = await prisma.paymentGateway.findFirst({

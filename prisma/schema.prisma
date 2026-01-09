@@ -343,6 +343,7 @@ model Page {
   uid           String     @unique @default(uuid())
   title         String
   content       String
+  description   String?
   pageType      PageType   @map("page_type")
   status        PageStatus @default(ACTIVE)
   storeId       Int        @map("store_id")

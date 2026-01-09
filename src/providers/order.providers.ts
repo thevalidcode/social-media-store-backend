@@ -6,7 +6,7 @@ import { prisma } from "../config/db.config";
 import { placeOrderSchema } from "../schemas/order.schema";
 import { z } from "zod";
 import { decryptKey } from "../utils/encrypt";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "@prisma/client/runtime/client";
 import { Order } from "../../prisma/generated";
 import { env } from "../config/env.config";
 

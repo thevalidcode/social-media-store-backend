@@ -4,7 +4,7 @@ import { prisma } from "../config/db.config";
 import { sendEmail } from "../emails";
 import { decryptKey } from "../utils/encrypt";
 import { v4 as uuidv4 } from "uuid";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "@prisma/client/runtime/client";
 import { ServiceType } from "../../prisma/generated";
 
 export const agent = new https.Agent({

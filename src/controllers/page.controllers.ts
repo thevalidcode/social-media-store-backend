@@ -128,6 +128,7 @@ export const createPage = async (
           storeScopedId: counter.pageCounter,
           pageType: parsed.data.pageType,
           title: parsed.data.title,
+          description: parsed.data.description,
           content: parsed.data.content,
           status: "ACTIVE",
         },
@@ -165,7 +166,7 @@ export const updatePage = async (
     return;
   }
 
-  const { uid, title, content, status } = parsed.data;
+  const { uid, title, content, status, description } = parsed.data;
   const { storeId } = authParsed.data;
 
   try {
@@ -181,6 +182,7 @@ export const updatePage = async (
 
     const updateData: any = {};
     if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
     if (content !== undefined) updateData.content = content;
     if (status !== undefined) updateData.status = status;
 
