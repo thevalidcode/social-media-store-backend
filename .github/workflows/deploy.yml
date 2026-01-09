@@ -40,8 +40,8 @@ jobs:
           script: |
             cd social-media-store/backend
             npm i --omit=dev
+            npm run migrate
             pm2 describe social-media-store > /dev/null \
               && pm2 restart social-media-store \
               || pm2 start app/index.js --name social-media-store
             pm2 save
-            npm run migrate
