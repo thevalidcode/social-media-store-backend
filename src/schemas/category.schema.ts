@@ -30,3 +30,16 @@ export const CategoryUpdateRequestSchema = z.object({
   description: z.string().optional(),
   status: z.nativeEnum(CategoryStatus).optional(),
 });
+
+export const categoryIdSchema = z.object({
+  categoryId: z.coerce.number(),
+  storeId: z.coerce.number(),
+});
+
+export const deleteCategorySchema = z.object({
+  uid: z.string(),
+});
+
+export const deleteMultipleCategorySchema = z.object({
+  uids: z.array(z.string()),
+});

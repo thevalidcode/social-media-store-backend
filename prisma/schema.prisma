@@ -6,7 +6,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Store {
@@ -122,6 +121,7 @@ model Service {
   name             String
   description      String?
   category         String
+  categoryUid      String        @map("category_uid")
   min              Int           @default(1)
   max              Int           @default(1)
   position         Int           @default(1)
@@ -145,9 +145,11 @@ model Service {
   type             ServiceType   @default(DEFAULT)
   icon             String?
   providerUid      String?       @map("provider_uid")
-  Order            Order[]
-  provider         Provider?     @relation(fields: [providerUid], references: [uid], onDelete: Cascade)
-  store            Store         @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  Order        Order[]
+  provider     Provider? @relation(fields: [providerUid], references: [uid], onDelete: Cascade)
+  categoryData Category  @relation(fields: [categoryUid], references: [uid], onDelete: Cascade)
+  store        Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@unique([storeId, storeScopedId])
   @@map("services")
@@ -265,6 +267,7 @@ model Category {
   status        CategoryStatus @default(ACTIVE)
   icon          String?
   store         Store          @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  services      Service[]
 
   @@unique([storeId, storeScopedId])
   @@map("categories")
@@ -528,7 +531,7 @@ model TicketMessage {
   senderType MessageSenderType @map("sender_type")
   message    String
   createdAt  DateTime          @default(now()) @map("created_at")
-  ticket     SupportTicket     @relation("TicketMessages", fields: [ticketUid], references: [uid])
+  ticket     SupportTicket     @relation("TicketMessages", fields: [ticketUid], references: [uid], onDelete: Cascade)
 
   @@index([ticketUid])
   @@index([senderUid])
@@ -566,7 +569,7 @@ model Payment {
   storeId       Int                    @map("store_id")
   storeScopedId Int
   store         Store                  @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
-  user          User                   @relation(fields: [userUid], references: [uid])
+  user          User                   @relation(fields: [userUid], references: [uid], onDelete: Cascade)
 
   @@unique([storeId, storeScopedId])
   @@map("payments")
@@ -602,165 +605,165 @@ model ServiceProvider {
 }
 
 enum StoreStatus {
-  ACTIVE   @map("active")
-  CANCELED @map("canceled")
-  DISABLED @map("disabled")
-  EXPIRED  @map("expired")
+  ACTIVE
+  CANCELED
+  DISABLED
+  EXPIRED
 }
 
 enum UserStatus {
-  ACTIVE   @map("active")
-  INACTIVE @map("inactive")
-  BANNED   @map("banned")
+  ACTIVE
+  INACTIVE
+  BANNED
 }
 
 enum UserRole {
-  BASIC    @map("basic")
-  VIP      @map("vip")
-  RESELLER @map("reseller")
-  PARTNER  @map("partner")
+  BASIC
+  VIP
+  RESELLER
+  PARTNER
 }
 
 enum AdminStatus {
-  ACTIVE   @map("active")
-  INACTIVE @map("inactive")
-  BANNED   @map("banned")
+  ACTIVE
+  INACTIVE
+  BANNED
 }
 
 enum EmailStatus {
-  SUCCESS @map("success")
-  ERROR   @map("error")
+  SUCCESS
+  ERROR
 }
 
 enum AdminRole {
-  SUPER            @map("super")
-  BASIC            @map("basic")
-  MANAGER          @map("manager")
-  SUPPORT_STAFF    @map("support_staff")
-  FINANCE_OFFICER  @map("finance_officer")
-  SERVICE_OPERATOR @map("service_operator")
+  SUPER
+  BASIC
+  MANAGER
+  SUPPORT_STAFF
+  FINANCE_OFFICER
+  SERVICE_OPERATOR
 }
 
 enum ServiceStatus {
-  ACTIVE   @map("active")
-  DISABLED @map("disabled")
+  ACTIVE
+  DISABLED
 }
 
 enum ServiceType {
-  MANUAL                  @map("manual")
-  DEFAULT                 @map("default")
-  PACKAGE                 @map("package")
-  SEO                     @map("seo")
-  CUSTOM_COMMENTS         @map("custom_comments")
-  MENTIONS                @map("mentions")
-  MENTIONS_WITH_HASHTAGS  @map("mentions_with_hashtags")
-  MENTIONS_CUSTOM_LIST    @map("mentions_custom_list")
-  MENTIONS_HASHTAG        @map("mentions_hashtag")
-  MENTIONS_USER_FOLLOWERS @map("mentions_user_followers")
-  MENTIONS_MEDIA_LIKERS   @map("mentions_media_likers")
-  CUSTOM_COMMENTS_PACKAGE @map("custom_comments_package")
-  COMMENT_LIKES           @map("comment_likes")
-  POLL                    @map("poll")
-  COMMENT_REPLIES         @map("comment_replies")
-  SUBSCRIPTIONS           @map("subscriptions")
-  INVITES_FROM_GROUPS     @map("invites_from_groups")
+  MANUAL
+  DEFAULT
+  PACKAGE
+  SEO
+  CUSTOM_COMMENTS
+  MENTIONS
+  MENTIONS_WITH_HASHTAGS
+  MENTIONS_CUSTOM_LIST
+  MENTIONS_HASHTAG
+  MENTIONS_USER_FOLLOWERS
+  MENTIONS_MEDIA_LIKERS
+  CUSTOM_COMMENTS_PACKAGE
+  COMMENT_LIKES
+  POLL
+  COMMENT_REPLIES
+  SUBSCRIPTIONS
+  INVITES_FROM_GROUPS
 }
 
 enum OrderStatus {
-  PENDING    @map("Pending")
-  CANCELED   @map("Canceled")
-  PARTIAL    @map("Partial")
-  COMPLETED  @map("Completed")
-  ACTIVE     @map("In progress")
-  PROCESSING @map("Processing")
-  FAILED     @map("Failed")
+  PENDING
+  CANCELED
+  PARTIAL
+  COMPLETED
+  ACTIVE
+  PROCESSING
+  FAILED
 }
 
 enum BlogStatus {
-  ACTIVE   @map("active")
-  DISABLED @map("disabled")
+  ACTIVE
+  DISABLED
 }
 
 enum CancelStatus {
-  PENDING   @map("Pending")
-  CANCELED  @map("Canceled")
-  REJECTED  @map("Rejected")
-  COMPLETED @map("Completed")
-  ACTIVE    @map("In progress")
-  ERROR     @map("Error")
+  PENDING
+  CANCELED
+  REJECTED
+  COMPLETED
+  ACTIVE
+  ERROR
 }
 
 enum CategoryStatus {
-  ACTIVE   @map("active")
-  DISABLED @map("disabled")
+  ACTIVE
+  DISABLED
 }
 
 enum FaqStatus {
-  ACTIVE   @map("active")
-  DISABLED @map("disabled")
+  ACTIVE
+  DISABLED
 }
 
 enum PageType {
-  SERVICES         @map("services")
-  ORDERS           @map("orders")
-  ORDER            @map("order")
-  TERMS_OF_SERVICE @map("terms_of_service")
-  PRIVACY_POLICY   @map("privacy_policy")
+  SERVICES
+  ORDERS
+  ORDER
+  TERMS_OF_SERVICE
+  PRIVACY_POLICY
 }
 
 enum PageStatus {
-  ACTIVE   @map("active")
-  INACTIVE @map("inactive")
+  ACTIVE
+  INACTIVE
 }
 
 enum PaymentGatewayStatus {
-  ACTIVE   @map("active")
-  DISABLED @map("disabled")
+  ACTIVE
+  DISABLED
 }
 
 enum PaymentGatewayPlatform {
-  MANUAL      @map("manual")
-  FLUTTERWAVE @map("flutterwave")
-  PAYSTACK    @map("paystack")
-  REFERRAL    @map("referral")
+  MANUAL
+  FLUTTERWAVE
+  PAYSTACK
+  REFERRAL
 }
 
 enum RefillStatus {
-  PENDING   @map("Pending")
-  CANCELED  @map("Canceled")
-  REJECTED  @map("Rejected")
-  COMPLETED @map("Completed")
-  ACTIVE    @map("In progress")
-  ERROR     @map("Error")
+  PENDING
+  CANCELED
+  REJECTED
+  COMPLETED
+  ACTIVE
+  ERROR
 }
 
 enum TicketStatus {
-  OPEN     @map("open")
-  PENDING  @map("pending")
-  RESOLVED @map("resolved")
-  CLOSED   @map("closed")
+  OPEN
+  PENDING
+  RESOLVED
+  CLOSED
 }
 
 enum TicketPriority {
-  LOW    @map("low")
-  MEDIUM @map("medium")
-  HIGH   @map("high")
-  URGENT @map("urgent")
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }
 
 enum MessageSenderType {
-  USER  @map("user")
-  ADMIN @map("admin")
+  USER
+  ADMIN
 }
 
 enum TransactionType {
-  WALLET_CREDIT   @map("wallet_credit")
-  WALLET_DEBIT    @map("wallet_debit")
-  REFERRAL_CREDIT @map("referral_credit")
+  WALLET_CREDIT
+  WALLET_DEBIT
+  REFERRAL_CREDIT
 }
 
 enum PaymentStatus {
-  PENDING @map("pending")
-  SUCCESS @map("success")
-  FAILED  @map("failed")
+  PENDING
+  SUCCESS
+  FAILED
 }

@@ -16,6 +16,7 @@ import {
   Forbidden,
   SuccessResponse,
 } from "../responses/common.response";
+import { StoreIdSchema } from "../../schemas/common.schema";
 
 // GET /categories?storeId=123
 registry.registerPath({
@@ -23,15 +24,9 @@ registry.registerPath({
   path: "/categories",
   summary: "Get all categories",
   tags: ["Categories"],
-  parameters: [
-    {
-      name: "storeId",
-      in: "query",
-      required: true,
-      description: "Store ID to filter categories",
-      schema: { type: "number" },
-    },
-  ],
+  request: {
+    query: StoreIdSchema,
+  },
   responses: {
     200: CategoryListResponse,
     400: BadRequest,
@@ -148,13 +143,10 @@ registry.registerPath({
       required: true,
       schema: { type: "number" },
     },
-    {
-      name: "storeId",
-      in: "query",
-      required: true,
-      schema: { type: "number" },
-    },
   ],
+  request: {
+    query: StoreIdSchema,
+  },
   responses: {
     200: CategoryObject,
     400: BadRequest,

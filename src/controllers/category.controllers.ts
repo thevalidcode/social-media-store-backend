@@ -3,30 +3,20 @@ import type { Request, Response } from "express";
 import { prisma } from "../config/db.config";
 import { v4 as uuidv4 } from "uuid";
 import { AdminAuthSchema } from "../schemas/admin.schema";
-import { CategoryCreateRequestSchema } from "../schemas/category.schema";
-
-const categoryIdSchema = z.object({
-  categoryId: z.coerce.number(),
-  storeId: z.coerce.number(),
-});
-
-const updateCategorySchema = z.object({
-  uid: z.string(),
-  name: z.string().optional(),
-  icon: z.string().optional(),
-  position: z.coerce.number().optional(),
-  description: z.string().optional(),
-});
-
-const deleteCategorySchema = z.object({
-  uid: z.string(),
-});
+import {
+  CategoryCreateRequestSchema,
+  categoryIdSchema,
+  CategoryUpdateRequestSchema,
+  deleteCategorySchema,
+  deleteMultipleCategorySchema,
+} from "../schemas/category.schema";
+import { StoreIdSchema } from "../schemas/common.schema";
 
 export const getCategories = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const parsed = z.object({ storeId: z.coerce.number() }).safeParse(req.query);
+  const parsed = StoreIdSchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
@@ -74,7 +64,7 @@ export const updateCategory = async (
   res: Response
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
-  const parsed = updateCategorySchema.safeParse(req.body);
+  const parsed = CategoryUpdateRequestSchema.safeParse(req.body);
 
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -141,11 +131,7 @@ export const deleteMultipleCategory = async (
   res: Response
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
-  const parsed = z
-    .object({
-      uids: z.array(z.string()),
-    })
-    .safeParse(req.body);
+  const parsed = deleteMultipleCategorySchema.safeParse(req.body);
 
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });

@@ -337,6 +337,14 @@ export const addService = async (
         }
       }
 
+      const category = await tx.category.findFirst({
+        where: { storeId, name: parsed.data.category },
+      });
+
+      if (!category) {
+        throw new Error(`Category with name ${parsed.data.category} not found`);
+      }
+
       const lastService = await tx.service.findFirst({
         where: { storeId },
         orderBy: { position: "desc" },
@@ -351,6 +359,7 @@ export const addService = async (
         storeId,
         storeScopedId: counter.serviceCounter,
         status: "ACTIVE",
+        categoryUid: category.uid,
         position: newPosition,
       };
 

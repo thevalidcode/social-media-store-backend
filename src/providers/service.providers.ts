@@ -27,7 +27,7 @@ export const updateExistingServices = async (): Promise<void> => {
 
     for (const { storeId } of storeIds) {
       const services = await prisma.service.findMany({
-        where: { storeId },
+        where: { storeId, syncWithProvider: true },
         include: { provider: true },
       });
       const providers = await prisma.provider.findMany({ where: { storeId } });
@@ -153,21 +153,19 @@ export const syncServices = async (): Promise<void> => {
           ),
         ]);
 
-        const provCur = prov.currency.toUpperCase();
-
         await prisma.$transaction(async (tx) => {
           for (const s of svcList) {
-            const categoryExists = existingCategories.some(
+            let category = existingCategories.find(
               (c) => c.name === s.category
             );
 
-            if (!categoryExists) {
+            if (!category) {
               const categoryCounter = await tx.storeCounter.update({
                 where: { storeId },
                 data: { categoryCounter: { increment: 1 } },
               });
 
-              await tx.category.create({
+              category = await tx.category.create({
                 data: {
                   name: s.category,
                   status: "ACTIVE",
@@ -177,6 +175,8 @@ export const syncServices = async (): Promise<void> => {
                   storeId,
                 },
               });
+
+              existingCategories.push(category);
             }
 
             const exists = existingServices.find(
@@ -204,9 +204,9 @@ export const syncServices = async (): Promise<void> => {
                 type: String(
                   s.type ? s.type.replace(/\s+/g, "_").toUpperCase() : "DEFAULT"
                 ) as ServiceType,
-                providerCurrency: provCur,
                 min: safeInt(s.min),
                 max: safeInt(s.max),
+                categoryUid: category.uid,
                 providerId: safeInt(s.service),
                 description: s.description || "",
                 providerPrice: providerRate,
@@ -218,9 +218,11 @@ export const syncServices = async (): Promise<void> => {
                 position: serviceCounter.serviceCounter,
                 cancel: s.cancel,
                 network: s.network || "None",
+                providerCurrency: prov.currency,
+                currency: "USD",
                 refill: s.refill,
                 percentage: prov.percentage,
-                dripFeed: false,
+                dripFeed: s.dripFeed || s.dripfeed || false,
                 providerUid: prov.uid,
               },
             });

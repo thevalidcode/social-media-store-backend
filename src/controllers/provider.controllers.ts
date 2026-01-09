@@ -117,10 +117,6 @@ export const importServices = async (
       }),
     ]);
 
-    const providerCurrency = String(
-      providerData.currency || "USD"
-    ).toUpperCase();
-
     const newServices = await prisma.$transaction(async (tx) => {
       const existingServices = await tx.service.findMany({
         where: { storeId },
@@ -160,7 +156,7 @@ export const importServices = async (
 
         const finalPrice = await convertCurrency(
           newPrice,
-          providerCurrency,
+          providerData.currency,
           "USD"
         );
 
@@ -243,10 +239,12 @@ export const importServices = async (
           refill: formattedRefill,
           percentage: importPercent,
           dripFeed: formattedDripFeed,
-          providerCurrency: "USD",
+          providerCurrency: providerData.currency,
+          currency: "USD",
           syncWithProvider: true,
           uid: uuidv4(),
           storeScopedId: currentServiceId,
+          categoryUid: categoryCache.get(serviceCategory)!.uid,
         });
 
         actualCreatedCount++;
@@ -316,11 +314,9 @@ export const addProvider = async (
         return;
       }
     } catch (err: any) {
-      res
-        .status(400)
-        .json({
-          error: err.response.data.error || "Invalid provider URL or API key.",
-        });
+      res.status(400).json({
+        error: err.response.data.error || "Invalid provider URL or API key.",
+      });
       return;
     }
 

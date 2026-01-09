@@ -58,6 +58,7 @@ export const UpdateUserByAdminRequestSchema = UserUpdateRequestSchema.extend({
     .string()
     .refine((val) => !isNaN(Number(val)), "Balance must be numeric"),
   uid: z.string(),
+  email: z.string().email().optional(),
   status: z.nativeEnum(UserStatus).optional(),
 });
 
