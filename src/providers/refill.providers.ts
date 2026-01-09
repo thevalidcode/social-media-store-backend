@@ -3,7 +3,7 @@ import https from "https";
 import { prisma } from "../config/db.config";
 import { sendEmail } from "../emails";
 import { decryptKey } from "../utils/encrypt";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "../../prisma/generated";
 import { v4 as uuidv4 } from "uuid";
 
 const agent = new https.Agent({
@@ -71,7 +71,7 @@ export const sendRefillToMainServer = async (
         where: { storeId },
         data: { refillCounter: { increment: 1 } },
       });
-      
+
       if (!order.provider) return false;
 
       const refillRow = await tx.refill.create({
