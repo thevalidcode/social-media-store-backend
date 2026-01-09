@@ -22,6 +22,7 @@ import { Decimal } from "@prisma/client/runtime/client";
 import { AdminAuthSchema } from "../schemas/admin.schema";
 import { sendUserEmail } from "../emails";
 import { StoreIdSchema } from "../schemas/common.schema";
+import { encryptKey } from "../utils/encrypt";
 
 async function getNextStoreScopedId(
   storeId: number,
@@ -53,6 +54,7 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
         email: true,
         username: true,
         balance: true,
+        image: true,
         status: true,
         spent: true,
         fullName: true,
@@ -243,6 +245,7 @@ export const getUserByUid = async (
         id: true,
         email: true,
         username: true,
+        image: true,
         balance: true,
         status: true,
       },
@@ -452,7 +455,10 @@ export const updateUser = async (
   try {
     const user = await prisma.user.update({
       where: { uid: uid },
-      data: parsed.data,
+      data: {
+        ...parsed.data,
+        apiKey: parsed.data.apiKey ? parsed.data.apiKey : undefined,
+      },
       select: {
         id: true,
         uid: true,
@@ -462,6 +468,7 @@ export const updateUser = async (
         status: true,
         spent: true,
         fullName: true,
+        image: true,
         refCode: true,
         ref: true,
         timestamp: true,
@@ -497,6 +504,7 @@ export const updateUserByAdmin = async (
         uid: true,
         email: true,
         username: true,
+        image: true,
         balance: true,
         status: true,
         spent: true,
