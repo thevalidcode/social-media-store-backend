@@ -6,7 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon",
     "start": "node index.js",
-    "build": "tsc",
+    "build": "npm run prisma generate && tsc",
     "dev:migrate": "npx prisma migrate dev",
     "migrate": "npx prisma migrate deploy",
     "release": "standard-version && git push --follow-tags",
