@@ -18,7 +18,7 @@ export const FlutterwaveWebhookSchema = z.object({
     id: z.number(),
     fullName: z.string().nullable(),
     email: z.string().email(),
-    phone: z.string(),
+    phone: z.string().nullable(),
   }),
 });
 
