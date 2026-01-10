@@ -37,26 +37,31 @@ export const sendOrderToProvider = async (
 
     const orderData = parsed.data;
 
-    if (!order.provider) {
-      throw new Error("No provider specified for this order.");
+    const service = await prisma.service.findUnique({
+      where: { uid: orderData.serviceUid },
+      include: {
+        provider: true,
+      },
+    });
+
+    if (!service || !service.provider) {
+      throw new Error(
+        "Service or associated provider with order does not exist."
+      );
     }
 
-    const [user, service, provider, affiliate] = await Promise.all([
+    const [user, provider, affiliate] = await Promise.all([
       prisma.user.findUnique({ where: { storeId, uid: orderData.userUid } }),
-      prisma.service.findUnique({
-        where: { uid: orderData.serviceUid },
-        include: {
-          provider: true,
-        },
+      prisma.provider.findFirst({
+        where: { storeId, url: service.provider.url },
       }),
-
-      prisma.provider.findFirst({ where: { storeId, url: order.provider } }),
       prisma.affiliateSetting.findFirst({ where: { storeId } }),
     ]);
 
     if (!user || !service || !provider)
       throw new Error("There's either no user, service or provider.");
 
+    
     const pricePer1000 = toDecimal(
       convertCurrency(
         toDecimal(service.price).toNumber(),
