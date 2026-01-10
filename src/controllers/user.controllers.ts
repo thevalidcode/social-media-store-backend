@@ -22,7 +22,6 @@ import { Decimal } from "@prisma/client/runtime/client";
 import { AdminAuthSchema } from "../schemas/admin.schema";
 import { sendUserEmail } from "../emails";
 import { StoreIdSchema } from "../schemas/common.schema";
-import { encryptKey } from "../utils/encrypt";
 
 async function getNextStoreScopedId(
   storeId: number,
@@ -54,14 +53,15 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
         email: true,
         username: true,
         balance: true,
-        image: true,
         status: true,
         spent: true,
         fullName: true,
+        image: true,
         refCode: true,
         ref: true,
         timestamp: true,
         updatedAt: true,
+        currency: true,
         storeScopedId: true,
       },
     });
@@ -243,11 +243,20 @@ export const getUserByUid = async (
       where: { uid, storeId },
       select: {
         id: true,
+        uid: true,
         email: true,
         username: true,
-        image: true,
         balance: true,
         status: true,
+        spent: true,
+        fullName: true,
+        image: true,
+        refCode: true,
+        ref: true,
+        timestamp: true,
+        updatedAt: true,
+        currency: true,
+        storeScopedId: true,
       },
     });
     res.status(200).send({ user });
@@ -473,6 +482,7 @@ export const updateUser = async (
         ref: true,
         timestamp: true,
         updatedAt: true,
+        currency: true,
         storeScopedId: true,
       },
     });
@@ -499,22 +509,6 @@ export const updateUserByAdmin = async (
     await prisma.user.update({
       where: { uid: uid },
       data: { ...parsed.data, balance: parsedBalance },
-      select: {
-        id: true,
-        uid: true,
-        email: true,
-        username: true,
-        image: true,
-        balance: true,
-        status: true,
-        spent: true,
-        fullName: true,
-        refCode: true,
-        ref: true,
-        timestamp: true,
-        updatedAt: true,
-        storeScopedId: true,
-      },
     });
 
     res.status(200).json({ success: "Successfully updated user" });
