@@ -75,7 +75,6 @@ app.use("/api/v1/orders", cors(dynamicHost), orderRoutes);
 app.use("/api/v1/refills", cors(dynamicHost), refillRoutes);
 app.use("/api/v1/version", cors(dynamicHost), versionRouter);
 app.use("/api/v1/files", cors(dynamicHost), filesRouter);
-app.use("/api/v1/webhooks", cors(dynamicHost), webhookRouter);
 app.use("/api/v1/payments", cors(dynamicHost), paymentRouter);
 app.use("/api/v1/supports", cors(dynamicHost), supportRouter);
 app.use("/api/v1/statistics", cors(dynamicHost), statisticsRouter);
@@ -88,6 +87,9 @@ app.use("/api/v1/transactions", cors(dynamicHost), transactionRouter);
 app.use("/internal", internalRouter);
 app.use("/api/v2", publicApiRoutes);
 app.use("/swagger", swaggerRouter);
+
+// Webhook Routes (no CORS - these are called by external services)
+app.use("/webhooks", openCors, webhookRouter);
 
 // Auth Routes (this is for the auth.vaalidpanel.com domain to handle OAuth)
 app.use("/api/auth/social-media-store", openCors, authRoutes);

@@ -10,7 +10,8 @@ router.post("/verify-session", strictLimiter, users.verifySession);
 router.post("/reset-password", strictLimiter, users.resetPassword);
 router.post("/forgot-password", strictLimiter, users.forgotPassword);
 router.post("/", strictLimiter, users.createUser);
-router.get("/:uid", authenticateAdmin, users.getUserByUid);
+router.get("/:uid", authenticateUser, users.getUserByUid);
+
 router.get("/affiliate", authenticateUser, users.getAffiliateData);
 router.patch("/", authenticateUser, users.updateUser);
 router.patch("/admin", authenticateAdmin, users.updateUserByAdmin);

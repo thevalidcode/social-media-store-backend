@@ -4,15 +4,19 @@ import { prisma } from "../config/db.config";
 import { initFlutterwavePayment } from "../providers/flutterwave.providers";
 import { initPaystackPayment } from "../providers/paystack.providers";
 import type { CreatePaymentInput } from "../schemas/payment.schema";
-import { TransactionType, User } from "../../prisma/generated";
+import { User } from "../../prisma/generated";
 import {
   FlutterwaveWebhookData,
   PaystackWebhookData,
 } from "../schemas/webhook.schema";
 import type { Request } from "express";
 import { Decimal } from "@prisma/client/runtime/client";
+import { v4 as uuidv4 } from "uuid";
 
-export const createPayment = async (user: Partial<User>, input: CreatePaymentInput) => {
+export const createPayment = async (
+  user: Partial<User>,
+  input: CreatePaymentInput
+) => {
   const { platform, currency, amount, redirect_url } = input;
 
   const gateway = await prisma.paymentGateway.findFirst({
@@ -35,8 +39,10 @@ export const createPayment = async (user: Partial<User>, input: CreatePaymentInp
   const gatewayFee = decimalAmount.mul(gateway.feePercent || 0);
   const newAmount = decimalAmount.add(gatewayFee).toNumber();
 
+  const txRef = uuidv4();
+
   const paymentData = {
-    tx_ref: Date.now(),
+    tx_ref: txRef,
     amount: newAmount,
     currency,
     redirect_url,
@@ -50,9 +56,7 @@ export const createPayment = async (user: Partial<User>, input: CreatePaymentInp
       logo: setting.logoUrl,
     },
     meta: {
-      userUid: user.uid,
-      storeId: user.storeId,
-      type: "WALLET_CREDIT" as TransactionType,
+      txRef,
     },
   };
   const parsedSecretKey = gateway.secretKey as {
@@ -60,6 +64,28 @@ export const createPayment = async (user: Partial<User>, input: CreatePaymentInp
     iv: string;
   };
 
+  await prisma.$transaction(async (tx) => {
+    const counter = await tx.storeCounter.update({
+      where: { storeId: user.storeId! },
+      data: {
+        paymentCounter: { increment: 1 },
+      },
+    });
+
+    await tx.payment.create({
+      data: {
+        uid: paymentData.tx_ref.toString(),
+        amount: decimalAmount,
+        status: "PENDING",
+        userUid: user.uid!,
+        currency,
+        chargedAmount: newAmount,
+        storeScopedId: counter.paymentCounter,
+        method: platform,
+        storeId: user.storeId!,
+      },
+    });
+  });
   switch (platform) {
     case "FLUTTERWAVE":
       return initFlutterwavePayment(paymentData, parsedSecretKey);

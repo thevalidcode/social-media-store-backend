@@ -63,31 +63,54 @@ const processSuccess = async (
   data: PaystackWebhookData,
   customer: PaystackWebhookData["customer"]
 ) => {
-  await verifySignature(req, data.metadata.storeId);
+  const payment = await prisma.payment.findFirst({
+    where: { uid: data.metadata.txRef, status: "PENDING" },
+  });
+
+  if (!payment) throw new Error("Payment not found");
+
+  await verifySignature(req, payment.storeId);
   const user = await prisma.user.findFirst({
     where: { email: customer.email },
   });
 
   if (!user) throw new Error("User not found");
 
-  const amount = new Decimal(data.amount / 100); // Paystack uses kobo
-
   await prisma.$transaction(async (tx) => {
     const counter = await tx.storeCounter.update({
-      where: { storeId: data.metadata.storeId },
-      data: { paymentCounter: { increment: 1 } },
-    });
-    await tx.payment.create({
+      where: { storeId: user.storeId! },
       data: {
-        uid: uuidv4(),
+        transactionCounter: { increment: 1 },
+      },
+    });
+    await tx.payment.update({
+      where: { uid: payment.uid },
+      data: {
         status: "SUCCESS",
-        amount,
-        storeId: data.metadata.storeId,
-        storeScopedId: counter.paymentCounter,
-        method: "PAYSTACK",
-        currency: data.currency,
-        chargedAmount: amount,
+      },
+    });
+
+    await tx.transaction.create({
+      data: {
+        uid: payment.uid,
+        type: "WALLET_CREDIT",
+        amount: data.amount,
+        description: `Wallet credit via Paystack`,
         userUid: user.uid,
+        storeScopedId: counter.transactionCounter,
+        storeId: user.storeId,
+      },
+    });
+
+    const toKoboAmount = data.amount / 100;
+    const usdAmount = await convertCurrency(toKoboAmount, data.currency, "USD");
+
+    await tx.user.update({
+      where: { uid: user.uid },
+      data: {
+        balance: {
+          increment: new Decimal(usdAmount),
+        },
       },
     });
   });
@@ -98,31 +121,24 @@ const processFailure = async (
   data: PaystackWebhookData,
   customer: PaystackWebhookData["customer"]
 ) => {
-  await verifySignature(req, data.metadata.storeId);
+  const payment = await prisma.payment.findFirst({
+    where: { uid: data.metadata.txRef, status: "PENDING" },
+  });
+
+  if (!payment) throw new Error("Payment not found");
+
+  await verifySignature(req, payment.storeId);
   const user = await prisma.user.findFirst({
     where: { email: customer.email },
   });
 
   if (!user) throw new Error("User not found");
-  const amountInDecimal = new Decimal(data.amount / 100);
-  await prisma.$transaction(async (tx) => {
-    const counter = await tx.storeCounter.update({
-      where: { storeId: data.metadata.storeId },
-      data: { paymentCounter: { increment: 1 } },
-    });
-    await tx.payment.create({
-      data: {
-        uid: crypto.randomUUID(),
-        status: "FAILED",
-        amount: amountInDecimal,
-        method: "PAYSTACK",
-        storeId: data.metadata.storeId,
-        storeScopedId: counter.paymentCounter,
-        currency: data.currency,
-        chargedAmount: amountInDecimal,
-        userUid: user.uid,
-      },
-    });
+
+  await prisma.payment.update({
+    where: { uid: payment.uid },
+    data: {
+      status: "FAILED",
+    },
   });
 };
 

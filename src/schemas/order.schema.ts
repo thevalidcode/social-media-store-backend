@@ -82,17 +82,7 @@ export const getOrdersByStatusSchema = z.object({
 });
 
 export const bulkCreateSchema = z.object({
-  orders: z.array(
-    z.object({
-      quantity: z.coerce.number(),
-      url: z.string(),
-      serviceUid: z.string(),
-      comments: z.string().optional(),
-      dripFeed: z.boolean().optional(),
-      interval: z.coerce.number().optional(),
-      userUid: z.string(),
-    })
-  ),
+  orders: z.array(placeOrderSchema),
 });
 
 export const bulkStatusUpdateSchema = z.object({

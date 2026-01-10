@@ -11,6 +11,11 @@ if (require.main === module) {
       },
     });
 
+    await prisma.store.update({
+      where: { storeId: 1 },
+      data: { status: "ACTIVE" },
+    });
+
     console.log("Admin updated successfully:");
     console.log(result);
 

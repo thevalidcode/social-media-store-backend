@@ -37,16 +37,18 @@ export const PaymentGatewayUsersSchema = z.object({
   platform: z.nativeEnum(PaymentGatewayPlatform),
 });
 
-export const PaymentCreateRequestSchema = z.object({
-  platform: z.nativeEnum(PaymentGatewayPlatform),
-  name: z.string(),
-  min: z.coerce.number(),
-  max: z.coerce.number(),
-  feePercent: z.coerce.number().optional(),
-  secretKey: z.string().optional(),
-  description: z.string().optional(),
-  image: z.string(),
-});
+export const PaymentCreateRequestSchema = z
+  .object({
+    platform: z.nativeEnum(PaymentGatewayPlatform),
+    name: z.string(),
+    min: z.coerce.number(),
+    max: z.coerce.number(),
+    feePercent: z.coerce.number().optional(),
+    secretKey: z.string().optional(),
+    description: z.string().optional(),
+    image: z.string(),
+  })
+  .strip();
 
 export const PaymentUpdateRequestSchema = z.object({
   platform: z.nativeEnum(PaymentGatewayPlatform),

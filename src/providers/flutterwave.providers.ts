@@ -6,6 +6,7 @@ import { decryptKey } from "../utils/encrypt";
 import { FlutterwaveWebhookData } from "../schemas/webhook.schema";
 import { Decimal } from "@prisma/client/runtime/client";
 import type { Request } from "express";
+import convertCurrency from "../utils/ConvertCurrency";
 
 const verifySignature = async (req: Request, storeId: number) => {
   const gateway = await prisma.paymentGateway.findFirst({
@@ -34,6 +35,7 @@ export const initFlutterwavePayment = async (
           secretKey.encrypted_key,
           secretKey.iv
         )}`,
+        "Content-Type": "application/json",
       },
     }
   );
@@ -45,7 +47,13 @@ const processSuccess = async (
   data: FlutterwaveWebhookData,
   customer: FlutterwaveWebhookData["customer"]
 ) => {
-  await verifySignature(req, data.meta.storeId);
+  const payment = await prisma.payment.findFirst({
+    where: { uid: data.txRef, status: "PENDING" },
+  });
+
+  if (!payment) throw new Error("Payment not found");
+
+  await verifySignature(req, payment.storeId);
   const user = await prisma.user.findFirst({
     where: { email: customer.email },
   });
@@ -54,20 +62,38 @@ const processSuccess = async (
 
   await prisma.$transaction(async (tx) => {
     const counter = await tx.storeCounter.update({
-      where: { storeId: data.meta.storeId },
-      data: { paymentCounter: { increment: 1 } },
-    });
-    await tx.payment.create({
+      where: { storeId: user.storeId! },
       data: {
-        uid: uuidv4(),
+        transactionCounter: { increment: 1 },
+      },
+    });
+    await tx.payment.update({
+      where: { uid: payment.uid },
+      data: {
         status: "SUCCESS",
+      },
+    });
+
+    await tx.transaction.create({
+      data: {
+        uid: payment.uid,
+        type: "WALLET_CREDIT",
         amount: data.amount,
-        storeId: data.meta.storeId,
-        storeScopedId: counter.paymentCounter,
-        method: "FLUTTERWAVE",
-        currency: data.currency,
-        chargedAmount: data.amount,
+        description: `Wallet credit via Flutterwave`,
         userUid: user.uid,
+        storeScopedId: counter.transactionCounter,
+        storeId: user.storeId,
+      },
+    });
+
+    const usdAmount = await convertCurrency(data.amount, data.currency, "USD");
+
+    await tx.user.update({
+      where: { uid: user.uid },
+      data: {
+        balance: {
+          increment: new Decimal(usdAmount),
+        },
       },
     });
   });
@@ -80,31 +106,24 @@ const processFailure = async (
   data: FlutterwaveWebhookData,
   customer: FlutterwaveWebhookData["customer"]
 ) => {
-  await verifySignature(req, data.meta.storeId);
+  const payment = await prisma.payment.findFirst({
+    where: { uid: data.txRef, status: "PENDING" },
+  });
+
+  if (!payment) throw new Error("Payment not found");
+
+  await verifySignature(req, payment.storeId);
   const user = await prisma.user.findFirst({
     where: { email: customer.email },
   });
 
   if (!user) throw new Error("User not found");
-  const amountInDecimal = new Decimal(data.amount / 100);
-  await prisma.$transaction(async (tx) => {
-    const counter = await tx.storeCounter.update({
-      where: { storeId: data.meta.storeId },
-      data: { paymentCounter: { increment: 1 } },
-    });
-    await tx.payment.create({
-      data: {
-        uid: crypto.randomUUID(),
-        status: "FAILED",
-        amount: amountInDecimal,
-        method: "FLUTTERWAVE",
-        storeId: data.meta.storeId,
-        storeScopedId: counter.paymentCounter,
-        currency: data.currency,
-        chargedAmount: amountInDecimal,
-        userUid: user.uid,
-      },
-    });
+
+  await prisma.payment.update({
+    where: { uid: payment.uid },
+    data: {
+      status: "FAILED",
+    },
   });
 };
 

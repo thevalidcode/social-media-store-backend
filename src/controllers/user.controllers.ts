@@ -21,7 +21,7 @@ import { Prisma } from "../../prisma/generated";
 import { Decimal } from "@prisma/client/runtime/client";
 import { AdminAuthSchema } from "../schemas/admin.schema";
 import { sendUserEmail } from "../emails";
-import { StoreIdSchema } from "../schemas/common.schema";
+import { StoreIdSchema, UidSchema } from "../schemas/common.schema";
 
 async function getNextStoreScopedId(
   storeId: number,
@@ -47,6 +47,7 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
   try {
     const allUsers = await prisma.user.findMany({
       where: { storeId },
+      orderBy: { storeScopedId: "desc" },
       select: {
         id: true,
         uid: true,
@@ -230,13 +231,19 @@ export const getUserByUid = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { uid } = req.params;
-  const parsed = AdminAuthSchema.safeParse(req.auth);
+  const paramsSchema = UidSchema.safeParse(req.params);
+  const parsed = UserAuthSchema.safeParse(req.auth);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
+
+  if (!paramsSchema.success) {
+    res.status(400).json({ error: paramsSchema.error.flatten() });
+    return;
+  }
   const { storeId } = parsed.data;
+  const { uid } = paramsSchema.data;
 
   try {
     const user = await prisma.user.findUnique({
