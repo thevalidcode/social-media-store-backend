@@ -44,10 +44,18 @@ export const sendOrderToProvider = async (
       },
     });
 
-    if (!service || !service.provider) {
+    if (!service) {
       throw new Error(
         "Service or associated provider with order does not exist."
       );
+    }
+
+    if (service.type === "MANUAL") {
+      return { success: "Manual service, no provider order sent." };
+    }
+
+    if (!service.provider) {
+      throw new Error("Provider associated with order does not exist.");
     }
 
     const [user, provider, affiliate] = await Promise.all([
@@ -61,7 +69,6 @@ export const sendOrderToProvider = async (
     if (!user || !service || !provider)
       throw new Error("There's either no user, service or provider.");
 
-    
     const pricePer1000 = toDecimal(
       convertCurrency(
         toDecimal(service.price).toNumber(),
@@ -242,6 +249,12 @@ export const updateOrderStatus = async (
       where: { uid: orderUid, storeId },
     });
     if (!order || !order.provider) return;
+
+    const service = await prisma.service.findUnique({
+      where: { uid: order.serviceUid, storeId },
+    });
+
+    if (service && service.type === "MANUAL") return;
 
     const provider = await prisma.provider.findFirst({
       where: { url: order.provider, storeId },
