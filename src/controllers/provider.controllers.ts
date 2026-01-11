@@ -17,6 +17,7 @@ import { Decimal } from "@prisma/client/runtime/client";
 import { ServiceType } from "../../prisma/generated";
 import { agent } from "../providers/service.providers";
 import convertCurrency from "../utils/ConvertCurrency";
+import ogs from "open-graph-scraper";
 
 export const getProviderServices = async (
   req: Request,
@@ -340,6 +341,26 @@ export const addProvider = async (
       return;
     }
 
+    // Scrape provider URL for favicon/image
+    let providerImage = reqData.image; // Default to user input
+    try {
+      const { result } = await ogs({ url: `https://${parsedUrl}` });
+
+      // Prioritize favicon over og:image, then fall back to user input
+      if (result.favicon) {
+        // Handle relative URLs for favicon
+        providerImage = result.favicon.startsWith("http")
+          ? result.favicon
+          : `https://${parsedUrl}${result.favicon.startsWith("/") ? "" : "/"}${
+              result.favicon
+            }`;
+      } else if (result.ogImage && result.ogImage.length > 0) {
+        providerImage = result.ogImage[0].url;
+      }
+    } catch (scrapeErr) {
+      // Continue with user-provided image
+    }
+
     // Check if serviceProvider exists, if not, create it
     const existingServiceProvider = await prisma.serviceProvider.findUnique({
       where: { url: parsedUrl },
@@ -350,7 +371,7 @@ export const addProvider = async (
         data: {
           name: reqData.name,
           url: parsedUrl,
-          image: reqData.image,
+          image: providerImage,
         },
       });
     }
@@ -379,7 +400,7 @@ export const addProvider = async (
           url: parsedUrl,
           sync: reqData.sync,
           currency: providerUser.currency.toUpperCase(),
-          image: reqData.image,
+          image: providerImage || "",
           percentage: reqData.percentage,
           apiKey: JSON.parse(JSON.stringify(encrypted_key)),
         },
