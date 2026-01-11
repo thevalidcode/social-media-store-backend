@@ -83,13 +83,13 @@ app.use("/v1/admins", cors(dynamicHost), adminRoutes);
 app.use("/v1/rates", cors(dynamicHost), ratesRouter);
 app.use("/v1/transactions", cors(dynamicHost), transactionRouter);
 
+// Webhook Routes (no CORS - these are called by external services)
+app.use("/v1/webhooks", openCors, webhookRouter);
+
 // Internal Routes
 app.use("/internal", internalRouter);
 app.use("/v2", publicApiRoutes);
 app.use("/swagger", swaggerRouter);
-
-// Webhook Routes (no CORS - these are called by external services)
-app.use("/webhooks", openCors, webhookRouter);
 
 // Auth Routes (this is for the auth.vaalidpanel.com domain to handle OAuth)
 app.use("/api/auth/social-media-store", openCors, authRoutes);
