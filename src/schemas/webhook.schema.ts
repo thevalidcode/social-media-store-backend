@@ -5,20 +5,26 @@ extendZodWithOpenApi(z);
 
 export const FlutterwaveWebhookSchema = z.object({
   "event.type": z.string(),
-  status: z.string(),
-  id: z.number(),
-  txRef: z.string(),
-  flwRef: z.string(),
-  amount: z.number(),
-  currency: z.string(),
-  charged_amount: z.number(),
-  charge_type: z.string(),
-  createdAt: z.string(),
-  customer: z.object({
+  event: z.string(),
+  data: z.object({
+    status: z.string(),
     id: z.number(),
-    fullName: z.string().nullable(),
-    email: z.string().email(),
-    phone: z.string().nullable(),
+    tx_ref: z.string(),
+    flw_ref: z.string(),
+    amount: z.number(),
+    currency: z.string(),
+    charged_amount: z.number(),
+    payment_type: z.string(),
+    created_at: z.string(),
+    customer: z.object({
+      id: z.number(),
+      name: z.string().nullable(),
+      email: z.string().email(),
+      phone_number: z.string().nullable(),
+    }),
+  }),
+  meta_data: z.object({
+    txRef: z.coerce.string(),
   }),
 });
 

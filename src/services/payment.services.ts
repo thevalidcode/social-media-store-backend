@@ -88,6 +88,11 @@ export const createPayment = async (
   });
   switch (platform) {
     case "FLUTTERWAVE":
+      if (newAmount < 1) {
+        throw new Error(
+          "Minimum amount for Flutterwave is 1 unit of the currency"
+        );
+      }
       return initFlutterwavePayment(paymentData, parsedSecretKey);
     case "PAYSTACK":
       return initPaystackPayment(paymentData, parsedSecretKey);
@@ -99,7 +104,7 @@ export const createPayment = async (
 const handleFlutterwaveSuccess = async (
   req: Request,
   data: FlutterwaveWebhookData,
-  customer: FlutterwaveWebhookData["customer"]
+  customer: FlutterwaveWebhookData["data"]["customer"]
 ) => {
   return await flutterwaveProvider.processSuccess(req, data, customer);
 };
@@ -107,7 +112,7 @@ const handleFlutterwaveSuccess = async (
 const handleFlutterwaveFailure = async (
   req: Request,
   data: FlutterwaveWebhookData,
-  customer: FlutterwaveWebhookData["customer"]
+  customer: FlutterwaveWebhookData["data"]["customer"]
 ) => {
   return await flutterwaveProvider.processFailure(req, data, customer);
 };

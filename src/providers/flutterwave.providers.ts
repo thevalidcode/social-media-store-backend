@@ -1,6 +1,5 @@
 import { prisma } from "../config/db.config";
 import { verifyFlutterwaveSignature } from "../utils/webhook/verifySignatures";
-import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import { decryptKey } from "../utils/encrypt";
 import { FlutterwaveWebhookData } from "../schemas/webhook.schema";
@@ -45,10 +44,10 @@ export const initFlutterwavePayment = async (
 const processSuccess = async (
   req: Request,
   data: FlutterwaveWebhookData,
-  customer: FlutterwaveWebhookData["customer"]
+  customer: FlutterwaveWebhookData["data"]["customer"]
 ) => {
   const payment = await prisma.payment.findFirst({
-    where: { uid: data.txRef, status: "PENDING" },
+    where: { uid: data.data.tx_ref, status: "PENDING" },
   });
 
   if (!payment) throw new Error("Payment not found");
@@ -78,7 +77,7 @@ const processSuccess = async (
       data: {
         uid: payment.uid,
         type: "WALLET_CREDIT",
-        amount: data.amount,
+        amount: data.data.amount,
         description: `Wallet credit via Flutterwave`,
         userUid: user.uid,
         storeScopedId: counter.transactionCounter,
@@ -86,7 +85,11 @@ const processSuccess = async (
       },
     });
 
-    const usdAmount = await convertCurrency(data.amount, data.currency, "USD");
+    const usdAmount = await convertCurrency(
+      data.data.amount,
+      data.data.currency,
+      "USD"
+    );
 
     await tx.user.update({
       where: { uid: user.uid },
@@ -104,10 +107,10 @@ const processSuccess = async (
 const processFailure = async (
   req: Request,
   data: FlutterwaveWebhookData,
-  customer: FlutterwaveWebhookData["customer"]
+  customer: FlutterwaveWebhookData["data"]["customer"]
 ) => {
   const payment = await prisma.payment.findFirst({
-    where: { uid: data.txRef, status: "PENDING" },
+    where: { uid: data.data.tx_ref, status: "PENDING" },
   });
 
   if (!payment) throw new Error("Payment not found");
