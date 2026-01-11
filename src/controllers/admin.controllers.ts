@@ -27,8 +27,8 @@ export const authenticateAdmin = async (
   }
 
   const domain =
-    normalizeHost(req.headers.host ?? "") ||
-    normalizeHost(req.headers.origin ?? "");
+    normalizeHost(req.headers.origin ?? "") ||
+    normalizeHost(req.headers.host ?? "");
 
   if (!domain) {
     res.status(400).json({ error: "Domain is not recognized." });
@@ -262,8 +262,8 @@ export const verifySession = async (
   }
 
   const domain =
-    normalizeHost(req.headers.host ?? "") ||
-    normalizeHost(req.headers.origin ?? "");
+    normalizeHost(req.headers.origin ?? "") ||
+    normalizeHost(req.headers.host ?? "");
 
   if (!domain) {
     res.status(400).json({ error: "Domain is not recognized." });

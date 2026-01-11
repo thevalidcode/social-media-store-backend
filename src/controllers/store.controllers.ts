@@ -1,4 +1,3 @@
-import { z } from "zod";
 import type { Request, Response } from "express";
 import { prisma } from "../config/db.config";
 import {
@@ -16,8 +15,8 @@ export const getStoreData = async (
   res: Response
 ): Promise<void> => {
   const domain =
-    normalizeHost(req.headers.host ?? "") ||
-    normalizeHost(req.headers.origin ?? "");
+    normalizeHost(req.headers.origin ?? "") ||
+    normalizeHost(req.headers.host ?? "");
 
   if (!domain) {
     res.status(400).json({ error: "Domain is not recognized." });
