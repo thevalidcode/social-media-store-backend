@@ -423,26 +423,73 @@ export const getAllSeviceProviders = async (req: Request, res: Response) => {
     return;
   }
 
+  const { storeId } = req.auth!;
+
   const { page = 1, limit = 20, search } = parsed.data;
   try {
-    const skip = (page - 1) * limit;
-    const where: any = search
-      ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            { url: { contains: search, mode: "insensitive" } },
-          ],
-        }
-      : {};
-
-    const providers = await prisma.serviceProvider.findMany({
-      where,
-      skip,
-      take: limit,
+    // Fetch service providers with only needed fields
+    const serviceProviders = await prisma.serviceProvider.findMany({
+      select: {
+        id: true,
+        uid: true,
+        name: true,
+        url: true,
+        image: true,
+        createdAt: true,
+        updatedAt: true,
+      },
       orderBy: { createdAt: "desc" },
     });
 
-    res.status(200).json({ providers });
+    // Fetch stores with settings in a single optimized query
+    const stores = await prisma.store.findMany({
+      where: {
+        storeId: { not: storeId },
+      },
+      select: {
+        storeId: true,
+        uid: true,
+        name: true,
+        timestamp: true,
+        Setting: true,
+      },
+      orderBy: { timestamp: "desc" },
+    });
+
+    // Transform stores to match the provider interface
+    const transformedStores = stores.map((store) => ({
+      id: store.storeId,
+      uid: store.uid,
+      name: store.name,
+      url: `api.${store.uid}/v2`,
+      image: store.Setting?.[0]?.logoUrl || null,
+      createdAt: store.timestamp,
+      updatedAt: store.timestamp,
+    }));
+
+    // Merge both arrays
+    let mergedProviders = [...serviceProviders, ...transformedStores];
+
+    // Apply search filter if provided
+    if (search) {
+      const searchLower = search.toLowerCase();
+      mergedProviders = mergedProviders.filter(
+        (provider) =>
+          provider.name.toLowerCase().includes(searchLower) ||
+          provider.url.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply pagination
+    const skip = (page - 1) * limit;
+    const paginatedProviders = mergedProviders.slice(skip, skip + limit);
+
+    res.status(200).json({
+      providers: paginatedProviders,
+      total: mergedProviders.length,
+      page,
+      limit,
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
