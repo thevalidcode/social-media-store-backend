@@ -117,157 +117,165 @@ export const importServices = async (
       }),
     ]);
 
-    const newServices = await prisma.$transaction(async (tx) => {
-      const existingServices = await tx.service.findMany({
-        where: { storeId },
-        select: { providerId: true },
-      });
-      const existingProviderIds = new Set(
-        existingServices.map((s) => s.providerId)
-      );
-
-      const categories = await tx.category.findMany({ where: { storeId } });
-      const categoryCache = new Map(
-        categories.map((c) => [c.name.toLowerCase(), c])
-      );
-
-      const counter = await tx.storeCounter.update({
-        where: { storeId },
-        data: { serviceCounter: { increment: providerServicesId.length } },
-      });
-
-      let currentServiceId = counter.serviceCounter - providerServicesId.length;
-      const servicesToCreate: any[] = [];
-      let actualCreatedCount = 0;
-
-      for (const providerServiceId of providerServicesId) {
-        const service = providerServices.find(
-          (s: any) => parseInt(s.service) === providerServiceId
-        );
-        if (!service) continue;
-
-        const providerId = parseInt(service.service);
-        if (existingProviderIds.has(providerId)) continue;
-
-        const baseRate = new Decimal(service.rate || 0);
-        const newPrice = baseRate
-          .plus(baseRate.times(importPercent).dividedBy(100))
-          .toDecimalPlaces(2);
-
-        const finalPrice = await convertCurrency(
-          newPrice,
-          providerData.currency,
-          "USD"
+    const newServices = await prisma.$transaction(
+      async (tx) => {
+        const existingServices = await tx.service.findMany({
+          where: { storeId },
+          select: { providerId: true },
+        });
+        const existingProviderIds = new Set(
+          existingServices.map((s) => s.providerId)
         );
 
-        currentServiceId++;
+        const categories = await tx.category.findMany({ where: { storeId } });
+        const categoryCache = new Map(
+          categories.map((c) => [c.name.toLowerCase(), c])
+        );
 
-        // Category handling
-        let serviceCategory = category.label;
-        let categoryUid: string;
-
-        if (category.value === "createSameCategory") {
-          const categoryName = (
-            service.category || "Uncategorized"
-          ).toLowerCase();
-          if (!categoryCache.has(categoryName)) {
-            const catCounter = await tx.storeCounter.update({
-              where: { storeId },
-              data: { categoryCounter: { increment: 1 } },
-            });
-
-            const newCategory = await tx.category.create({
-              data: {
-                name: service.category || "Uncategorized",
-                status: "ACTIVE",
-                position: catCounter.categoryCounter,
-                uid: uuidv4(),
-                storeId,
-                storeScopedId: catCounter.categoryCounter,
-              },
-            });
-
-            categoryCache.set(categoryName, newCategory);
-          }
-
-          serviceCategory = categoryCache.get(categoryName)!.name;
-          categoryUid = categoryCache.get(categoryName)!.uid;
-        } else {
-          // Use predefined category - lookup by lowercase
-          const categoryLookup = categoryCache.get(
-            serviceCategory.toLowerCase()
-          );
-          if (!categoryLookup) {
-            throw new Error(`Category "${serviceCategory}" not found in store`);
-          }
-          categoryUid = categoryLookup.uid;
-        }
-
-        // Normalize all fields
-        const formattedType = String(
-          service.type
-            ? service.type.replace(/\s+/g, "_").toUpperCase()
-            : "DEFAULT"
-        ) as ServiceType;
-
-        if (!(formattedType in ServiceType)) {
-          console.log(
-            "Unknown type:",
-            service.type,
-            "-> formatted as:",
-            formattedType
-          );
-        }
-
-        const formattedStatus = "ACTIVE";
-        const formattedNetwork = String(service.network || "None");
-        const formattedCancel =
-          service.cancel === true || service.cancel === "true";
-        const formattedRefill =
-          service.refill === true || service.refill === "true";
-        const formattedSyncQuantity = true;
-        const formattedSyncCatAndName = true;
-        const formattedDripFeed = false;
-
-        servicesToCreate.push({
-          id: currentServiceId,
-          name: String(service.name || "Untitled Service"),
-          category: String(serviceCategory),
-          type: formattedType,
-          min: parseInt(service.min) || 0,
-          max: parseInt(service.max) || 0,
-          providerId,
-          description: String(service.description || ""),
-          providerPrice: baseRate,
-          providerUid: providerData.uid,
-          storeId,
-          status: formattedStatus,
-          syncQuantity: formattedSyncQuantity,
-          syncCatAndName: formattedSyncCatAndName,
-          price: finalPrice,
-          position: currentServiceId,
-          cancel: formattedCancel,
-          network: formattedNetwork,
-          refill: formattedRefill,
-          percentage: importPercent,
-          dripFeed: formattedDripFeed,
-          providerCurrency: providerData.currency,
-          currency: "USD",
-          syncWithProvider: true,
-          uid: uuidv4(),
-          storeScopedId: currentServiceId,
-          categoryUid,
+        const counter = await tx.storeCounter.update({
+          where: { storeId },
+          data: { serviceCounter: { increment: providerServicesId.length } },
         });
 
-        actualCreatedCount++;
-      }
+        let currentServiceId =
+          counter.serviceCounter - providerServicesId.length;
+        const servicesToCreate: any[] = [];
+        let actualCreatedCount = 0;
 
-      if (servicesToCreate.length > 0) {
-        await tx.service.createMany({ data: servicesToCreate });
-      }
+        for (const providerServiceId of providerServicesId) {
+          const service = providerServices.find(
+            (s: any) => parseInt(s.service) === providerServiceId
+          );
+          if (!service) continue;
 
-      return actualCreatedCount;
-    });
+          const providerId = parseInt(service.service);
+          if (existingProviderIds.has(providerId)) continue;
+
+          const baseRate = new Decimal(service.rate || 0);
+          const newPrice = baseRate
+            .plus(baseRate.times(importPercent).dividedBy(100))
+            .toDecimalPlaces(2);
+
+          const finalPrice = await convertCurrency(
+            newPrice,
+            providerData.currency,
+            "USD"
+          );
+
+          currentServiceId++;
+
+          // Category handling
+          let serviceCategory = category.label;
+          let categoryUid: string;
+
+          if (category.value === "createSameCategory") {
+            const categoryName = (
+              service.category || "Uncategorized"
+            ).toLowerCase();
+            if (!categoryCache.has(categoryName)) {
+              const catCounter = await tx.storeCounter.update({
+                where: { storeId },
+                data: { categoryCounter: { increment: 1 } },
+              });
+
+              const newCategory = await tx.category.create({
+                data: {
+                  name: service.category || "Uncategorized",
+                  status: "ACTIVE",
+                  position: catCounter.categoryCounter,
+                  uid: uuidv4(),
+                  storeId,
+                  storeScopedId: catCounter.categoryCounter,
+                },
+              });
+
+              categoryCache.set(categoryName, newCategory);
+            }
+
+            serviceCategory = categoryCache.get(categoryName)!.name;
+            categoryUid = categoryCache.get(categoryName)!.uid;
+          } else {
+            // Use predefined category - lookup by lowercase
+            const categoryLookup = categoryCache.get(
+              serviceCategory.toLowerCase()
+            );
+            if (!categoryLookup) {
+              throw new Error(
+                `Category "${serviceCategory}" not found in store`
+              );
+            }
+            categoryUid = categoryLookup.uid;
+          }
+
+          // Normalize all fields
+          const formattedType = String(
+            service.type
+              ? service.type.replace(/\s+/g, "_").toUpperCase()
+              : "DEFAULT"
+          ) as ServiceType;
+
+          if (!(formattedType in ServiceType)) {
+            console.log(
+              "Unknown type:",
+              service.type,
+              "-> formatted as:",
+              formattedType
+            );
+          }
+
+          const formattedStatus = "ACTIVE";
+          const formattedNetwork = String(service.network || "None");
+          const formattedCancel =
+            service.cancel === true || service.cancel === "true";
+          const formattedRefill =
+            service.refill === true || service.refill === "true";
+          const formattedSyncQuantity = true;
+          const formattedSyncCatAndName = true;
+          const formattedDripFeed = false;
+
+          servicesToCreate.push({
+            id: currentServiceId,
+            name: String(service.name || "Untitled Service"),
+            category: String(serviceCategory),
+            type: formattedType,
+            min: parseInt(service.min) || 0,
+            max: parseInt(service.max) || 0,
+            providerId,
+            description: String(service.description || ""),
+            providerPrice: baseRate,
+            providerUid: providerData.uid,
+            storeId,
+            status: formattedStatus,
+            syncQuantity: formattedSyncQuantity,
+            syncCatAndName: formattedSyncCatAndName,
+            price: finalPrice,
+            position: currentServiceId,
+            cancel: formattedCancel,
+            network: formattedNetwork,
+            refill: formattedRefill,
+            percentage: importPercent,
+            dripFeed: formattedDripFeed,
+            providerCurrency: providerData.currency,
+            currency: "USD",
+            syncWithProvider: true,
+            uid: uuidv4(),
+            storeScopedId: currentServiceId,
+            categoryUid,
+          });
+
+          actualCreatedCount++;
+        }
+
+        if (servicesToCreate.length > 0) {
+          await tx.service.createMany({ data: servicesToCreate });
+        }
+
+        return actualCreatedCount;
+      },
+      {
+        timeout: 120000,
+      }
+    );
 
     res.status(200).json({
       success: "Services imported successfully.",
