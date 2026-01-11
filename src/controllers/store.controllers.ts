@@ -3,7 +3,6 @@ import type { Request, Response } from "express";
 import { prisma } from "../config/db.config";
 import {
   StoreGeneralDataRequestSchema,
-  storeIdQuerySchema,
   storeIdSchema,
   UpdateGeneralDataRequestSchema,
   UpdateStylesRequestSchema,
@@ -21,7 +20,7 @@ export const getStoreData = async (
     normalizeHost(req.headers.origin ?? "");
 
   if (!domain) {
-    res.status(400).json({ error: "Domain is required." });
+    res.status(400).json({ error: "Domain is not recognized." });
     return;
   }
 

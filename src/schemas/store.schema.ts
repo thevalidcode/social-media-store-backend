@@ -108,6 +108,5 @@ export const UpdateStylesRequestSchema = z
     }),
   })
   .strict();
-
-export const storeIdQuerySchema = z.object({ domain: z.string().min(1) });
+  
 export const storeIdSchema = z.object({ storeId: z.coerce.number() });
