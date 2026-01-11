@@ -35,15 +35,11 @@ const openApiDocument = generator.generateDocument({
   },
   servers: [
     {
-      url: `https://validpanel.com${env.BACKEND_PROXY_PATH}/api/v1`,
-      description: "Public testing server (use this to test endpoints)",
-    },
-    {
-      url: `https://auth.validpanel.com/api/auth/store`,
+      url: `https://auth.validpanel.com/api/auth/social-media-store`,
       description: "Public server (use this for auth endpoints)",
     },
     {
-      url: `https://{domain}${env.BACKEND_PROXY_PATH}/api/v1`,
+      url: `https://api.{domain}/v1`,
       description: "Custom store domain (replace `{domain}` with your own)",
       variables: {
         domain: {
@@ -53,7 +49,7 @@ const openApiDocument = generator.generateDocument({
       },
     },
     {
-      url: `http://localhost:${env.PRIMARY_PORT}/api/v1`,
+      url: `http://localhost:${env.PRIMARY_PORT}/v1`,
       description: "Local development server",
     },
   ],
@@ -67,8 +63,8 @@ swaggerRouter.use(
   isAdmin,
   swaggerUi.serve,
   swaggerUi.setup(openApiDocument, {
-    customCssUrl: `${env.BACKEND_PROXY_PATH}/assets/swagger-custom.css`,
-    customfavIcon: `${env.BACKEND_PROXY_PATH}/assets/validpanel.png`,
+    customCssUrl: `/assets/swagger-custom.css`,
+    customfavIcon: `/assets/validpanel.png`,
     customSiteTitle: "Social Media Store API Docs",
   })
 );

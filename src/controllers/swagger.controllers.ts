@@ -92,7 +92,7 @@ export const adminSwaggerLogin = (req: Request, res: Response) => {
 </head>
 <body>
 
-  <form class="login-form" method="POST" action="${env.BACKEND_PROXY_PATH}/swagger/login">
+  <form class="login-form" method="POST" action="/swagger/login">
     <h2>Admin Login</h2>
 
     <div class="form-group">
@@ -117,7 +117,7 @@ export const authenticateSwaggerAdmin = (req: Request, res: Response) => {
 
   if (username === env.ADMIN_USERNAME && password === env.ADMIN_PASSWORD) {
     (req.session as any).isAdmin = true;
-    res.redirect(`${env.BACKEND_PROXY_PATH}/swagger/docs/`);
+    res.redirect(`/swagger/docs/`);
   } else {
     res.status(401).send("Invalid credentials");
   }
@@ -125,6 +125,6 @@ export const authenticateSwaggerAdmin = (req: Request, res: Response) => {
 
 export const logoutSwaggerAdmin = (req: Request, res: Response) => {
   req.session.destroy(() => {
-    res.redirect(`${env.BACKEND_PROXY_PATH}/swagger/login/`);
+    res.redirect(`/swagger/login/`);
   });
 };

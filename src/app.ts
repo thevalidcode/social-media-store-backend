@@ -63,29 +63,29 @@ app.use(
 );
 
 // --- Public Routes ---
-app.use("/api/v1/users", cors(dynamicHost), userRouter);
-app.use("/api/v1/stores", cors(dynamicHost), storeRoutes);
-app.use("/api/v1/blogs", cors(dynamicHost), blogRoutes);
-app.use("/api/v1/faqs", cors(dynamicHost), faqRoutes);
-app.use("/api/v1/pages", cors(dynamicHost), pageRoutes);
-app.use("/api/v1/services", cors(dynamicHost), serviceRoutes);
-app.use("/api/v1/providers", cors(dynamicHost), providerRoutes);
-app.use("/api/v1/categories", cors(dynamicHost), categoryRoutes);
-app.use("/api/v1/orders", cors(dynamicHost), orderRoutes);
-app.use("/api/v1/refills", cors(dynamicHost), refillRoutes);
-app.use("/api/v1/version", cors(dynamicHost), versionRouter);
-app.use("/api/v1/files", cors(dynamicHost), filesRouter);
-app.use("/api/v1/payments", cors(dynamicHost), paymentRouter);
-app.use("/api/v1/supports", cors(dynamicHost), supportRouter);
-app.use("/api/v1/statistics", cors(dynamicHost), statisticsRouter);
-app.use("/api/v1/payment-gateways", cors(dynamicHost), paymentGatewayRouter);
-app.use("/api/v1/admins", cors(dynamicHost), adminRoutes);
-app.use("/api/v1/rates", cors(dynamicHost), ratesRouter);
-app.use("/api/v1/transactions", cors(dynamicHost), transactionRouter);
+app.use("/v1/users", cors(dynamicHost), userRouter);
+app.use("/v1/stores", cors(dynamicHost), storeRoutes);
+app.use("/v1/blogs", cors(dynamicHost), blogRoutes);
+app.use("/v1/faqs", cors(dynamicHost), faqRoutes);
+app.use("/v1/pages", cors(dynamicHost), pageRoutes);
+app.use("/v1/services", cors(dynamicHost), serviceRoutes);
+app.use("/v1/providers", cors(dynamicHost), providerRoutes);
+app.use("/v1/categories", cors(dynamicHost), categoryRoutes);
+app.use("/v1/orders", cors(dynamicHost), orderRoutes);
+app.use("/v1/refills", cors(dynamicHost), refillRoutes);
+app.use("/v1/version", cors(dynamicHost), versionRouter);
+app.use("/v1/files", cors(dynamicHost), filesRouter);
+app.use("/v1/payments", cors(dynamicHost), paymentRouter);
+app.use("/v1/supports", cors(dynamicHost), supportRouter);
+app.use("/v1/statistics", cors(dynamicHost), statisticsRouter);
+app.use("/v1/payment-gateways", cors(dynamicHost), paymentGatewayRouter);
+app.use("/v1/admins", cors(dynamicHost), adminRoutes);
+app.use("/v1/rates", cors(dynamicHost), ratesRouter);
+app.use("/v1/transactions", cors(dynamicHost), transactionRouter);
 
 // Internal Routes
 app.use("/internal", internalRouter);
-app.use("/api/v2", publicApiRoutes);
+app.use("/v2", publicApiRoutes);
 app.use("/swagger", swaggerRouter);
 
 // Webhook Routes (no CORS - these are called by external services)
