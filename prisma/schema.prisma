@@ -669,6 +669,7 @@ enum ServiceType {
   COMMENT_REPLIES
   SUBSCRIPTIONS
   INVITES_FROM_GROUPS
+  WEB_TRAFFIC
 }
 
 enum OrderStatus {
