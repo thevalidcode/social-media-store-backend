@@ -3,10 +3,12 @@ import {
   processDripFeedOrders,
   sendUnsyncedOrders,
   syncAllStoresOrderDetails,
-} from "../providers/order.providers"
-;
-import { syncServices, updateExistingServices } from "../providers/service.providers"
-;
+} from "../providers/order.providers";
+import {
+  syncServices,
+  updateExistingServices,
+} from "../providers/service.providers";
+import { syncExchangeRates } from "../controllers/rate.controllers";
 
 function startCronJobs() {
   cron.schedule("*/5 * * * *", () => {
@@ -27,6 +29,10 @@ function startCronJobs() {
 
   cron.schedule("0 2,9,18 * * *", () => {
     syncServices();
+  });
+
+  cron.schedule("0 6,14,22 * * *", async () => {
+    await syncExchangeRates();
   });
 }
 

@@ -1,6 +1,6 @@
-import { getRates } from "../controllers/rate.controllers";
+import { prisma } from "../config/db.config";
 
 export const exchangeRates = async (): Promise<Record<string, number>> => {
-  const rates = await getRates();
-  return (rates as Record<string, number>) || { USD: 1 };
+  const rates = await prisma.exchangeRate.findFirst();
+  return (rates?.rates as Record<string, number>) || { USD: 1 };
 };

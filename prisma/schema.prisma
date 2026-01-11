@@ -769,3 +769,12 @@ enum PaymentStatus {
   SUCCESS
   FAILED
 }
+
+model ExchangeRate {
+  id          Int      @id @default(autoincrement())
+  rates       Json
+  lastUpdated DateTime @default(now()) @map("last_updated")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("exchange_rates")
+}
