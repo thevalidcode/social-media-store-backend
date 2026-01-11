@@ -235,9 +235,9 @@ export const addPaymentGateway = async (
       if (reqData.secretKey) {
         const encrypted_key = encryptKey(reqData.secretKey);
         paymentData.secretKey = JSON.parse(JSON.stringify(encrypted_key));
-        paymentData.webhookUrl = `https://${
+        paymentData.webhookUrl = `https://api.${
           store?.uid //The domain name
-        }/social-media-store/backend/webhooks/${reqData.platform.toLowerCase()}`;
+        }/v1/webhooks/${reqData.platform.toLowerCase()}`;
       }
 
       const payment = await tx.paymentGateway.create({
