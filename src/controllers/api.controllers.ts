@@ -12,6 +12,7 @@ import {
 } from "../schemas/api.schema";
 import { Request, Response } from "express";
 import convertCurrency from "../utils/ConvertCurrency";
+import { Decimal } from "@prisma/client/runtime/client";
 
 export const apiRequests = async (req: Request, res: Response) => {
   const parseResult = ApiActionSchema.safeParse(req.body);
@@ -52,9 +53,8 @@ export const apiRequests = async (req: Request, res: Response) => {
 
   switch (action) {
     case "services": {
-      const [services, rates] = await Promise.all([
+      const [services] = await Promise.all([
         prisma.service.findMany({ where: { storeId } }),
-        exchangeRates(),
       ]);
 
       const formattedServices = services.map((data) => ({
@@ -63,9 +63,7 @@ export const apiRequests = async (req: Request, res: Response) => {
         name: data.name,
         type: data.type,
         category: data.category,
-        rate: String(
-          convertCurrency(data.price, data.providerCurrency!, "USD")
-        ),
+        rate: String(convertCurrency(data.price, data.currency!, "USD")),
         min: String(data.min),
         max: String(data.max),
         refill: data.refill,
@@ -83,7 +81,9 @@ export const apiRequests = async (req: Request, res: Response) => {
         return;
       }
 
-      const allOrders = await prisma.order.findMany({ where: { storeId } });
+      const allOrders = await prisma.order.findMany({
+        where: { storeId, userUid: user.uid },
+      });
 
       if (order) {
         const orderData = allOrders.find(
@@ -132,7 +132,9 @@ export const apiRequests = async (req: Request, res: Response) => {
         return;
       }
 
-      const allRefills = await prisma.refill.findMany({ where: { storeId } });
+      const allRefills = await prisma.refill.findMany({
+        where: { storeId, userUid: user.uid },
+      });
 
       if (refill) {
         const refillData = allRefills.find(
@@ -169,9 +171,10 @@ export const apiRequests = async (req: Request, res: Response) => {
       const { service, link, quantity, runs, interval } =
         OrderActionSchema.parse(req.body);
 
-      const [rates, serviceData] = await Promise.all([
-        exchangeRates(),
-        prisma.service.findFirst({ where: { storeScopedId: service } }),
+      const [serviceData] = await Promise.all([
+        prisma.service.findUnique({
+          where: { storeId_storeScopedId: { storeScopedId: service, storeId } },
+        }),
       ]);
 
       if (!serviceData) {
@@ -179,13 +182,14 @@ export const apiRequests = async (req: Request, res: Response) => {
         return;
       }
 
-      const userCurrency = user.currency || "USD";
-      const currencyRate = rates[userCurrency] || 1;
-
       const costUSD = serviceData.price.div(1000).mul(quantity);
-      const costUserCurrency = costUSD.mul(currencyRate);
+      const costUserCurrency = await convertCurrency(
+        costUSD,
+        user.currency,
+        "USD"
+      );
 
-      if (user.balance < costUserCurrency) {
+      if (new Decimal(user.balance).lessThan(costUserCurrency)) {
         res.status(400).json({ error: "Insufficient balance" });
         return;
       }
@@ -208,11 +212,12 @@ export const apiRequests = async (req: Request, res: Response) => {
             serviceUid: serviceData.uid,
             url: link,
             uid: uuidv4(),
+            dripFeed: runs && interval ? true : false,
             quantity,
             runs,
             interval,
             price: costUSD,
-            currency: userCurrency,
+            currency: "USD",
             storeScopedId: orderCounter,
             synced: false,
           },
@@ -260,8 +265,11 @@ export const apiRequests = async (req: Request, res: Response) => {
       };
 
       if (order) {
-        const orderData = await prisma.order.findFirst({
-          where: { storeScopedId: order, storeId },
+        const orderData = await prisma.order.findUnique({
+          where: {
+            storeId_storeScopedId: { storeScopedId: order, storeId },
+            userUid: user.uid,
+          },
         });
         if (!orderData) {
           res.status(400).json({ error: "Invalid order" });
@@ -279,8 +287,11 @@ export const apiRequests = async (req: Request, res: Response) => {
       if (orders) {
         for (const id of orders.split(",")) {
           const idNum = parseInt(id, 10);
-          const orderData = await prisma.order.findFirst({
-            where: { storeScopedId: idNum, storeId },
+          const orderData = await prisma.order.findUnique({
+            where: {
+              storeId_storeScopedId: { storeScopedId: idNum, storeId },
+              userUid: user.uid,
+            },
           });
 
           if (orderData) {
@@ -305,8 +316,18 @@ export const apiRequests = async (req: Request, res: Response) => {
 
     case "cancel": {
       const { order } = CancelActionSchema.parse(req.body);
-      const orderData = await prisma.order.findFirst({
-        where: { storeScopedId: order },
+      const orderData = await prisma.order.findUnique({
+        where: {
+          storeId_storeScopedId: { storeScopedId: order, storeId },
+          userUid: user.uid,
+        },
+        include: {
+          service: {
+            select: {
+              provider: true,
+            },
+          },
+        },
       });
       if (!orderData) {
         res.status(400).json({ error: "Invalid order" });
@@ -321,13 +342,11 @@ export const apiRequests = async (req: Request, res: Response) => {
       const cancel = await prisma.cancel.create({
         data: {
           orderUid: orderData.uid,
-          uid: uuidv4(),
           storeId,
-          provider: orderData.provider!,
           storeScopedId: cancelCounter,
           userUid: user.uid,
-          providerId: 1,
-          providerOrderId: 1,
+          providerUid: orderData.service.provider?.uid!,
+          providerOrderId: orderData.providerOrderId!,
         },
       });
 
