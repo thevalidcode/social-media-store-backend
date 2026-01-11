@@ -10,18 +10,20 @@ import {
 } from "../schemas/store.schema";
 import { AdminAuthSchema } from "../schemas/admin.schema";
 import { coreApiRequest } from "../lib/apiClient";
+import { normalizeHost } from "../config/cors.config";
 
 export const getStoreData = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const parsed = storeIdQuerySchema.safeParse(req.query);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
+  const domain =
+    normalizeHost(req.headers.host ?? "") ||
+    normalizeHost(req.headers.origin ?? "");
+
+  if (!domain) {
+    res.status(400).json({ error: "Domain is required." });
     return;
   }
-
-  const { domain } = parsed.data;
 
   try {
     const store = await prisma.store.findUnique({
