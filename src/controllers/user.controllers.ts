@@ -22,6 +22,7 @@ import { Decimal } from "@prisma/client/runtime/client";
 import { AdminAuthSchema } from "../schemas/admin.schema";
 import { sendUserEmail } from "../emails";
 import { StoreIdSchema, UidSchema } from "../schemas/common.schema";
+import { normalizeHost } from "../config/cors.config";
 
 async function getNextStoreScopedId(
   storeId: number,
@@ -81,6 +82,14 @@ export const createUser = async (
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
+  const domain =
+    normalizeHost(req.headers.host ?? "") ||
+    normalizeHost(req.headers.origin ?? "");
+
+  if (!domain) {
+    res.status(400).json({ error: "Domain is not recognized." });
+    return;
+  }
 
   const { storeId, email, username, ref, password } = parsed.data;
 
@@ -136,6 +145,7 @@ export const createUser = async (
       res.cookie("csrf_token", csrfToken, {
         httpOnly: false,
         secure: env.NODE_ENV === "production",
+        domain: `.${domain}`,
         sameSite: env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
@@ -143,6 +153,7 @@ export const createUser = async (
       res.cookie("auth_token", token, {
         httpOnly: true,
         secure: env.NODE_ENV === "production",
+        domain: `.${domain}`,
         sameSite: env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
@@ -166,6 +177,14 @@ export const me = async (req: Request, res: Response): Promise<void> => {
   const parsed = AuthenticateUserSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+  const domain =
+    normalizeHost(req.headers.host ?? "") ||
+    normalizeHost(req.headers.origin ?? "");
+
+  if (!domain) {
+    res.status(400).json({ error: "Domain is not recognized." });
     return;
   }
 
@@ -205,6 +224,7 @@ export const me = async (req: Request, res: Response): Promise<void> => {
     res.cookie("csrf_token", csrfToken, {
       httpOnly: false,
       secure: env.NODE_ENV === "production",
+      domain: `.${domain}`,
       sameSite: env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -212,6 +232,7 @@ export const me = async (req: Request, res: Response): Promise<void> => {
     res.cookie("auth_token", token, {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
+      domain: `.${domain}`,
       sameSite: env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -369,6 +390,15 @@ export const verifySession = async (
     return;
   }
 
+  const domain =
+    normalizeHost(req.headers.host ?? "") ||
+    normalizeHost(req.headers.origin ?? "");
+
+  if (!domain) {
+    res.status(400).json({ error: "Domain is not recognized." });
+    return;
+  }
+
   let account: any = null;
 
   account = await prisma.user.findFirst({
@@ -405,6 +435,7 @@ export const verifySession = async (
   res.cookie("csrf_token", csrfToken, {
     httpOnly: false,
     secure: env.NODE_ENV === "production",
+    domain: `.${domain}`,
     sameSite: env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
@@ -412,6 +443,7 @@ export const verifySession = async (
   res.cookie("auth_token", token, {
     httpOnly: true,
     secure: env.NODE_ENV === "production",
+    domain: `.${domain}`,
     sameSite: env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });

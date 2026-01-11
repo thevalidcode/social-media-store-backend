@@ -14,6 +14,7 @@ import {
 import { sendUserEmail } from "../emails";
 import { StoreIdSchema } from "../schemas/common.schema";
 import { VerifySessionCodeBodySchema } from "../schemas/user.schema";
+import { normalizeHost } from "../config/cors.config";
 
 export const authenticateAdmin = async (
   req: Request,
@@ -22,6 +23,15 @@ export const authenticateAdmin = async (
   const parsed = AuthenticateAdminSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  const domain =
+    normalizeHost(req.headers.host ?? "") ||
+    normalizeHost(req.headers.origin ?? "");
+
+  if (!domain) {
+    res.status(400).json({ error: "Domain is not recognized." });
     return;
   }
 
@@ -60,6 +70,7 @@ export const authenticateAdmin = async (
       httpOnly: false,
       secure: env.NODE_ENV === "production",
       sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+      domain: `.${domain}`,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -67,10 +78,11 @@ export const authenticateAdmin = async (
       httpOnly: true,
       secure: env.NODE_ENV === "production",
       sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+      domain: `.${domain}`,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    const { password: _, ...safeAdmin } = account;
+    const { password: _, resetToken, resetTokenExpiry, ...safeAdmin } = account;
     res.status(200).json({
       success: "Logged in successfully",
       role,
@@ -97,7 +109,7 @@ export const updateAdmin = async (
       where: { uid, storeId },
       data: parsed.data,
     });
-    const { password: _, ...safeAdmin } = admin;
+    const { password: _, resetToken, resetTokenExpiry, ...safeAdmin } = admin;
     res
       .status(200)
       .json({ success: "Successfully updated admin", admin: safeAdmin });
@@ -249,6 +261,15 @@ export const verifySession = async (
     return;
   }
 
+  const domain =
+    normalizeHost(req.headers.host ?? "") ||
+    normalizeHost(req.headers.origin ?? "");
+
+  if (!domain) {
+    res.status(400).json({ error: "Domain is not recognized." });
+    return;
+  }
+
   const { sessionCode, storeId } = parsed.data;
 
   const session = await prisma.sessionCode.findUnique({
@@ -296,6 +317,7 @@ export const verifySession = async (
     httpOnly: false,
     secure: env.NODE_ENV === "production",
     sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+    domain: `.${domain}`,
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
@@ -303,6 +325,7 @@ export const verifySession = async (
     httpOnly: true,
     secure: env.NODE_ENV === "production",
     sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+    domain: `.${domain}`,
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
   const { password: _, resetToken, resetTokenExpiry, ...safeAdmin } = admin;
