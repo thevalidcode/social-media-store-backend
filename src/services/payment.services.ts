@@ -96,6 +96,11 @@ export const createPayment = async (
       return initFlutterwavePayment(paymentData, parsedSecretKey);
     case "PAYSTACK":
       return initPaystackPayment(paymentData, parsedSecretKey);
+    case "MANUAL":
+      return {
+        message:
+          "Please follow the instructions to complete your manual payment.",
+      };
     default:
       throw new Error("Unsupported payment platform");
   }
