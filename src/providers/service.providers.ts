@@ -230,7 +230,7 @@ export const syncServices = async (): Promise<void> => {
             try {
               await sendEmail(
                 undefined,
-                "NEWSERVICE",
+                "NEW_SERVICE",
                 {
                   ...newService,
                   providerCurrency: newService.providerCurrency,

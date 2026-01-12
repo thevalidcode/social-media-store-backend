@@ -21,6 +21,7 @@ export const sendRefillToMainServer = async (
   try {
     const order = await prisma.order.findFirst({
       where: { uid: orderUid, storeId },
+      include: { user: true },
     });
 
     if (!order) return false;
@@ -49,7 +50,7 @@ export const sendRefillToMainServer = async (
       try {
         await sendEmail(
           undefined,
-          "NEWFAILEDREFILL",
+          "NEW_FAILED_REFILL",
           {
             orderId: order.id,
             quantity: order.quantity,
@@ -94,8 +95,8 @@ export const sendRefillToMainServer = async (
 
     try {
       await sendEmail(
-        undefined,
-        "NEWREFILL",
+        order.user.email,
+        "NEW_REFILL",
         {
           orderId: order.id,
           number: order.quantity,

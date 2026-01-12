@@ -3,8 +3,8 @@ import { devBypass } from "./utils";
 
 // User creating support tickets
 export const createTicketLimiter = devBypass(rateLimit({
-  windowMs: 30 * 60 * 1000, // 30 minutes
-  max: 3,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: "Too many support tickets created. Please try again later.",
@@ -12,8 +12,8 @@ export const createTicketLimiter = devBypass(rateLimit({
 
 // Adding messages to tickets
 export const addMessageLimiter = devBypass(rateLimit({
-  windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 10,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: "Too many messages. Please slow down.",
@@ -21,8 +21,8 @@ export const addMessageLimiter = devBypass(rateLimit({
 
 // Admin actions on tickets (update/delete)
 export const adminActionLimiter = devBypass(rateLimit({
-  windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 20,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
   message: "Too many admin actions. Please slow down.",

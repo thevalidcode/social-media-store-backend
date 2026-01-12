@@ -138,7 +138,7 @@ export const sendOrderToProvider = async (
         try {
           await sendEmail(
             undefined,
-            "NEWFAILEDORDER",
+            "NEW_FAILED_ORDER",
             {
               ...orderData,
               userBalance: userFinalBalance,
@@ -222,8 +222,8 @@ export const sendOrderToProvider = async (
 
     if (env.NODE_ENV === "production") {
       await sendEmail(
-        undefined,
-        "NEWORDER",
+        user.email,
+        "NEW_ORDER",
         {
           ...orderData,
           userBalance: userFinalBalance,

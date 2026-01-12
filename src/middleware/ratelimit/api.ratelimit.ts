@@ -3,8 +3,8 @@ import { devBypass } from "./utils";
 
 // Public API requests
 export const apiRequestLimiter = devBypass(rateLimit({
-  windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 10,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
   message: "Too many API requests. Please slow down.",

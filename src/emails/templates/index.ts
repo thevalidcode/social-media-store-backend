@@ -1,4 +1,8 @@
-import { LogoVars, TemplateResult, DesignColors } from "../components/EmailLayout";
+import {
+  LogoVars,
+  TemplateResult,
+  DesignColors,
+} from "../components/EmailLayout";
 import {
   forgotPassword,
   passwordChanged,
@@ -9,6 +13,22 @@ import {
   adminPasswordChanged,
   AdminForgotPasswordVars,
 } from "./admin.templates";
+import {
+  newOrder,
+  newFailedOrder,
+  NewOrderVars,
+  NewFailedOrderVars,
+} from "./order.templates";
+import {
+  newRefill,
+  newFailedRefill,
+  NewRefillVars,
+  NewFailedRefillVars,
+} from "./refill.templates";
+import {
+  newService,
+  NewServiceVars,
+} from "./service.templates";
 
 interface StoreSettings {
   logoUrl: string;
@@ -23,7 +43,11 @@ export interface EmailTemplateVars {
   PASSWORD_CHANGED: LogoVars;
   ADMIN_FORGOT_PASSWORD: AdminForgotPasswordVars;
   ADMIN_PASSWORD_CHANGED: LogoVars;
-  // Add more templates here
+  NEW_ORDER: NewOrderVars;
+  NEW_FAILED_ORDER: NewFailedOrderVars;
+  NEW_REFILL: NewRefillVars;
+  NEW_FAILED_REFILL: NewFailedRefillVars;
+  NEW_SERVICE: NewServiceVars;
 }
 
 // Typed templates for dev-time safety
@@ -37,6 +61,11 @@ const typedTemplates: {
   PASSWORD_CHANGED: passwordChanged,
   ADMIN_FORGOT_PASSWORD: adminForgotPassword,
   ADMIN_PASSWORD_CHANGED: adminPasswordChanged,
+  NEW_ORDER: newOrder,
+  NEW_FAILED_ORDER: newFailedOrder,
+  NEW_REFILL: newRefill,
+  NEW_FAILED_REFILL: newFailedRefill,
+  NEW_SERVICE: newService,
 };
 
 /**
@@ -53,7 +82,10 @@ export function getTemplate<K extends keyof EmailTemplateVars>(
   storeSettings: StoreSettings
 ): TemplateResult {
   const templateFn = typedTemplates[type as keyof typeof typedTemplates] as
-    | ((vars: Record<string, any>, storeSettings: StoreSettings) => TemplateResult)
+    | ((
+        vars: Record<string, any>,
+        storeSettings: StoreSettings
+      ) => TemplateResult)
     | undefined;
   if (!templateFn) {
     throw new Error(`Email template for type "${type}" not found.`);

@@ -3,22 +3,22 @@ import { devBypass } from "./utils";
 
 // Protected operations
 export const createPageLimiter = devBypass(rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 10,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
 }));
 
 export const updatePageLimiter = devBypass(rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 15,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200,
   standardHeaders: true,
   legacyHeaders: false,
 }));
 
 export const deletePageLimiter = devBypass(rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 10,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
 }));

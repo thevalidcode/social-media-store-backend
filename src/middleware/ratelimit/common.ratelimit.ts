@@ -2,13 +2,13 @@ import rateLimit from "express-rate-limit";
 import { devBypass } from "./utils";
 
 export const limittAdd = devBypass(rateLimit({
-  windowMs: 30 * 60 * 1000, // 30 mins
-  max: 3,
+  windowMs: 15 * 60 * 1000, // 15 mins
+  max: 100,
   message: "Too many import attempts. Please try again later.",
 }));
 
 export const limittActions = devBypass(rateLimit({
-  windowMs: 10 * 60 * 1000, // 10 mins
-  max: 10,
-  message: "Too many provider actions. Please slow down.",
+  windowMs: 15 * 60 * 1000, // 15 mins
+  max: 500,
+  message: "Too many actions. Please slow down.",
 }));
