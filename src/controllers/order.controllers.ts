@@ -351,7 +351,10 @@ export const placeOrder = async (
         // Increment counter
         const counter = await tx.storeCounter.update({
           where: { storeId },
-          data: { orderCounter: { increment: 1 } },
+          data: {
+            orderCounter: { increment: 1 },
+            transactionCounter: { increment: 1 },
+          },
         });
 
         // Create order
@@ -376,7 +379,7 @@ export const placeOrder = async (
             amount: orderPrice.neg(),
             type: "WALLET_DEBIT",
             description: `Order #${order.storeScopedId} - ${parsed.data.quantity} ${service.type}`,
-            storeScopedId: 0, // Will be updated by trigger or separate process
+            storeScopedId: counter.transactionCounter,
           },
         });
 
@@ -559,7 +562,10 @@ export const bulkCreateOrders = async (
         // Increment counter by number of orders
         const counter = await tx.storeCounter.update({
           where: { storeId },
-          data: { orderCounter: { increment: ordersWithPrices.length } },
+          data: {
+            orderCounter: { increment: ordersWithPrices.length },
+            transactionCounter: { increment: 1 },
+          },
         });
 
         let currentOrderId = counter.orderCounter - ordersWithPrices.length;
@@ -600,7 +606,7 @@ export const bulkCreateOrders = async (
             amount: totalPrice.neg(),
             type: "WALLET_DEBIT",
             description: `Bulk order - ${ordersWithPrices.length} orders`,
-            storeScopedId: 0,
+            storeScopedId: counter.transactionCounter,
           },
         });
 
