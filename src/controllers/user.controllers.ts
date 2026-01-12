@@ -145,17 +145,17 @@ export const createUser = async (
       res.cookie("csrf_token", csrfToken, {
         httpOnly: false,
         secure: env.NODE_ENV === "production",
-        domain: `.${domain}`,
         sameSite: env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000,
+        ...(env.NODE_ENV === "production" && { domain: `.${domain}` }),
       });
 
       res.cookie("auth_token", token, {
         httpOnly: true,
         secure: env.NODE_ENV === "production",
-        domain: `.${domain}`,
         sameSite: env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000,
+        ...(env.NODE_ENV === "production" && { domain: `.${domain}` }),
       });
 
       res.status(200).send({
@@ -224,17 +224,17 @@ export const me = async (req: Request, res: Response): Promise<void> => {
     res.cookie("csrf_token", csrfToken, {
       httpOnly: false,
       secure: env.NODE_ENV === "production",
-      domain: `.${domain}`,
       sameSite: env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
+      ...(env.NODE_ENV === "production" && { domain: `.${domain}` }),
     });
 
     res.cookie("auth_token", token, {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
-      domain: `.${domain}`,
       sameSite: env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
+      ...(env.NODE_ENV === "production" && { domain: `.${domain}` }),
     });
 
     const { password: _, resetToken, resetTokenExpiry, ...safeUser } = account;
@@ -435,17 +435,17 @@ export const verifySession = async (
   res.cookie("csrf_token", csrfToken, {
     httpOnly: false,
     secure: env.NODE_ENV === "production",
-    domain: `.${domain}`,
     sameSite: env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
+    ...(env.NODE_ENV === "production" && { domain: `.${domain}` }),
   });
 
   res.cookie("auth_token", token, {
     httpOnly: true,
     secure: env.NODE_ENV === "production",
-    domain: `.${domain}`,
     sameSite: env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
+    ...(env.NODE_ENV === "production" && { domain: `.${domain}` }),
   });
 
   const { password: _, resetToken, resetTokenExpiry, ...safeUser } = user;

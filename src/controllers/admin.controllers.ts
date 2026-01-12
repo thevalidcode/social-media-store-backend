@@ -70,16 +70,16 @@ export const authenticateAdmin = async (
       httpOnly: false,
       secure: env.NODE_ENV === "production",
       sameSite: env.NODE_ENV === "production" ? "none" : "lax",
-      domain: `.${domain}`,
       maxAge: 7 * 24 * 60 * 60 * 1000,
+      ...(env.NODE_ENV === "production" && { domain: `.${domain}` }),
     });
 
     res.cookie("auth_token", token, {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
       sameSite: env.NODE_ENV === "production" ? "none" : "lax",
-      domain: `.${domain}`,
       maxAge: 7 * 24 * 60 * 60 * 1000,
+      ...(env.NODE_ENV === "production" && { domain: `.${domain}` }),
     });
 
     const { password: _, resetToken, resetTokenExpiry, ...safeAdmin } = account;
@@ -89,6 +89,7 @@ export const authenticateAdmin = async (
       admin: safeAdmin,
     });
   } catch (err: any) {
+    console.log(err)
     res.status(500).json({ error: "Login failed " + err.message });
   }
 };
@@ -317,16 +318,16 @@ export const verifySession = async (
     httpOnly: false,
     secure: env.NODE_ENV === "production",
     sameSite: env.NODE_ENV === "production" ? "none" : "lax",
-    domain: `.${domain}`,
     maxAge: 7 * 24 * 60 * 60 * 1000,
+    ...(env.NODE_ENV === "production" && { domain: `.${domain}` }),
   });
 
   res.cookie("auth_token", token, {
     httpOnly: true,
     secure: env.NODE_ENV === "production",
     sameSite: env.NODE_ENV === "production" ? "none" : "lax",
-    domain: `.${domain}`,
     maxAge: 7 * 24 * 60 * 60 * 1000,
+    ...(env.NODE_ENV === "production" && { domain: `.${domain}` }),
   });
   const { password: _, resetToken, resetTokenExpiry, ...safeAdmin } = admin;
 
