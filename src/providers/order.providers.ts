@@ -167,7 +167,10 @@ export const sendOrderToProvider = async (
 
       await tx.user.update({
         where: { uid: user.uid },
-        data: { balance: userFinalBalance },
+        data: {
+          balance: userFinalBalance,
+          spent: { increment: chargeUSD },
+        },
       });
 
       await tx.order.update({
@@ -379,7 +382,10 @@ export const syncOrderDetails = async (
       );
       await prisma.user.update({
         where: { uid: user.uid, storeId },
-        data: { balance: newBalance },
+        data: {
+          balance: newBalance,
+          spent: { decrement: toDecimal(orderData.price) },
+        },
       });
       await prisma.order.update({
         where: { uid: orderData.uid, storeId },
@@ -413,7 +419,10 @@ export const syncOrderDetails = async (
 
       await prisma.user.update({
         where: { uid: user.uid },
-        data: { balance: newBalance },
+        data: {
+          balance: newBalance,
+          spent: { decrement: totalPrice },
+        },
       });
       await prisma.order.update({
         where: { uid: orderData.uid },
@@ -445,7 +454,10 @@ export const syncOrderDetails = async (
 
         await prisma.user.update({
           where: { uid: user.uid, storeId },
-          data: { balance: newBalance },
+          data: {
+            balance: newBalance,
+            spent: { increment: totalPrice },
+          },
         });
         await prisma.order.update({
           where: { uid: orderData.uid, storeId },
@@ -468,7 +480,10 @@ export const syncOrderDetails = async (
 
         await prisma.user.update({
           where: { uid: user.uid, storeId },
-          data: { balance: newBalance },
+          data: {
+            balance: newBalance,
+            spent: { increment: refundPrice },
+          },
         });
         await prisma.order.update({
           where: { uid: orderData.uid, storeId },
@@ -489,7 +504,18 @@ export const syncOrderDetails = async (
     await prisma.order.update({
       where: { uid: orderData.uid, storeId },
       data: {
-        status: resp.status,
+        status:
+          resp.status === "In Progress"
+            ? "ACTIVE"
+            : resp.status === "Processing"
+            ? "PROCESSING"
+            : resp.status === "Completed"
+            ? "COMPLETED"
+            : resp.status === "Partial"
+            ? "PARTIAL"
+            : resp.status === "Canceled"
+            ? "CANCELED"
+            : orderData.status,
         remains: safeInt(resp.remains),
         start: safeInt(resp.startCount),
         providerPrice: toDecimal(
