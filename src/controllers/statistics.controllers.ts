@@ -174,26 +174,12 @@ export const getUserDashboardData = async (
       })
     ).length;
 
+    const userOrders = orders.filter((o) => o.userUid === uid);
+
     // Count and total spent
-    const yourOrders = orders.length;
-    const yourSpent = orders.reduce((sum, o) => sum + Number(o.price), 0);
-
+    const yourOrders = userOrders.length;
+    const yourSpent = userOrders.reduce((sum, o) => sum + Number(o.price), 0);
     const totalStoreOrders = orders.length;
-
-    // Recent 10 orders
-    const storeOrders = orders.slice(0, 10).map((order) => ({
-      id: order.uid,
-      serviceName: order.service?.name || "Unknown",
-      userName: order.user?.username || "Unknown",
-      quantity: order.quantity,
-      price: `$${order.price.toFixed(2)}`,
-      status: order.status,
-      date: new Date(order.timestamp).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      }),
-    }));
 
     // Recently added services
     const recentlyAddedServices = await prisma.service.findMany({
