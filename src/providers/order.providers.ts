@@ -284,7 +284,18 @@ export const updateOrderStatus = async (
     await prisma.order.update({
       where: { uid: order.uid, storeId },
       data: {
-        status: resp.status,
+        status:
+          resp.status === "In Progress"
+            ? "ACTIVE"
+            : resp.status === "Processing"
+            ? "PROCESSING"
+            : resp.status === "Completed"
+            ? "COMPLETED"
+            : resp.status === "Partial"
+            ? "PARTIAL"
+            : resp.status === "Canceled"
+            ? "CANCELED"
+            : order.status,
         providerCurrency: resp.currency?.toUpperCase(),
         providerPrice: toDecimal(
           convertCurrency(
