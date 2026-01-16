@@ -34,6 +34,12 @@ export const updateExistingServices = async (): Promise<void> => {
 
       const provCache: Record<string, any> = {};
 
+      // Prepare all updates before executing
+      const updateOperations: Array<{
+        uid: string;
+        data: any;
+      }> = [];
+
       for (const svc of services) {
         const prov = providers.find((p) => p.url === svc.provider?.url);
         if (!prov) continue;
@@ -68,8 +74,8 @@ export const updateExistingServices = async (): Promise<void> => {
         );
 
         if (!liveSvc) {
-          await prisma.service.update({
-            where: { uid: svc.uid },
+          updateOperations.push({
+            uid: svc.uid,
             data: { status: "DISABLED" },
           });
           continue;
@@ -81,8 +87,8 @@ export const updateExistingServices = async (): Promise<void> => {
           .plus(providerRate.mul(pct).div(100))
           .toDecimalPlaces(2);
 
-        await prisma.service.update({
-          where: { uid: svc.uid },
+        updateOperations.push({
+          uid: svc.uid,
           data: {
             type: String(
               liveSvc.type
@@ -106,6 +112,29 @@ export const updateExistingServices = async (): Promise<void> => {
             }),
           },
         });
+      }
+
+      // Process updates in batches with transaction timeout
+      const BATCH_SIZE = 100;
+      for (let i = 0; i < updateOperations.length; i += BATCH_SIZE) {
+        const batch = updateOperations.slice(i, i + BATCH_SIZE);
+
+        await prisma.$transaction(
+          async (tx) => {
+            await Promise.all(
+              batch.map((op) =>
+                tx.service.update({
+                  where: { uid: op.uid },
+                  data: op.data,
+                })
+              )
+            );
+          },
+          {
+            maxWait: 10000, // 10 seconds
+            timeout: 30000, // 30 seconds
+          }
+        );
       }
     }
   } catch (err: any) {
@@ -153,96 +182,122 @@ export const syncServices = async (): Promise<void> => {
           ),
         ]);
 
-        await prisma.$transaction(async (tx) => {
-          for (const s of svcList) {
-            let category = existingCategories.find(
-              (c) => c.name === s.category
-            );
-
-            if (!category) {
-              const categoryCounter = await tx.storeCounter.update({
-                where: { storeId },
-                data: { categoryCounter: { increment: 1 } },
-              });
-
-              category = await tx.category.create({
-                data: {
-                  name: s.category,
-                  status: "ACTIVE",
-                  storeScopedId: categoryCounter.categoryCounter,
-                  uid: uuidv4(),
-                  position: categoryCounter.categoryCounter,
-                  storeId,
-                },
-              });
-
-              existingCategories.push(category);
-            }
-
-            const exists = existingServices.find(
+        // Filter out already existing services before transaction
+        const newServices = svcList.filter(
+          (s: any) =>
+            !existingServices.find(
               (x) => safeInt(x.providerId) === safeInt(s.service)
-            );
-            if (exists) continue;
+            )
+        );
 
-            const serviceCounter = await tx.storeCounter.update({
-              where: { storeId },
-              data: { serviceCounter: { increment: 1 } },
-            });
+        if (!newServices.length) continue;
 
-            const providerRate = toDecimal(s.rate);
-            const pct = toDecimal(prov.percentage);
-            const endPrice = providerRate
-              .plus(providerRate.mul(pct).div(100))
-              .toDecimalPlaces(2);
+        // Process in batches to avoid timeout
+        const BATCH_SIZE = 50;
+        const createdServices: any[] = [];
 
-            const newService = await tx.service.create({
-              data: {
-                storeScopedId: serviceCounter.serviceCounter,
-                uid: uuidv4(),
-                name: s.name,
-                category: s.category,
-                type: String(
-                  s.type ? s.type.replace(/\s+/g, "_").toUpperCase() : "DEFAULT"
-                ) as ServiceType,
-                min: safeInt(s.min),
-                max: safeInt(s.max),
-                categoryUid: category.uid,
-                providerId: safeInt(s.service),
-                description: s.description || "",
-                providerPrice: providerRate,
-                storeId,
-                status: "ACTIVE",
-                syncQuantity: true,
-                syncCatAndName: true,
-                price: endPrice,
-                position: serviceCounter.serviceCounter,
-                cancel: s.cancel,
-                network: s.network || "None",
-                providerCurrency: prov.currency,
-                currency: "USD",
-                refill: s.refill,
-                percentage: prov.percentage,
-                dripFeed: s.dripFeed || s.dripfeed || false,
-                providerUid: prov.uid,
-              },
-            });
+        for (let i = 0; i < newServices.length; i += BATCH_SIZE) {
+          const batch = newServices.slice(i, i + BATCH_SIZE);
 
-            try {
-              await sendEmail(
-                undefined,
-                "NEW_SERVICE",
-                {
-                  ...newService,
-                  providerCurrency: newService.providerCurrency,
-                  providerPrice: newService.providerPrice,
-                },
-                storeId
-              );
-            } catch (err: any) {
-              console.error(`Email error (store ${storeId}):`, err.message);
+          await prisma.$transaction(
+            async (tx) => {
+              for (const s of batch) {
+                let category = existingCategories.find(
+                  (c) => c.name === s.category
+                );
+
+                if (!category) {
+                  const categoryCounter = await tx.storeCounter.update({
+                    where: { storeId },
+                    data: { categoryCounter: { increment: 1 } },
+                  });
+
+                  category = await tx.category.create({
+                    data: {
+                      name: s.category,
+                      status: "ACTIVE",
+                      storeScopedId: categoryCounter.categoryCounter,
+                      uid: uuidv4(),
+                      position: categoryCounter.categoryCounter,
+                      storeId,
+                    },
+                  });
+
+                  existingCategories.push(category);
+                }
+
+                const serviceCounter = await tx.storeCounter.update({
+                  where: { storeId },
+                  data: { serviceCounter: { increment: 1 } },
+                });
+
+                const providerRate = toDecimal(s.rate);
+                const pct = toDecimal(prov.percentage);
+                const endPrice = providerRate
+                  .plus(providerRate.mul(pct).div(100))
+                  .toDecimalPlaces(2);
+
+                const newService = await tx.service.create({
+                  data: {
+                    storeScopedId: serviceCounter.serviceCounter,
+                    uid: uuidv4(),
+                    name: s.name,
+                    category: s.category,
+                    type: String(
+                      s.type
+                        ? s.type.replace(/\s+/g, "_").toUpperCase()
+                        : "DEFAULT"
+                    ) as ServiceType,
+                    min: safeInt(s.min),
+                    max: safeInt(s.max),
+                    categoryUid: category.uid,
+                    providerId: safeInt(s.service),
+                    description: s.description || "",
+                    providerPrice: providerRate,
+                    storeId,
+                    status: "ACTIVE",
+                    syncQuantity: true,
+                    syncCatAndName: true,
+                    price: endPrice,
+                    position: serviceCounter.serviceCounter,
+                    cancel: s.cancel,
+                    network: s.network || "None",
+                    providerCurrency: prov.currency,
+                    currency: "USD",
+                    refill: s.refill,
+                    percentage: prov.percentage,
+                    dripFeed: s.dripFeed || s.dripfeed || false,
+                    providerUid: prov.uid,
+                  },
+                });
+
+                createdServices.push(newService);
+              }
+            },
+            {
+              maxWait: 10000, // 10 seconds
+              timeout: 30000, // 30 seconds
             }
+          );
+        }
+
+        // Send emails outside transaction to avoid delays
+        for (const newService of createdServices) {
+          try {
+            await sendEmail(
+              undefined,
+              "NEW_SERVICE",
+              {
+                ...newService,
+                providerCurrency: newService.providerCurrency,
+                providerPrice: newService.providerPrice,
+              },
+              storeId
+            );
+          } catch (err: any) {
+            console.error(`Email error (store ${storeId}):`, err.message);
           }
-        });
+        }
       }
     }
   } catch (err: any) {

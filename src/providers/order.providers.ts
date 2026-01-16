@@ -179,6 +179,7 @@ export const sendOrderToProvider = async (
           providerOrderId: safeInt(res.order),
           provider: provider.url,
           price: chargeUSD,
+          synced: true,
           storeScopedId: counter.orderCounter,
         },
       });
@@ -304,7 +305,6 @@ export const updateOrderStatus = async (
             "USD"
           )
         ),
-        synced: true,
       },
     });
   } catch (err: any) {
@@ -405,7 +405,9 @@ export const syncOrderDetails = async (
     }
 
     if (resp.status === "Partial" && orderData.status !== "PARTIAL") {
-      if (!service) return false;
+      if (!service) {
+        throw new Error("Service not found");
+      }
 
       const pricePer1000 = toDecimal(
         convertCurrency(
@@ -446,7 +448,9 @@ export const syncOrderDetails = async (
     }
 
     if (resp.status === "Completed" && orderData.status !== "COMPLETED") {
-      if (!service) return false;
+      if (!service) {
+        throw new Error("Service not found");
+      }
 
       const pricePer1000 = toDecimal(
         convertCurrency(
@@ -516,7 +520,7 @@ export const syncOrderDetails = async (
       where: { uid: orderData.uid, storeId },
       data: {
         status:
-          resp.status === "In Progress"
+          resp.status === "In progress"
             ? "ACTIVE"
             : resp.status === "Processing"
             ? "PROCESSING"
