@@ -72,7 +72,7 @@ export const sendOrderToProvider = async (
     const pricePer1000 = toDecimal(
       convertCurrency(
         toDecimal(service.price).toNumber(),
-        service.providerCurrency || "USD",
+        service.currency || "USD",
         "USD"
       )
     );
