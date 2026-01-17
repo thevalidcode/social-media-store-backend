@@ -17,6 +17,7 @@ import {
   UpdateGeneralDataRequestSchema,
   UpdateStylesRequestSchema,
 } from "../../schemas/store.schema";
+import { StoreIdSchema } from "../../schemas/common.schema";
 
 // GET /stores/data
 registry.registerPath({
@@ -24,14 +25,6 @@ registry.registerPath({
   path: "/stores/data",
   summary: "Get the store data for a custom domain",
   tags: ["Store"],
-  parameters: [
-    {
-      name: "domain",
-      in: "query",
-      required: true,
-      schema: { type: "string" },
-    },
-  ],
   responses: {
     200: StoreDataResponse,
     404: NotFound,
@@ -45,14 +38,9 @@ registry.registerPath({
   path: "/stores/{storeId}/general-data",
   summary: "Get the general data for a store",
   tags: ["Store"],
-  parameters: [
-    {
-      name: "storeId",
-      in: "path",
-      required: true,
-      schema: { type: "number" },
-    },
-  ],
+  request: {
+    query: StoreIdSchema,
+  },
   responses: {
     200: GeneralDataResponse,
     404: NotFound,
@@ -89,14 +77,9 @@ registry.registerPath({
   path: "/stores/{storeId}/styles",
   summary: "Get design styles for a store",
   tags: ["Store"],
-  parameters: [
-    {
-      name: "storeId",
-      in: "path",
-      required: true,
-      schema: { type: "number" },
-    },
-  ],
+  request: {
+    query: StoreIdSchema,
+  },
   responses: {
     200: DesignStylesResponse,
     500: ServerError,

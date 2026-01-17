@@ -91,7 +91,7 @@ app.use("/internal", internalRouter);
 app.use("/v2", publicApiRoutes);
 app.use("/swagger", swaggerRouter);
 
-// Auth Routes (this is for the auth.vaalidpanel.com domain to handle OAuth)
+// Auth Routes (this is for the auth.validpanel.com domain to handle OAuth)
 app.use("/api/auth/social-media-store", openCors, authRoutes);
 
 export default app;

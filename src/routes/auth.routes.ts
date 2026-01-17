@@ -1,6 +1,6 @@
 import express from "express";
 import * as auth from "../controllers/auth.controllers";
-import { authRateLimit } from "../middleware/auth.ratelimit";
+import { authRateLimit } from "../middleware/ratelimit/auth.ratelimit";
 
 const router = express.Router();
 
