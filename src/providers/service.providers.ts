@@ -52,14 +52,14 @@ export const updateExistingServices = async (): Promise<void> => {
 
           const decryptedKey = decryptKey(
             apiKeyData.encrypted_key,
-            apiKeyData.iv
+            apiKeyData.iv,
           );
           const baseURL = `${prov.url}`;
           const [servicesRes] = await Promise.all([
             axios.post(
               `https://${baseURL}`,
               { action: "services", key: decryptedKey },
-              { httpsAgent: agent }
+              { httpsAgent: agent },
             ),
           ]);
 
@@ -70,7 +70,7 @@ export const updateExistingServices = async (): Promise<void> => {
 
         const { list } = provCache[prov.url];
         const liveSvc = list.find(
-          (x: any) => String(x.service) === String(svc.providerId)
+          (x: any) => String(x.service) === String(svc.providerId),
         );
 
         if (!liveSvc) {
@@ -93,7 +93,7 @@ export const updateExistingServices = async (): Promise<void> => {
             type: String(
               liveSvc.type
                 ? liveSvc.type.replace(/\s+/g, "_").toUpperCase()
-                : "DEFAULT"
+                : "DEFAULT",
             ) as ServiceType,
             providerPrice: providerRate,
             price: priceUSD,
@@ -126,14 +126,14 @@ export const updateExistingServices = async (): Promise<void> => {
                 tx.service.update({
                   where: { uid: op.uid },
                   data: op.data,
-                })
-              )
+                }),
+              ),
             );
           },
           {
             maxWait: 10000, // 10 seconds
             timeout: 30000, // 30 seconds
-          }
+          },
         );
       }
     }
@@ -170,7 +170,7 @@ export const syncServices = async (): Promise<void> => {
 
         const decryptedKey = decryptKey(
           apiKeyData.encrypted_key,
-          apiKeyData.iv
+          apiKeyData.iv,
         );
         const baseURL = `${prov.url}`;
 
@@ -178,7 +178,7 @@ export const syncServices = async (): Promise<void> => {
           axios.post(
             `https://${baseURL}`,
             { action: "services", key: decryptedKey },
-            { httpsAgent: agent }
+            { httpsAgent: agent },
           ),
         ]);
 
@@ -186,8 +186,8 @@ export const syncServices = async (): Promise<void> => {
         const newServices = svcList.filter(
           (s: any) =>
             !existingServices.find(
-              (x) => safeInt(x.providerId) === safeInt(s.service)
-            )
+              (x) => safeInt(x.providerId) === safeInt(s.service),
+            ),
         );
 
         if (!newServices.length) continue;
@@ -203,7 +203,7 @@ export const syncServices = async (): Promise<void> => {
             async (tx) => {
               for (const s of batch) {
                 let category = existingCategories.find(
-                  (c) => c.name === s.category
+                  (c) => c.name === s.category,
                 );
 
                 if (!category) {
@@ -246,7 +246,7 @@ export const syncServices = async (): Promise<void> => {
                     type: String(
                       s.type
                         ? s.type.replace(/\s+/g, "_").toUpperCase()
-                        : "DEFAULT"
+                        : "DEFAULT",
                     ) as ServiceType,
                     min: safeInt(s.min),
                     max: safeInt(s.max),
@@ -277,7 +277,7 @@ export const syncServices = async (): Promise<void> => {
             {
               maxWait: 10000, // 10 seconds
               timeout: 30000, // 30 seconds
-            }
+            },
           );
         }
 
@@ -292,7 +292,7 @@ export const syncServices = async (): Promise<void> => {
                 providerCurrency: newService.providerCurrency,
                 providerPrice: newService.providerPrice,
               },
-              storeId
+              storeId,
             );
           } catch (err: any) {
             console.error(`Email error (store ${storeId}):`, err.message);

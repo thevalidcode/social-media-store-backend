@@ -15,7 +15,7 @@ import { AdminAuthSchema } from "../schemas/admin.schema";
 
 export const getPaymentGateways = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
 
@@ -34,7 +34,6 @@ export const getPaymentGateways = async (
         platform: true,
         name: true,
         uid: true,
-        image: true,
         description: true,
         min: true,
         max: true,
@@ -53,7 +52,7 @@ export const getPaymentGateways = async (
 
 export const getPaymentGatewayByUid = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const paramsParsed = GetPaymentGatewayByIdSchema.safeParse(req.params);
@@ -81,7 +80,6 @@ export const getPaymentGatewayByUid = async (
         platform: true,
         name: true,
         uid: true,
-        image: true,
         feePercent: true,
         description: true,
         min: true,
@@ -99,7 +97,7 @@ export const getPaymentGatewayByUid = async (
 
 export const getPaymentGatewaysForUser = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = UserAuthSchema.safeParse(req.auth);
 
@@ -118,7 +116,6 @@ export const getPaymentGatewaysForUser = async (
         platform: true,
         name: true,
         uid: true,
-        image: true,
         description: true,
         feePercent: true,
         position: true,
@@ -136,7 +133,7 @@ export const getPaymentGatewaysForUser = async (
 
 export const getPaymentGatewayByUidForUser = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = UserAuthSchema.safeParse(req.auth);
   const paramsParsed = GetPaymentGatewayByIdSchema.safeParse(req.params);
@@ -165,7 +162,6 @@ export const getPaymentGatewayByUidForUser = async (
         name: true,
         feePercent: true,
         uid: true,
-        image: true,
         description: true,
         min: true,
         max: true,
@@ -180,7 +176,7 @@ export const getPaymentGatewayByUidForUser = async (
 
 export const addPaymentGateway = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const bodyParsed = PaymentCreateRequestSchema.safeParse(req.body);
@@ -223,7 +219,6 @@ export const addPaymentGateway = async (
         position: counter.paymentGatewayCounter,
         name: reqData.name,
         description: reqData.description,
-        image: reqData.image,
         platform: reqData.platform,
         feePercent: reqData.feePercent,
         min: reqData.min,
@@ -259,7 +254,7 @@ export const addPaymentGateway = async (
 
 export const updatePaymentGateway = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = PaymentUpdateRequestSchema.safeParse(req.body);
@@ -289,7 +284,6 @@ export const updatePaymentGateway = async (
     const paymentGatewayData = {
       name: reqData.name,
       description: reqData.description,
-      image: reqData.image,
       feePercent: reqData.feePercent,
       min: reqData.min,
       max: reqData.max,
@@ -322,7 +316,7 @@ export const updatePaymentGateway = async (
 
 export const updatePaymentGatewayStatus = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = PaymentUpdateStatusRequestSchema.safeParse(req.body);
@@ -358,7 +352,7 @@ export const updatePaymentGatewayStatus = async (
 
 export const deletePaymentGateway = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = DeletePaymentGatewaySchema.safeParse(req.params);

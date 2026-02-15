@@ -6,50 +6,53 @@ import {
   limitProviderImport,
   limitProviderActions,
 } from "../middleware/ratelimit/provider.ratelimit";
+import { checkServicesSync } from "../middleware/features";
 
 router.get(
   "/all",
   authenticateAdmin,
   limitProviderActions,
-  providers.getAllSeviceProviders
+  providers.getAllSeviceProviders,
 );
 router.post(
   "/services/import",
   authenticateAdmin,
   limitProviderImport,
-  providers.importServices
+  providers.importServices,
 );
 router.get(
   "/services",
   authenticateAdmin,
   limitProviderActions,
-  providers.getProviderServices
+  providers.getProviderServices,
 );
 
 router.post(
   "/",
   authenticateAdmin,
+  checkServicesSync,
   limitProviderActions,
-  providers.addProvider
+  providers.addProvider,
 );
 router.get("/", authenticateAdmin, providers.getProviders);
 router.patch(
   "/",
   authenticateAdmin,
+  checkServicesSync,
   limitProviderActions,
-  providers.updateProvider
+  providers.updateProvider,
 );
 router.delete(
   "/",
   authenticateAdmin,
   limitProviderActions,
-  providers.deleteProvider
+  providers.deleteProvider,
 );
 router.delete(
   "/multiple",
   authenticateAdmin,
   limitProviderActions,
-  providers.deleteMultipleProviders
+  providers.deleteMultipleProviders,
 );
 
 export default router;

@@ -46,7 +46,6 @@ export const PaymentCreateRequestSchema = z
     feePercent: z.coerce.number().optional(),
     secretKey: z.string().optional(),
     description: z.string().optional(),
-    image: z.string(),
   })
   .strip();
 
@@ -59,7 +58,6 @@ export const PaymentUpdateRequestSchema = z.object({
   feePercent: z.number().optional(),
   secretKey: z.string().optional(),
   description: z.string().optional(),
-  image: z.string(),
 });
 
 export const PaymentUpdateStatusRequestSchema = z.object({

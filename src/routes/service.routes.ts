@@ -6,16 +6,23 @@ import {
   limitServiceAdd,
   limitServiceDelete,
 } from "../middleware/ratelimit/service.ratelimit";
+import { checkServiceLimit } from "../middleware/features";
 
 router.get("/", services.getServices);
-router.post("/", limitServiceAdd, authenticateAdmin, services.addService);
+router.post(
+  "/",
+  limitServiceAdd,
+  authenticateAdmin,
+  checkServiceLimit,
+  services.addService,
+);
 router.get("/admin", authenticateAdmin, services.getServicesForAdmins);
 router.get("/:providerId", authenticateAdmin, services.getServicesByProviderId);
 router.get("/:serviceId", services.getServiceByID);
 router.get(
   "/admin/:serviceId",
   authenticateAdmin,
-  services.getServiceByIDFromAdmin
+  services.getServiceByIDFromAdmin,
 );
 
 router.patch("/", authenticateAdmin, services.updateService);
@@ -23,13 +30,13 @@ router.delete(
   "/",
   authenticateAdmin,
   limitServiceDelete,
-  services.deleteService
+  services.deleteService,
 );
 router.delete(
   "/multiple",
   authenticateAdmin,
   limitServiceDelete,
-  services.deleteMultipleService
+  services.deleteMultipleService,
 );
 
 export default router;

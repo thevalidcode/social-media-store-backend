@@ -22,7 +22,7 @@ export const ProviderCreateRequestSchema = z.object({
   percentage: z.number(),
   image: z.string().url().optional(),
   apiKey: z.string(),
-  sync: z.boolean(),
+  sync: z.boolean().default(false),
 });
 
 export const ProviderUpdateRequestSchema = z.object({
@@ -31,7 +31,7 @@ export const ProviderUpdateRequestSchema = z.object({
   image: z.string().url(),
   percentage: z.number().optional(),
   apiKey: z.string(),
-  sync: z.boolean().optional(),
+  sync: z.boolean().default(false).optional(),
 });
 
 export const deleteMultipleProviderSchema = z.object({
@@ -49,26 +49,26 @@ export const ImportProviderServicesRequestSchema = z.object({
   importPercent: z
     .number()
     .describe(
-      "Percentage markup to apply on imported services (e.g., 15 for +15%)"
+      "Percentage markup to apply on imported services (e.g., 15 for +15%)",
     ),
   category: z
     .object({
       value: z
         .string()
         .describe(
-          "Category UID or internal identifier (e.g., createSameCategory, facebookLikes)"
+          "Category UID or internal identifier (e.g., createSameCategory, facebookLikes)",
         ),
       label: z
         .string()
         .describe(
-          "Human-readable category name  (e.g., Create Same Category or Facebook Likes)"
+          "Human-readable category name  (e.g., Create Same Category or Facebook Likes)",
         ),
     })
     .describe("Target category to group the imported services under"),
   provider: z
     .string()
     .describe(
-      "API base URL or identifier for the third-party provider (e.g., api.example.com/api/v2/)"
+      "API base URL or identifier for the third-party provider (e.g., api.example.com/api/v2/)",
     ),
 });
 

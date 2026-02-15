@@ -46,7 +46,7 @@ export const StoreDataSchema = z
     storeId: z.number().describe("Unique identifier for the store"),
     planId: z.number().describe("The plan id associated with the store"),
     features: SubscriptionPlanFeaturesSchema.describe(
-      "Key‑value map of store features"
+      "Key‑value map of store features",
     ),
     status: z.nativeEnum(StoreStatus).describe("The status of the store"),
     timestamp: z.string().describe("Timestamp when the store was created"),
@@ -69,6 +69,21 @@ export const StoreGeneralDataResponseSchema = z
     onboardingCompleted: z.boolean(),
     storeDescription: z.string(),
     defaultClientCurrency: z.string().length(3).toUpperCase(),
+
+    // Store Physical Address
+    storeStreet: z.string().optional(),
+    storeCity: z.string().optional(),
+    storeState: z.string().optional(),
+    storePostalCode: z.string().optional(),
+    storeCountry: z.string().optional(),
+    storePhone: z.string().optional(),
+
+    // Social Accounts
+    instagramUrl: z.string().optional(),
+    xUrl: z.string().optional(),
+    facebookUrl: z.string().optional(),
+    youtubeUrl: z.string().optional(),
+    tiktokUrl: z.string().optional(),
   })
   .strict()
   .openapi("General");
@@ -80,6 +95,21 @@ export const UpdateGeneralDataRequestSchema = z.object({
   showBanner: z.boolean().optional(),
   storeDescription: z.string().optional(),
   defaultClientCurrency: z.string().length(3).toUpperCase().optional(),
+
+  // Store Physical Address
+  storeStreet: z.string().optional(),
+  storeCity: z.string().optional(),
+  storeState: z.string().optional(),
+  storePostalCode: z.string().optional(),
+  storeCountry: z.string().optional(),
+  storePhone: z.string().optional(),
+
+  // Social Accounts
+  instagramUrl: z.string().optional(),
+  xUrl: z.string().optional(),
+  facebookUrl: z.string().optional(),
+  youtubeUrl: z.string().optional(),
+  tiktokUrl: z.string().optional(),
 });
 
 export const ExchangeRatesSchema = z
@@ -108,5 +138,5 @@ export const UpdateStylesRequestSchema = z
     }),
   })
   .strict();
-  
+
 export const storeIdSchema = z.object({ storeId: z.coerce.number() });

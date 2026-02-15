@@ -9,6 +9,7 @@ import { decryptKey } from "../utils/encrypt";
 import { Decimal } from "@prisma/client/runtime/client";
 import { Order } from "../../prisma/generated";
 import { env } from "../config/env.config";
+import { SubscriptionPlanFeatures } from "../schemas/store.schema";
 
 const agent = new https.Agent({
   keepAlive: true,
@@ -28,7 +29,7 @@ type ProviderOrderResult = {
 
 export const sendOrderToProvider = async (
   order: Order,
-  storeId: number
+  storeId: number,
 ): Promise<ProviderOrderResult> => {
   try {
     const orderSchema = placeOrderSchema.extend({ uid: z.string().uuid() });
@@ -46,7 +47,7 @@ export const sendOrderToProvider = async (
 
     if (!service) {
       throw new Error(
-        "Service or associated provider with order does not exist."
+        "Service or associated provider with order does not exist.",
       );
     }
 
@@ -73,8 +74,8 @@ export const sendOrderToProvider = async (
       convertCurrency(
         toDecimal(service.price).toNumber(),
         service.currency || "USD",
-        "USD"
-      )
+        "USD",
+      ),
     );
 
     let chargeUSD = new Decimal(0);
@@ -145,7 +146,7 @@ export const sendOrderToProvider = async (
               providerError: res.error,
               serviceId: service.id,
             },
-            storeId
+            storeId,
           );
         } catch (e: any) {
           console.error("Email error (failed order):", e.message);
@@ -233,7 +234,7 @@ export const sendOrderToProvider = async (
           userBalance: userFinalBalance,
           serviceId: service.id,
         },
-        storeId
+        storeId,
       );
     }
 
@@ -246,7 +247,7 @@ export const sendOrderToProvider = async (
 
 export const updateOrderStatus = async (
   orderUid: string,
-  storeId: number
+  storeId: number,
 ): Promise<void> => {
   try {
     const order = await prisma.order.findUnique({
@@ -279,7 +280,7 @@ export const updateOrderStatus = async (
         action: "status",
         order: order.providerOrderId,
       },
-      { httpsAgent: agent }
+      { httpsAgent: agent },
     );
 
     await prisma.order.update({
@@ -289,21 +290,21 @@ export const updateOrderStatus = async (
           resp.status === "In Progress"
             ? "ACTIVE"
             : resp.status === "Processing"
-            ? "PROCESSING"
-            : resp.status === "Completed"
-            ? "COMPLETED"
-            : resp.status === "Partial"
-            ? "PARTIAL"
-            : resp.status === "Canceled"
-            ? "CANCELED"
-            : order.status,
+              ? "PROCESSING"
+              : resp.status === "Completed"
+                ? "COMPLETED"
+                : resp.status === "Partial"
+                  ? "PARTIAL"
+                  : resp.status === "Canceled"
+                    ? "CANCELED"
+                    : order.status,
         providerCurrency: resp.currency?.toUpperCase(),
         providerPrice: toDecimal(
           convertCurrency(
             toDecimal(resp.charge).toNumber(),
             resp.currency?.toUpperCase(),
-            "USD"
-          )
+            "USD",
+          ),
         ),
       },
     });
@@ -351,7 +352,7 @@ export const sendUnsyncedOrders = async (): Promise<void> => {
 
 export const syncOrderDetails = async (
   orderData: Order,
-  storeId: number
+  storeId: number,
 ): Promise<boolean> => {
   try {
     const user = await prisma.user.findUnique({
@@ -389,7 +390,7 @@ export const syncOrderDetails = async (
 
     if (resp.status === "Canceled" && orderData.status !== "CANCELED") {
       const newBalance = toDecimal(user.balance).add(
-        toDecimal(orderData.price)
+        toDecimal(orderData.price),
       );
       await prisma.user.update({
         where: { uid: user.uid, storeId },
@@ -413,12 +414,12 @@ export const syncOrderDetails = async (
         convertCurrency(
           toDecimal(service.price).toNumber(),
           service.providerCurrency || "USD",
-          "USD"
-        ) || 0
+          "USD",
+        ) || 0,
       );
 
       const refunded = toDecimal(orderData.quantity).minus(
-        toDecimal(resp.remains)
+        toDecimal(resp.remains),
       );
       const totalPrice = toDecimal(resp.remains)
         .div(1000)
@@ -456,8 +457,8 @@ export const syncOrderDetails = async (
         convertCurrency(
           toDecimal(service.price).toNumber(),
           service.providerCurrency || "USD",
-          "USD"
-        ) || 0
+          "USD",
+        ) || 0,
       );
 
       if (orderData.status === "CANCELED") {
@@ -523,22 +524,22 @@ export const syncOrderDetails = async (
           resp.status === "In progress"
             ? "ACTIVE"
             : resp.status === "Processing"
-            ? "PROCESSING"
-            : resp.status === "Completed"
-            ? "COMPLETED"
-            : resp.status === "Partial"
-            ? "PARTIAL"
-            : resp.status === "Canceled"
-            ? "CANCELED"
-            : orderData.status,
+              ? "PROCESSING"
+              : resp.status === "Completed"
+                ? "COMPLETED"
+                : resp.status === "Partial"
+                  ? "PARTIAL"
+                  : resp.status === "Canceled"
+                    ? "CANCELED"
+                    : orderData.status,
         remains: safeInt(resp.remains),
         start: safeInt(resp.startCount),
         providerPrice: toDecimal(
           convertCurrency(
             toDecimal(resp.charge).toNumber(),
             resp.currency.toUpperCase(),
-            "USD"
-          )
+            "USD",
+          ),
         ),
         providerCurrency: resp.currency.toUpperCase(),
       },
@@ -591,6 +592,11 @@ export const processDripFeedOrders = async (): Promise<void> => {
           dripFeed: true,
         },
       });
+
+      const store = await prisma.store.findUnique({ where: { storeId } });
+
+      if (!store) continue;
+      const storeFeatures = store.features as SubscriptionPlanFeatures;
 
       for (const order of dripFeedOrders) {
         const processedRuns = order.processedRuns || 0;
@@ -688,7 +694,7 @@ export const processDripFeedOrders = async (): Promise<void> => {
           const newOrderData = {
             ...order,
             provider: service.provider?.url,
-            syncOrder: true,
+            syncOrder: storeFeatures.social_store_order_sync,
             providerOrderId: service.providerId,
             price,
             storeId,
@@ -709,14 +715,14 @@ export const processDripFeedOrders = async (): Promise<void> => {
           }
         } catch (err: any) {
           console.error(
-            `Error processing drip feed order [${order.uid}]: ${err.message}`
+            `Error processing drip feed order [${order.uid}]: ${err.message}`,
           );
         }
       }
     }
   } catch (error: any) {
     console.error(
-      `Error fetching or processing drip feed orders: ${error.message}`
+      `Error fetching or processing drip feed orders: ${error.message}`,
     );
   }
 };

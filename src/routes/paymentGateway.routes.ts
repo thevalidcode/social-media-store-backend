@@ -5,6 +5,7 @@ import {
   limitPaymentAdd,
   limitPaymentActions,
 } from "../middleware/ratelimit/paymentGateway.ratelimit";
+import { checkPaymentGatewayLimit } from "../middleware/features";
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ router.get("/admin", authenticateAdmin, paymentGateways.getPaymentGateways);
 router.get(
   "/admin/:uid",
   authenticateAdmin,
-  paymentGateways.getPaymentGatewayByUid
+  paymentGateways.getPaymentGatewayByUid,
 );
 
 router.get("/", authenticateUser, paymentGateways.getPaymentGatewaysForUser);
@@ -21,35 +22,36 @@ router.get("/", authenticateUser, paymentGateways.getPaymentGatewaysForUser);
 router.get(
   "/:uid",
   authenticateUser,
-  paymentGateways.getPaymentGatewayByUidForUser
+  paymentGateways.getPaymentGatewayByUidForUser,
 );
 
 router.post(
   "/",
   authenticateAdmin,
+  checkPaymentGatewayLimit,
   limitPaymentAdd,
-  paymentGateways.addPaymentGateway
+  paymentGateways.addPaymentGateway,
 );
 
 router.patch(
   "/",
   authenticateAdmin,
   limitPaymentActions,
-  paymentGateways.updatePaymentGateway
+  paymentGateways.updatePaymentGateway,
 );
 
 router.patch(
   "/status",
   authenticateAdmin,
   limitPaymentActions,
-  paymentGateways.updatePaymentGatewayStatus
+  paymentGateways.updatePaymentGatewayStatus,
 );
 
 router.delete(
   "/:uid",
   authenticateAdmin,
   limitPaymentActions,
-  paymentGateways.deletePaymentGateway
+  paymentGateways.deletePaymentGateway,
 );
 
 export default router;

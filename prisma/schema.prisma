@@ -162,7 +162,7 @@ model Order {
   timestamp          DateTime    @default(now())
   userUid            String      @map("user_uid")
   currency           String      @default("USD")
-  syncOrder          Boolean     @default(true) @map("sync_order")
+  syncOrder          Boolean     @default(false) @map("sync_order")
   synced             Boolean     @default(false)
   providerCurrency   String?     @map("provider_currency")
   providerPrice      Decimal?    @map("provider_price") @db.Decimal(10, 2)
@@ -371,7 +371,23 @@ model Setting {
   defaultClientCurrency String?  @map("default_client_currency")
   showBanner            Boolean? @default(true) @map("show_banner")
   onboardingCompleted   Boolean? @default(false) @map("onboarding_completed")
-  store                 Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  // Social Accounts
+  instagramUrl String?
+  facebookUrl  String?
+  youtubeUrl   String?
+  xUrl         String?
+  tiktokUrl    String?
+
+  // Store Physical Address
+  storeStreet     String? @map("store_street")
+  storeCity       String? @map("store_city")
+  storeState      String? @map("store_state")
+  storePostalCode String? @map("store_postal_code")
+  storeCountry    String? @map("store_country")
+  storePhone      String? @map("store_phone")
+
+  store Store @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@map("settings")
 }
@@ -394,7 +410,6 @@ model PaymentGateway {
   name          String
   description   String?
   secretKey     Json?                  @map("secret_key")
-  image         String
   createdAt     DateTime               @default(now()) @map("created_at")
   storeId       Int                    @map("store_id")
   min           Decimal                @db.Decimal(10, 2)

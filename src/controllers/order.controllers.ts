@@ -12,6 +12,7 @@ import { UserAuthSchema } from "../schemas/user.schema";
 import { AdminAuthSchema } from "../schemas/admin.schema";
 import { sendOrderToProvider } from "../providers/order.providers";
 import { Decimal } from "@prisma/client/runtime/client";
+import { SubscriptionPlanFeatures } from "../schemas/store.schema";
 
 const publicFields = {
   storeScopedId: true,
@@ -75,7 +76,7 @@ export const getOrders = async (req: Request, res: Response): Promise<void> => {
 
 export const getOrdersForAdmins = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   if (!authParsed.success) {
@@ -105,7 +106,7 @@ export const getOrdersForAdmins = async (
 
 export const getOrdersByStatus = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = getOrdersByStatusSchema.safeParse(req.params);
@@ -146,7 +147,7 @@ export const getOrdersByStatus = async (
 
 export const getUserOrdersByStatus = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = UserAuthSchema.safeParse(req.auth);
   const parsed = getOrdersByStatusSchema.safeParse(req.params);
@@ -183,7 +184,7 @@ export const getUserOrdersByStatus = async (
 
 export const getUserOrderByUid = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = UserAuthSchema.safeParse(req.auth);
   const { orderUid } = req.params;
@@ -218,7 +219,7 @@ export const getUserOrderByUid = async (
 
 export const getOrderByUid = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const { orderUid } = req.params;
@@ -257,7 +258,7 @@ export const getOrderByUid = async (
 
 export const placeOrder = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = UserAuthSchema.safeParse(req.auth);
   const parsed = placeOrderSchema.safeParse(req.body);
@@ -284,6 +285,7 @@ export const placeOrder = async (
         status: true,
         min: true,
         max: true,
+        store: true,
       },
     });
 
@@ -291,6 +293,8 @@ export const placeOrder = async (
       res.status(404).json({ error: "Service not found" });
       return;
     }
+
+    const storeFeatures = service.store.features as SubscriptionPlanFeatures;
 
     if (service.status !== "ACTIVE") {
       res.status(400).json({ error: "Service is not available" });
@@ -363,6 +367,7 @@ export const placeOrder = async (
             ...parsed.data,
             uid: uuidv4(),
             storeId,
+            syncOrder: storeFeatures.social_store_order_sync,
             storeScopedId: counter.orderCounter,
             price: orderPrice,
             userInitialBalance: userBalance,
@@ -389,7 +394,7 @@ export const placeOrder = async (
         maxWait: 5000,
         timeout: 10000,
         isolationLevel: "Serializable",
-      }
+      },
     );
 
     // Send to provider (outside transaction to avoid holding lock)
@@ -439,7 +444,7 @@ export const placeOrder = async (
 
 export const bulkCreateOrders = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = UserAuthSchema.safeParse(req.auth);
   const parsed = bulkCreateSchema.safeParse(req.body);
@@ -616,7 +621,7 @@ export const bulkCreateOrders = async (
         maxWait: 10000,
         timeout: 30000,
         isolationLevel: "Serializable",
-      }
+      },
     );
 
     // Send orders to provider (outside transaction)
@@ -684,7 +689,7 @@ export const bulkCreateOrders = async (
 
 export const updateOrder = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = updateOrderSchema.safeParse(req.body);
@@ -716,7 +721,7 @@ export const updateOrder = async (
 
 export const deleteOrder = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const { orderUid } = req.params;
@@ -741,7 +746,7 @@ export const deleteOrder = async (
 
 export const bulkUpdateOrderStatus = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = bulkStatusUpdateSchema.safeParse(req.body);
@@ -764,8 +769,8 @@ export const bulkUpdateOrderStatus = async (
         prisma.order.updateMany({
           where: { uid: update.uid, storeId },
           data: { status: update.status },
-        })
-      )
+        }),
+      ),
     );
 
     res.status(200).json({ success: "Bulk status update completed" });
