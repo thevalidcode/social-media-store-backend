@@ -12,7 +12,8 @@ const envSchema = z.object({
   DB_HOST: z.string().default("localhost"),
   MASTER_KEY: z.string(),
   JWT_SECRET: z.string(),
-  INTERNAL_SERVICE_JWT_SECRET: z.string(),
+  INTERNAL_SERVICE_USER_JWT_SECRET: z.string(),
+  INTERNAL_SERVICE_ADMIN_JWT_SECRET: z.string(),
   DATABASE_URL: z.string().url().default(""),
   SESSION_SECRET: z.string(),
   ADMIN_USERNAME: z.string(),
@@ -33,7 +34,7 @@ const parsed = envSchema.safeParse(process.env);
 if (!parsed.success) {
   console.error(
     "❌ Invalid environment variables:",
-    parsed.error.flatten().fieldErrors
+    parsed.error.flatten().fieldErrors,
   );
   process.exit(1);
 }

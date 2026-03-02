@@ -8,20 +8,40 @@ import {
   deleteBlogLimiter,
   deleteMultipleBlogsLimiter,
 } from "../middleware/ratelimit/blog.ratelimit";
+import { requireActiveSubscription } from "../middleware/subscription.middleware";
 
 // Public routes
 router.get("/", blogs.getBlogs);
 router.get("/:blogId", blogs.getBlogById);
 
 // Protected routes
-router.post("/", authenticateAdmin, addBlogLimiter, blogs.addBlog);
-router.patch("/", authenticateAdmin, updateBlogLimiter, blogs.updateBlog);
-router.delete("/", authenticateAdmin, deleteBlogLimiter, blogs.deleteBlog);
+router.post(
+  "/",
+  authenticateAdmin,
+  requireActiveSubscription,
+  addBlogLimiter,
+  blogs.addBlog,
+);
+router.patch(
+  "/",
+  authenticateAdmin,
+  requireActiveSubscription,
+  updateBlogLimiter,
+  blogs.updateBlog,
+);
+router.delete(
+  "/",
+  authenticateAdmin,
+  requireActiveSubscription,
+  deleteBlogLimiter,
+  blogs.deleteBlog,
+);
 router.delete(
   "/multiple",
   authenticateAdmin,
+  requireActiveSubscription,
   deleteMultipleBlogsLimiter,
-  blogs.deleteMultipleBlogs
+  blogs.deleteMultipleBlogs,
 );
 
 export default router;

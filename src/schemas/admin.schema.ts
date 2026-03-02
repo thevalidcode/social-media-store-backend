@@ -43,15 +43,15 @@ export const AuthenticateAdminResponseSchema = z.object({
 });
 
 export const internalTokenPayloadSchema = z.object({
-  serviceKey: z.string(),
-  service: z.enum(["social-media-store", "shop"]),
+  iss: z.literal("core"), // who issued
+  aud: z.enum(["core", "social-media-store", "shop"]), // who should receive
   uid: z.string().uuid(),
   storeId: z.number(),
 });
 
 export const internalAdminTokenPayloadSchema = z.object({
-  serviceKey: z.string(),
-  service: z.enum(["social-media-store", "shop"]),
+  iss: z.literal("core"), // who issued
+  aud: z.enum(["core", "social-media-store", "shop"]), // who should receive
 });
 
 export const AdminUpdateRequestSchema = z
