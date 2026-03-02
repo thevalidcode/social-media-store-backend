@@ -72,14 +72,14 @@ class SubscriptionService {
    * Generate internal service JWT token for authentication
    * @param adminUid - The admin user UID to include in the token
    */
-  private generateInternalToken(adminUid: string): string {
+  private generateInternalToken(adminUid: string, storeId: number): string {
     const payload = {
-      serviceKey: env.INTERNAL_SERVICE_JWT_SECRET,
-      service: "social-media-store",
+      storeId: storeId,
+      iss: "social-media-store",
       uid: adminUid,
     };
 
-    return jwt.sign(payload, env.INTERNAL_SERVICE_JWT_SECRET, {
+    return jwt.sign(payload, env.INTERNAL_SERVICE_USER_JWT_SECRET, {
       expiresIn: "5m",
     });
   }
@@ -111,7 +111,7 @@ class SubscriptionService {
       }
 
       // Generate internal token with admin UID
-      const token = this.generateInternalToken(admin.uid);
+      const token = this.generateInternalToken(admin.uid, storeId);
 
       // Fetch from Core API
       const response = await coreApiRequest<{ subscription: Subscription }>({
@@ -159,7 +159,7 @@ class SubscriptionService {
       }
 
       // Generate internal token with admin UID
-      const token = this.generateInternalToken(admin.uid);
+      const token = this.generateInternalToken(admin.uid, storeId);
 
       // Fetch from Core API
       const response = await coreApiRequest<{ store: StoreData }>({
@@ -203,9 +203,7 @@ class SubscriptionService {
    * @param storeId - The store ID to get admin UID from
    * Note: Core Platform now returns latest subscription regardless of status
    */
-  async getValidatedSubscription(
-    storeId: number,
-  ): Promise<{
+  async getValidatedSubscription(storeId: number): Promise<{
     valid: boolean;
     subscription: Subscription | null;
     reason?: string;
