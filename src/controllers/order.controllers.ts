@@ -293,7 +293,9 @@ export const placeOrder = async (
     const service = await prisma.service.findUnique({
       where: { uid: parsed.data.serviceUid, storeId },
       select: {
+        uid: true,
         price: true,
+        currency: true,
         type: true,
         status: true,
         min: true,
@@ -366,6 +368,15 @@ export const placeOrder = async (
         .toDecimalPlaces(2);
     }
 
+    // Validate that price is not zero or negative
+    if (orderPrice.lte(0)) {
+      res.status(400).json({
+        error:
+          "Invalid order price calculated. Service may not be properly configured.",
+      });
+      return;
+    }
+
     // Create order and deduct balance in single transaction
     const newOrder = await prisma.$transaction(
       async (tx) => {
@@ -404,17 +415,27 @@ export const placeOrder = async (
           },
         });
 
-        // Create order
+        // Create order - explicitly set fields to avoid any conflicts
         const order = await tx.order.create({
           data: {
-            ...parsed.data,
+            serviceUid: parsed.data.serviceUid,
+            quantity: parsed.data.quantity,
+            url: parsed.data.url,
+            comments: parsed.data.comments || "",
+            dripFeed: parsed.data.dripFeed || false,
+            interval: parsed.data.interval,
+            runs: parsed.data.runs,
+            userUid: user.uid,
             uid: uuidv4(),
             storeId,
             syncOrder: storeFeatures.social_store_order_sync,
             storeScopedId: counter.orderCounter,
             price: orderPrice,
+            currency: "USD",
             userInitialBalance: userBalance,
             userFinalBalance: finalBalance,
+            status: "PENDING",
+            synced: false,
           },
         });
 
@@ -425,6 +446,7 @@ export const placeOrder = async (
             storeId,
             userUid: user.uid,
             amount: orderPrice.neg(),
+            currency: "USD",
             type: "WALLET_DEBIT",
             description: `Order #${order.storeScopedId} - ${parsed.data.quantity} ${service.type}`,
             storeScopedId: counter.transactionCounter,
@@ -523,6 +545,7 @@ export const bulkCreateOrders = async (
       select: {
         uid: true,
         price: true,
+        currency: true,
         type: true,
         status: true,
         min: true,
@@ -569,6 +592,13 @@ export const bulkCreateOrders = async (
           .div(1000)
           .toDecimalPlaces(2);
       }
+
+      // Validate price is positive
+      // if (orderPrice.lte(0)) {
+      //   throw new Error(
+      //     `Invalid price calculated for service ${order.serviceUid}. Service may not be properly configured.`,
+      //   );
+      // }
 
       totalPrice = totalPrice.add(orderPrice);
 
@@ -637,8 +667,11 @@ export const bulkCreateOrders = async (
               storeId,
               storeScopedId: currentOrderId,
               price: orderData.calculatedPrice,
+              currency: "USD",
               userInitialBalance: userBalance,
               userFinalBalance: finalBalance,
+              status: "PENDING",
+              synced: false,
             },
           });
 
@@ -652,6 +685,7 @@ export const bulkCreateOrders = async (
             storeId,
             userUid: user.uid,
             amount: totalPrice.neg(),
+            currency: "USD",
             type: "WALLET_DEBIT",
             description: `Bulk order - ${ordersWithPrices.length} orders`,
             storeScopedId: counter.transactionCounter,

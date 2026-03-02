@@ -40,7 +40,7 @@ export const apiRequests = async (req: Request, res: Response) => {
       PROCESSING: "Processing",
       CANCELED: "Canceled",
       COMPLETED: "Completed",
-    }[status] || "Error");
+    })[status] || "Error";
 
   const mapRefillStatus = (status: string) =>
     ({
@@ -49,7 +49,7 @@ export const apiRequests = async (req: Request, res: Response) => {
       REJECTED: "Rejected",
       CANCELED: "Canceled",
       COMPLETED: "Completed",
-    }[status] || "Error");
+    })[status] || "Error";
 
   switch (action) {
     case "services": {
@@ -87,7 +87,7 @@ export const apiRequests = async (req: Request, res: Response) => {
 
       if (order) {
         const orderData = allOrders.find(
-          (o) => o.storeScopedId === Number(order)
+          (o) => o.storeScopedId === Number(order),
         );
         if (!orderData) {
           res.status(404).json({ error: "Order not found" });
@@ -138,7 +138,7 @@ export const apiRequests = async (req: Request, res: Response) => {
 
       if (refill) {
         const refillData = allRefills.find(
-          (r) => r.storeScopedId === Number(refill)
+          (r) => r.storeScopedId === Number(refill),
         );
         if (!refillData) {
           res.status(404).json({ error: "Refill not found" });
@@ -182,11 +182,18 @@ export const apiRequests = async (req: Request, res: Response) => {
         return;
       }
 
-      const costUSD = serviceData.price.div(1000).mul(quantity);
-      const costUserCurrency = await convertCurrency(
-        costUSD,
-        user.currency,
-        "USD"
+      // Calculate cost in service's currency first
+      const serviceCurrency = serviceData.currency || "USD";
+      const costInServiceCurrency = serviceData.price.div(1000).mul(quantity);
+
+      // Convert to USD for the order
+      const costUSD = new Decimal(
+        await convertCurrency(costInServiceCurrency, serviceCurrency, "USD"),
+      );
+
+      // Convert to user's currency for balance checking
+      const costUserCurrency = new Decimal(
+        await convertCurrency(costUSD, "USD", user.currency),
       );
 
       if (new Decimal(user.balance).lessThan(costUserCurrency)) {
@@ -195,14 +202,32 @@ export const apiRequests = async (req: Request, res: Response) => {
       }
 
       await prisma.$transaction(async (tx) => {
-        await tx.user.update({
+        const currentUser = await tx.user.findUnique({
           where: { uid: user.uid },
-          data: { balance: { decrement: costUserCurrency } },
+          select: { balance: true },
         });
 
-        const { orderCounter } = await tx.storeCounter.update({
+        if (!currentUser) {
+          throw new Error("User not found");
+        }
+
+        const userBalance = new Decimal(currentUser.balance);
+        const finalBalance = userBalance.sub(costUserCurrency);
+
+        await tx.user.update({
+          where: { uid: user.uid },
+          data: {
+            balance: finalBalance,
+            spent: { increment: costUserCurrency },
+          },
+        });
+
+        const counter = await tx.storeCounter.update({
           where: { storeId },
-          data: { orderCounter: { increment: 1 } },
+          data: {
+            orderCounter: { increment: 1 },
+            transactionCounter: { increment: 1 },
+          },
         });
 
         const order = await tx.order.create({
@@ -218,8 +243,25 @@ export const apiRequests = async (req: Request, res: Response) => {
             interval,
             price: costUSD,
             currency: "USD",
-            storeScopedId: orderCounter,
+            userInitialBalance: userBalance,
+            userFinalBalance: finalBalance,
+            storeScopedId: counter.orderCounter,
             synced: false,
+            status: "PENDING",
+          },
+        });
+
+        // Create transaction record
+        await tx.transaction.create({
+          data: {
+            uid: uuidv4(),
+            storeId,
+            userUid: user.uid,
+            amount: costUserCurrency.neg(),
+            type: "WALLET_DEBIT",
+            description: `Order #${order.storeScopedId} - ${quantity} units`,
+            storeScopedId: counter.transactionCounter,
+            currency: user.currency,
           },
         });
 
@@ -277,7 +319,7 @@ export const apiRequests = async (req: Request, res: Response) => {
         }
 
         const newRefill = await prisma.$transaction(() =>
-          createRefill(orderData)
+          createRefill(orderData),
         );
         res.json({ refill: newRefill.storeScopedId });
         return;
@@ -296,7 +338,7 @@ export const apiRequests = async (req: Request, res: Response) => {
 
           if (orderData) {
             const newRefill = await prisma.$transaction(() =>
-              createRefill(orderData)
+              createRefill(orderData),
             );
             refillResults.push({
               order: idNum,

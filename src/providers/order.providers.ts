@@ -720,22 +720,83 @@ export const processDripFeedOrders = async (): Promise<void> => {
             .mul(toDecimal(service.price))
             .toDecimalPlaces(2);
 
-          const newOrderData = {
-            ...order,
-            provider: service.provider?.url,
-            syncOrder: storeFeatures.social_store_order_sync,
-            providerOrderId: service.providerId,
-            price,
-            storeId,
-            dripFeed: undefined,
-            runs: undefined,
-            interval: undefined,
-            processedRuns: undefined,
-            lastRunTime: undefined,
-          };
+          const newOrder = await prisma.$transaction(async (tx) => {
+            // Get current user balance
+            const currentUser = await tx.user.findUnique({
+              where: { uid: user.uid },
+              select: { balance: true },
+            });
 
-          const newOrder = await prisma.order.create({
-            data: newOrderData,
+            if (!currentUser) {
+              throw new Error("User not found");
+            }
+
+            const userBalance = toDecimal(currentUser.balance);
+
+            // Check if user has sufficient balance
+            if (userBalance.lt(price)) {
+              throw new Error(
+                `Insufficient balance for drip feed order. Required: ${price}, Available: ${userBalance}`,
+              );
+            }
+
+            const finalBalance = userBalance.minus(price);
+
+            // Deduct balance
+            await tx.user.update({
+              where: { uid: user.uid },
+              data: {
+                balance: finalBalance,
+                spent: { increment: price },
+              },
+            });
+
+            // Increment counter
+            const counter = await tx.storeCounter.update({
+              where: { storeId },
+              data: {
+                orderCounter: { increment: 1 },
+                transactionCounter: { increment: 1 },
+              },
+            });
+
+            // Create order with explicit fields only
+            const createdOrder = await tx.order.create({
+              data: {
+                storeId,
+                storeScopedId: counter.orderCounter,
+                userUid: order.userUid,
+                serviceUid: order.serviceUid,
+                url: order.url,
+                quantity: order.quantity,
+                comments: order.comments || "",
+                price,
+                currency: "USD",
+                userInitialBalance: userBalance,
+                userFinalBalance: finalBalance,
+                provider: service.provider?.url,
+                providerOrderId: service.providerId,
+                syncOrder: storeFeatures.social_store_order_sync,
+                synced: false,
+                dripFeed: false,
+                status: "PENDING",
+              },
+            });
+
+            // Create transaction record
+            await tx.transaction.create({
+              data: {
+                storeId,
+                userUid: user.uid,
+                amount: price.neg(),
+                type: "WALLET_DEBIT",
+                description: `Drip Feed Order #${createdOrder.storeScopedId} - ${order.quantity} units`,
+                storeScopedId: counter.transactionCounter,
+                currency: "USD",
+              },
+            });
+
+            return createdOrder;
           });
 
           const result = await sendOrderToProvider(newOrder, storeId);
