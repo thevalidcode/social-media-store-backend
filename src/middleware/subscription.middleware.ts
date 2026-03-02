@@ -9,7 +9,7 @@ import type { SubscriptionPlanFeatures } from "../schemas/store.schema";
 export const requireActiveSubscription = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     // Get storeId from authenticated request
@@ -26,7 +26,7 @@ export const requireActiveSubscription = async (
 
     // Get store data from Core Platform (cached)
     const coreStore = await subscriptionService.getStoreData(storeId);
-    
+
     if (!coreStore) {
       res.status(403).json({
         error: "Active Subscription Required",
@@ -45,10 +45,8 @@ export const requireActiveSubscription = async (
     }
 
     // Get subscription data for store owner (cached)
-    const validation = await subscriptionService.getValidatedSubscription(
-      coreStore.ownerId,
-      storeId
-    );
+    const validation =
+      await subscriptionService.getValidatedSubscription(storeId);
 
     if (!validation.valid) {
       res.status(403).json({
@@ -84,7 +82,7 @@ export const requireActiveSubscription = async (
 export const checkSubscription = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const auth = (req as any).auth;
@@ -97,17 +95,15 @@ export const checkSubscription = async (
 
     // Get store data from Core Platform (cached)
     const coreStore = await subscriptionService.getStoreData(storeId);
-    
+
     if (!coreStore) {
       next();
       return;
     }
 
     // Get subscription data for store owner (cached)
-    const validation = await subscriptionService.getValidatedSubscription(
-      coreStore.ownerId,
-      storeId
-    );
+    const validation =
+      await subscriptionService.getValidatedSubscription(storeId);
 
     // Attach subscription info (even if invalid)
     (req as any).subscription = {
@@ -130,8 +126,15 @@ export const checkSubscription = async (
  * @param featureName - The name of the feature to check (e.g., "api_access", "custom_domain")
  * @param requireEnabled - Whether the feature must be enabled (true) or just present
  */
-export const requireFeature = (featureName: string, requireEnabled: boolean = true) => {
-  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const requireFeature = (
+  featureName: string,
+  requireEnabled: boolean = true,
+) => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
       // Get storeId from authenticated request
       const auth = (req as any).auth;
@@ -157,10 +160,8 @@ export const requireFeature = (featureName: string, requireEnabled: boolean = tr
       }
 
       // Get subscription data for store owner (cached)
-      const validation = await subscriptionService.getValidatedSubscription(
-        coreStore.ownerId,
-        storeId
-      );
+      const validation =
+        await subscriptionService.getValidatedSubscription(storeId);
 
       if (!validation.valid || !validation.subscription) {
         res.status(403).json({

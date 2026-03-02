@@ -45,7 +45,7 @@ const transporter = nodemailer.createTransport({
 function interpolate(template: string, variables: Record<string, any>): string {
   return template.replace(
     /\{\{(.*?)\}\}/g,
-    (_, key) => variables[key.trim()] ?? ""
+    (_, key) => variables[key.trim()] ?? "",
   );
 }
 
@@ -75,16 +75,14 @@ async function loadStoreSettings(storeId: number): Promise<StoreSettings> {
 
   // Get store data from Core Platform to get owner ID
   const coreStore = await subscriptionService.getStoreData(storeId);
-  
+
   if (!coreStore) {
     throw new Error(`Unable to verify store subscription`);
   }
 
   // Get subscription with plan features
-  const validation = await subscriptionService.getValidatedSubscription(
-    coreStore.ownerId,
-    storeId,
-  );
+  const validation =
+    await subscriptionService.getValidatedSubscription(storeId);
 
   if (!validation.valid || !validation.subscription?.plan?.features) {
     throw new Error(`Active subscription required for email notifications`);
@@ -138,7 +136,7 @@ export async function buildEmailTemplate(
   type: keyof EmailTemplateVars,
   data: Record<string, any>,
   storeSettings: StoreSettings,
-  storeId: number
+  storeId: number,
 ): Promise<{ subject: string; html: string }> {
   const template = await prisma.emailTemplate.findFirst({
     where: { type, storeId },
@@ -248,7 +246,7 @@ async function dispatchEmail({
 export async function sendEmailToAdmins(
   storeId: number,
   type: keyof EmailTemplateVars,
-  data: Record<string, any> = {}
+  data: Record<string, any> = {},
 ): Promise<void> {
   try {
     const storeSettings = await loadStoreSettings(storeId);
@@ -256,7 +254,7 @@ export async function sendEmailToAdmins(
       type,
       data,
       storeSettings,
-      storeId
+      storeId,
     );
 
     // Get admin emails for this store
@@ -292,7 +290,7 @@ export async function sendUserEmail(
   storeId: number,
   to: string,
   type: keyof EmailTemplateVars,
-  data: Record<string, any> = {}
+  data: Record<string, any> = {},
 ): Promise<void> {
   try {
     const storeSettings = await loadStoreSettings(storeId);
@@ -300,7 +298,7 @@ export async function sendUserEmail(
       type,
       data,
       storeSettings,
-      storeId
+      storeId,
     );
 
     // Determine sender email based on store_custom_emails feature
@@ -322,7 +320,7 @@ export async function sendEmail(
   to: string | undefined,
   type: string,
   data: Record<string, any>,
-  storeId: number
+  storeId: number,
 ): Promise<void> {
   // If no recipient specified, send to admins
   if (!to) {

@@ -594,9 +594,9 @@ export const processDripFeedOrders = async (): Promise<void> => {
         },
       });
 
-      const store = await prisma.store.findUnique({ 
+      const store = await prisma.store.findUnique({
         where: { storeId },
-        select: { storeId: true }
+        select: { storeId: true },
       });
 
       if (!store) continue;
@@ -605,12 +605,11 @@ export const processDripFeedOrders = async (): Promise<void> => {
       let storeFeatures: SubscriptionPlanFeatures | null = null;
       try {
         const coreStore = await subscriptionService.getStoreData(store.storeId);
-        
+
         if (!coreStore) continue;
 
         // Get subscription with plan features
         const validation = await subscriptionService.getValidatedSubscription(
-          coreStore.ownerId,
           store.storeId,
         );
 
@@ -621,7 +620,10 @@ export const processDripFeedOrders = async (): Promise<void> => {
         storeFeatures = validation.subscription.plan.features;
       } catch (error) {
         // If subscription service fails, skip this store
-        console.error(`Failed to fetch subscription for store ${storeId}:`, error);
+        console.error(
+          `Failed to fetch subscription for store ${storeId}:`,
+          error,
+        );
         continue;
       }
 

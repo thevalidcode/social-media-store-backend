@@ -326,7 +326,6 @@ export const placeOrder = async (
 
     // Get subscription with plan features
     const validation = await subscriptionService.getValidatedSubscription(
-      coreStore.ownerId,
       service.store.storeId,
     );
 

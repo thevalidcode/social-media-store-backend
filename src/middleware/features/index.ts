@@ -34,10 +34,8 @@ export async function checkPaymentGatewayLimit(
     }
 
     // Get subscription with features (cached)
-    const validation = await subscriptionService.getValidatedSubscription(
-      coreStore.ownerId,
-      storeId,
-    );
+    const validation =
+      await subscriptionService.getValidatedSubscription(storeId);
 
     if (!validation.valid || !validation.subscription) {
       res.status(403).json({
@@ -107,10 +105,8 @@ export async function checkServiceLimit(
     }
 
     // Get subscription with features (cached)
-    const validation = await subscriptionService.getValidatedSubscription(
-      coreStore.ownerId,
-      storeId,
-    );
+    const validation =
+      await subscriptionService.getValidatedSubscription(storeId);
 
     if (!validation.valid || !validation.subscription) {
       res.status(403).json({
@@ -203,10 +199,8 @@ export async function checkHidePlatformBanner(
     }
 
     // Get subscription with features (cached)
-    const validation = await subscriptionService.getValidatedSubscription(
-      coreStore.ownerId,
-      storeId,
-    );
+    const validation =
+      await subscriptionService.getValidatedSubscription(storeId);
 
     if (!validation.valid || !validation.subscription) {
       res.status(403).json({
@@ -283,10 +277,8 @@ export async function checkCustomBranding(
     }
 
     // Get subscription with features (cached)
-    const validation = await subscriptionService.getValidatedSubscription(
-      coreStore.ownerId,
-      storeId,
-    );
+    const validation =
+      await subscriptionService.getValidatedSubscription(storeId);
 
     if (!validation.valid || !validation.subscription) {
       res.status(403).json({
@@ -340,10 +332,8 @@ export async function checkAnalytics(
     }
 
     // Get subscription with features (cached)
-    const validation = await subscriptionService.getValidatedSubscription(
-      coreStore.ownerId,
-      storeId,
-    );
+    const validation =
+      await subscriptionService.getValidatedSubscription(storeId);
 
     if (!validation.valid || !validation.subscription) {
       res.status(403).json({
@@ -405,10 +395,8 @@ export async function checkServicesSync(
     }
 
     // Get subscription with features (cached)
-    const validation = await subscriptionService.getValidatedSubscription(
-      coreStore.ownerId,
-      storeId,
-    );
+    const validation =
+      await subscriptionService.getValidatedSubscription(storeId);
 
     if (!validation.valid || !validation.subscription) {
       res.status(403).json({
@@ -470,10 +458,8 @@ export async function checkOrdersSync(
     }
 
     // Get subscription with features (cached)
-    const validation = await subscriptionService.getValidatedSubscription(
-      coreStore.ownerId,
-      storeId,
-    );
+    const validation =
+      await subscriptionService.getValidatedSubscription(storeId);
 
     if (!validation.valid || !validation.subscription) {
       res.status(403).json({
