@@ -15,10 +15,7 @@ model Store {
   timestamp   DateTime    @default(now())
   status      StoreStatus
   description String?
-  expiresAt   DateTime?   @map("expires_at")
-  startedAt   DateTime?   @map("started_at")
   name        String
-  planId      Int
 
   Admin            Admin[]
   AdminEmail       AdminEmail[]

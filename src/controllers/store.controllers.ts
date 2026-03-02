@@ -28,7 +28,6 @@ export const getStoreData = async (
       where: { uid: domain, status: "ACTIVE" },
       select: {
         storeId: true,
-        planId: true,
         timestamp: true,
         name: true,
         description: true,

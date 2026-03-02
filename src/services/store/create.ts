@@ -69,7 +69,6 @@ export async function CreateStore(params: CreateStoreParams) {
           storeId,
           description: description || null,
           name,
-          planId,
           ssl: true,
         },
       });
