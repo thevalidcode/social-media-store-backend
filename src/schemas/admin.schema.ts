@@ -44,18 +44,14 @@ export const AuthenticateAdminResponseSchema = z.object({
 
 export const internalTokenPayloadSchema = z.object({
   serviceKey: z.string(),
-  type: z.literal("system", {
-    errorMap: () => ({ message: "Invalid value provided" }),
-  }),
+  service: z.enum(["social-media-store", "shop"]),
   uid: z.string().uuid(),
   storeId: z.number(),
 });
 
 export const internalAdminTokenPayloadSchema = z.object({
   serviceKey: z.string(),
-  type: z.literal("system", {
-    errorMap: () => ({ message: "Invalid value provided" }),
-  }),
+  service: z.enum(["social-media-store", "shop"]),
 });
 
 export const AdminUpdateRequestSchema = z

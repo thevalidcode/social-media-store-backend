@@ -1,0 +1,8 @@
+version: "3.9"
+
+services:
+  social-media-store-redis:
+    image: redis:8
+    container_name: social-media-store-redis
+    ports:
+      - "6380:6379"

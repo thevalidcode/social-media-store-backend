@@ -66,3 +66,7 @@ export const bulkStatusUpdateRefillSchema = z.object({
     })
   ),
 });
+
+export const RefillUidSchema = z.object({
+  refillUid: z.string().uuid(),
+});

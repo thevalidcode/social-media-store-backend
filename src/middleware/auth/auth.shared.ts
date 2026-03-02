@@ -60,14 +60,6 @@ export const verifyBrowserAuth = (req: Request, res: Response) => {
   }
 };
 
-// -----------------
-// Shared secrets map for services
-// -----------------
-const serviceSecrets: Record<string, string> = {
-  "core-platform": env.CORE_SERVICE_SECRET,
-  // "analytics": env.ANALYTICS_SERVICE_SECRET,
-};
-
 /**
  * 🔒 Internal User Authentication
  *
@@ -76,7 +68,7 @@ const serviceSecrets: Record<string, string> = {
  *
  * That user on the core platform is an admin to a specific store.
  *
- * Payload requires: `{ serviceKey, type: "system", uid, storeId }`
+ * Payload requires: `{ serviceKey, service, uid, storeId }`
  */
 export const verifyInternalUserAuth = (req: Request, res: Response) => {
   const authHeader = req.headers["authorization"] as string;
@@ -88,19 +80,8 @@ export const verifyInternalUserAuth = (req: Request, res: Response) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decodedUnverified = jwt.decode(token) as any;
-    if (!decodedUnverified?.serviceKey) {
-      res.status(401).json({ error: "Invalid token payload" });
-      return null;
-    }
+    const decoded = jwt.verify(token, env.INTERNAL_SERVICE_JWT_SECRET);
 
-    const serviceSecret = serviceSecrets[decodedUnverified.serviceKey];
-    if (!serviceSecret) {
-      res.status(401).json({ error: "Unknown service key" });
-      return null;
-    }
-
-    const decoded = jwt.verify(token, serviceSecret);
     const parsed = internalTokenPayloadSchema.safeParse(decoded);
 
     if (!parsed.success) {
@@ -108,7 +89,7 @@ export const verifyInternalUserAuth = (req: Request, res: Response) => {
       return null;
     }
 
-    return parsed.data; // { serviceKey, type, uid, storeId }
+    return parsed.data; // { serviceKey, service, uid, storeId }
   } catch {
     res.status(401).json({ error: "Invalid or expired token" });
     return null;
@@ -121,7 +102,7 @@ export const verifyInternalUserAuth = (req: Request, res: Response) => {
  * Used when **admins** of the core platform
  * need to fetch or manage **all stores** at once.
  *
- * Payload requires: `{ serviceKey, type: "system" }`
+ * Payload requires: `{ serviceKey, service }`
  * No `uid` or `storeId` is needed.
  */
 export const verifyInternalAdminAuth = (req: Request, res: Response) => {
@@ -134,19 +115,8 @@ export const verifyInternalAdminAuth = (req: Request, res: Response) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decodedUnverified = jwt.decode(token) as any;
-    if (!decodedUnverified?.serviceKey) {
-      res.status(401).json({ error: "Invalid token payload" });
-      return null;
-    }
+    const decoded = jwt.verify(token, env.INTERNAL_SERVICE_JWT_SECRET);
 
-    const serviceSecret = serviceSecrets[decodedUnverified.serviceKey];
-    if (!serviceSecret) {
-      res.status(401).json({ error: "Unknown service key" });
-      return null;
-    }
-
-    const decoded = jwt.verify(token, serviceSecret);
     const parsed = internalAdminTokenPayloadSchema.safeParse(decoded);
 
     if (!parsed.success) {
@@ -154,7 +124,7 @@ export const verifyInternalAdminAuth = (req: Request, res: Response) => {
       return null;
     }
 
-    return parsed.data; // { serviceKey, type }
+    return parsed.data; // { serviceKey, service }
   } catch {
     res.status(401).json({ error: "Invalid or expired token" });
     return null;

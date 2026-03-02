@@ -10,6 +10,7 @@ import {
   storeModifyRateLimit,
   storeRateLimit,
 } from "../middleware/ratelimit/store.ratelimit";
+import { requireActiveSubscription } from "../middleware/subscription.middleware";
 
 router.get("/data", storeRateLimit, stores.getStoreData);
 router.put(
@@ -25,15 +26,18 @@ router.get(
 router.patch(
   "/general-data",
   authenticateAdmin,
+  requireActiveSubscription,
   checkHidePlatformBanner,
   checkCustomBranding,
   stores.updateStoreGeneralData,
 );
+
 router.get("/:storeId/styles", storeRateLimit, stores.getStyles);
 router.patch(
   "/styles",
   storeModifyRateLimit,
   authenticateAdmin,
+  requireActiveSubscription,
   checkCustomBranding,
   stores.updateStoreStyles,
 );

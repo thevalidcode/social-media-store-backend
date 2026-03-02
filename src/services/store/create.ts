@@ -13,7 +13,7 @@ export function runStoreCreateCLI(domain: string): Promise<void> {
     exec(cmd, (error, stdout, stderr) => {
       if (error) {
         return reject(
-          new StoreError("CLI_ERROR", stderr || stdout || error.message)
+          new StoreError("CLI_ERROR", stderr || stdout || error.message),
         );
       }
 
@@ -33,7 +33,6 @@ export async function CreateStore(params: CreateStoreParams) {
     name,
     description,
     planId,
-    features = {},
     adminEmail,
     adminUsername,
     fullName,
@@ -58,7 +57,7 @@ export async function CreateStore(params: CreateStoreParams) {
       if (existingStore) {
         throw new StoreError(
           "DOMAIN_TAKEN",
-          "Store domain has already been used"
+          "Store domain has already been used",
         );
       }
 
@@ -69,7 +68,6 @@ export async function CreateStore(params: CreateStoreParams) {
           status: "DISABLED",
           storeId,
           description: description || null,
-          features,
           name,
           planId,
           ssl: true,

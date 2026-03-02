@@ -17,7 +17,6 @@ model Store {
   description String?
   expiresAt   DateTime?   @map("expires_at")
   startedAt   DateTime?   @map("started_at")
-  features    Json
   name        String
   planId      Int
 

@@ -10,6 +10,7 @@ import { Decimal } from "@prisma/client/runtime/client";
 import { Order } from "../../prisma/generated";
 import { env } from "../config/env.config";
 import { SubscriptionPlanFeatures } from "../schemas/store.schema";
+import { subscriptionService } from "../services/subscription.services";
 
 const agent = new https.Agent({
   keepAlive: true,
@@ -593,10 +594,36 @@ export const processDripFeedOrders = async (): Promise<void> => {
         },
       });
 
-      const store = await prisma.store.findUnique({ where: { storeId } });
+      const store = await prisma.store.findUnique({ 
+        where: { storeId },
+        select: { storeId: true }
+      });
 
       if (!store) continue;
-      const storeFeatures = store.features as SubscriptionPlanFeatures;
+
+      // Get store data from Core Platform to get owner ID
+      let storeFeatures: SubscriptionPlanFeatures | null = null;
+      try {
+        const coreStore = await subscriptionService.getStoreData(store.storeId);
+        
+        if (!coreStore) continue;
+
+        // Get subscription with plan features
+        const validation = await subscriptionService.getValidatedSubscription(
+          coreStore.ownerId,
+          store.storeId,
+        );
+
+        if (!validation.valid || !validation.subscription?.plan?.features) {
+          continue;
+        }
+
+        storeFeatures = validation.subscription.plan.features;
+      } catch (error) {
+        // If subscription service fails, skip this store
+        console.error(`Failed to fetch subscription for store ${storeId}:`, error);
+        continue;
+      }
 
       for (const order of dripFeedOrders) {
         const processedRuns = order.processedRuns || 0;

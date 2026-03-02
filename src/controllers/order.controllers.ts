@@ -7,12 +7,13 @@ import {
   bulkCreateSchema,
   bulkStatusUpdateSchema,
   getOrdersByStatusSchema,
+  OrderUidSchema,
 } from "../schemas/order.schema";
 import { UserAuthSchema } from "../schemas/user.schema";
 import { AdminAuthSchema } from "../schemas/admin.schema";
 import { sendOrderToProvider } from "../providers/order.providers";
 import { Decimal } from "@prisma/client/runtime/client";
-import { SubscriptionPlanFeatures } from "../schemas/store.schema";
+import { subscriptionService } from "../services/subscription.services";
 
 const publicFields = {
   storeScopedId: true,
@@ -187,13 +188,19 @@ export const getUserOrderByUid = async (
   res: Response,
 ): Promise<void> => {
   const authParsed = UserAuthSchema.safeParse(req.auth);
-  const { orderUid } = req.params;
+  const parsed = OrderUidSchema.safeParse(req.params);
 
-  if (!authParsed.success) {
-    res.status(400).json({ error: authParsed.error.flatten() });
+  if (!authParsed.success || !parsed.success) {
+    res.status(400).json({
+      error: {
+        ...authParsed.error?.flatten(),
+        ...parsed.error?.flatten(),
+      },
+    });
     return;
   }
 
+  const { orderUid } = parsed.data;
   const { storeId, user } = authParsed.data;
 
   try {
@@ -222,14 +229,20 @@ export const getOrderByUid = async (
   res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
-  const { orderUid } = req.params;
+  const parsed = OrderUidSchema.safeParse(req.params);
 
-  if (!authParsed.success) {
-    res.status(400).json({ error: authParsed.error.flatten() });
+  if (!authParsed.success || !parsed.success) {
+    res.status(400).json({
+      error: {
+        ...authParsed.error?.flatten(),
+        ...parsed.error?.flatten(),
+      },
+    });
     return;
   }
 
   const { storeId } = authParsed.data;
+  const { orderUid } = parsed.data;
 
   try {
     const order = await prisma.order.findFirst({
@@ -285,7 +298,11 @@ export const placeOrder = async (
         status: true,
         min: true,
         max: true,
-        store: true,
+        store: {
+          select: {
+            storeId: true,
+          },
+        },
       },
     });
 
@@ -294,7 +311,34 @@ export const placeOrder = async (
       return;
     }
 
-    const storeFeatures = service.store.features as SubscriptionPlanFeatures;
+    // Get store data from Core Platform to get owner ID
+    const coreStore = await subscriptionService.getStoreData(
+      service.store.storeId,
+    );
+
+    if (!coreStore) {
+      res.status(503).json({
+        error: "Service Unavailable",
+        message: "Unable to verify store subscription",
+      });
+      return;
+    }
+
+    // Get subscription with plan features
+    const validation = await subscriptionService.getValidatedSubscription(
+      coreStore.ownerId,
+      service.store.storeId,
+    );
+
+    if (!validation.valid || !validation.subscription?.plan?.features) {
+      res.status(403).json({
+        error: "Subscription Required",
+        message: "Active subscription required to place orders",
+      });
+      return;
+    }
+
+    const storeFeatures = validation.subscription.plan.features;
 
     if (service.status !== "ACTIVE") {
       res.status(400).json({ error: "Service is not available" });
@@ -693,18 +737,20 @@ export const updateOrder = async (
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = updateOrderSchema.safeParse(req.body);
-  const { orderUid } = req.params;
+  const parsedParams = OrderUidSchema.safeParse(req.params);
 
-  if (!parsed.success || !authParsed.success) {
+  if (!parsed.success || !authParsed.success || !parsedParams.success) {
     res.status(400).json({
       error: {
         ...parsed.error?.flatten(),
         ...authParsed.error?.flatten(),
+        ...parsedParams.error?.flatten(),
       },
     });
     return;
   }
 
+  const { orderUid } = parsedParams.data;
   const { storeId } = authParsed.data;
 
   try {
@@ -724,13 +770,16 @@ export const deleteOrder = async (
   res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
-  const { orderUid } = req.params;
+  const parsed = OrderUidSchema.safeParse(req.params);
 
-  if (!authParsed.success) {
-    res.status(400).json({ error: authParsed.error.flatten() });
+  if (!authParsed.success || !parsed.success) {
+    res.status(400).json({
+      error: { ...authParsed.error?.flatten(), ...parsed.error?.flatten() },
+    });
     return;
   }
 
+  const { orderUid } = parsed.data;
   const { storeId } = authParsed.data;
 
   try {

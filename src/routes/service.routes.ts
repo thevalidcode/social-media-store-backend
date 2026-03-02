@@ -7,12 +7,14 @@ import {
   limitServiceDelete,
 } from "../middleware/ratelimit/service.ratelimit";
 import { checkServiceLimit } from "../middleware/features";
+import { requireActiveSubscription } from "../middleware/subscription.middleware";
 
 router.get("/", services.getServices);
 router.post(
   "/",
   limitServiceAdd,
   authenticateAdmin,
+  requireActiveSubscription,
   checkServiceLimit,
   services.addService,
 );
@@ -25,16 +27,23 @@ router.get(
   services.getServiceByIDFromAdmin,
 );
 
-router.patch("/", authenticateAdmin, services.updateService);
+router.patch(
+  "/",
+  authenticateAdmin,
+  requireActiveSubscription,
+  services.updateService,
+);
 router.delete(
   "/",
   authenticateAdmin,
+  requireActiveSubscription,
   limitServiceDelete,
   services.deleteService,
 );
 router.delete(
   "/multiple",
   authenticateAdmin,
+  requireActiveSubscription,
   limitServiceDelete,
   services.deleteMultipleService,
 );

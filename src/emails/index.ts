@@ -6,6 +6,7 @@ import {
   DesignColors,
 } from "./components/EmailLayout";
 import { parse as parseDomain } from "tldts";
+import { subscriptionService } from "../services/subscription.services";
 
 interface DispatchEmailParams {
   from: string;
@@ -72,8 +73,25 @@ async function loadStoreSettings(storeId: number): Promise<StoreSettings> {
   const parsed = parseDomain(setting.store.uid);
   const domain = parsed.domain || setting.store.uid;
 
-  // Extract features from store
-  const features = (setting.store.features as any) || {};
+  // Get store data from Core Platform to get owner ID
+  const coreStore = await subscriptionService.getStoreData(storeId);
+  
+  if (!coreStore) {
+    throw new Error(`Unable to verify store subscription`);
+  }
+
+  // Get subscription with plan features
+  const validation = await subscriptionService.getValidatedSubscription(
+    coreStore.ownerId,
+    storeId,
+  );
+
+  if (!validation.valid || !validation.subscription?.plan?.features) {
+    throw new Error(`Active subscription required for email notifications`);
+  }
+
+  // Extract email notification features from subscription
+  const features = validation.subscription.plan.features;
   const storeEmailNotifications = features.store_email_notifications ?? false;
   const storeCustomEmails = features.store_custom_emails ?? false;
 

@@ -44,7 +44,7 @@ app.use(apiLimiter);
 app.use(express.urlencoded({ extended: true }));
 app.use(
   "/assets",
-  express.static(path.join(__dirname, "..", "public", "assets"))
+  express.static(path.join(__dirname, "..", "public", "assets")),
 );
 
 app.set("trust proxy", 1);
@@ -59,7 +59,7 @@ app.use(
       secure: env.NODE_ENV === "production",
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     },
-  })
+  }),
 );
 
 // --- Public Routes ---
@@ -86,10 +86,12 @@ app.use("/v1/transactions", cors(dynamicOrigin), transactionRouter);
 // Webhook Routes (no CORS - these are called by external services)
 app.use("/v1/webhooks", openCors, webhookRouter);
 
-// Internal Routes
-app.use("/internal", internalRouter);
-app.use("/v2", publicApiRoutes);
-app.use("/swagger", swaggerRouter);
+// Internal Routes (no CORS - these are called by internal services with JWT auth)
+app.use("/internal", openCors, internalRouter);
+
+// Swagger Docs
+app.use("/v2", openCors, publicApiRoutes);
+app.use("/swagger", openCors, swaggerRouter);
 
 // Auth Routes (this is for the auth.validpanel.com domain to handle OAuth)
 app.use("/api/auth/social-media-store", openCors, authRoutes);

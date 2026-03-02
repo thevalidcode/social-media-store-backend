@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../config/db.config";
 import { AdminAuthSchema } from "../../schemas/admin.schema";
-import { SubscriptionPlanFeaturesSchema } from "../../schemas/store.schema";
+import { subscriptionService } from "../../services/subscription.services";
+import type { SubscriptionPlanFeatures } from "../../schemas/store.schema";
 
 /**
  * Middleware to check if store can add more payment gateways
@@ -24,34 +25,37 @@ export async function checkPaymentGatewayLimit(
   const { storeId } = authParsed.data;
 
   try {
-    const [store, currentCount] = await Promise.all([
-      prisma.store.findUnique({
-        where: { storeId },
-        select: { features: true },
-      }),
-      prisma.paymentGateway.count({
-        where: { storeId, status: "ACTIVE" },
-      }),
-    ]);
+    // Get store data from Core Platform (cached)
+    const coreStore = await subscriptionService.getStoreData(storeId);
 
-    if (!store) {
+    if (!coreStore) {
       res.status(404).json({ error: "Store not found" });
       return;
     }
 
-    const featuresParsed = SubscriptionPlanFeaturesSchema.safeParse(
-      store.features,
+    // Get subscription with features (cached)
+    const validation = await subscriptionService.getValidatedSubscription(
+      coreStore.ownerId,
+      storeId,
     );
 
-    if (!featuresParsed.success) {
-      res.status(500).json({
-        error: "Invalid store features configuration",
-        details: featuresParsed.error.flatten(),
+    if (!validation.valid || !validation.subscription) {
+      res.status(403).json({
+        error: "Subscription Required",
+        message: "Active subscription required to add payment gateways",
       });
       return;
     }
 
-    const { payment_gateways } = featuresParsed.data;
+    const features: SubscriptionPlanFeatures =
+      validation.subscription.plan.features;
+
+    // Count current payment gateways
+    const currentCount = await prisma.paymentGateway.count({
+      where: { storeId, status: "ACTIVE" },
+    });
+
+    const { payment_gateways } = features;
 
     if (currentCount >= payment_gateways) {
       res.status(403).json({
@@ -94,34 +98,37 @@ export async function checkServiceLimit(
   const { storeId } = authParsed.data;
 
   try {
-    const [store, currentCount] = await Promise.all([
-      prisma.store.findUnique({
-        where: { storeId },
-        select: { features: true },
-      }),
-      prisma.service.count({
-        where: { storeId, status: "ACTIVE" },
-      }),
-    ]);
+    // Get store data from Core Platform (cached)
+    const coreStore = await subscriptionService.getStoreData(storeId);
 
-    if (!store) {
+    if (!coreStore) {
       res.status(404).json({ error: "Store not found" });
       return;
     }
 
-    const featuresParsed = SubscriptionPlanFeaturesSchema.safeParse(
-      store.features,
+    // Get subscription with features (cached)
+    const validation = await subscriptionService.getValidatedSubscription(
+      coreStore.ownerId,
+      storeId,
     );
 
-    if (!featuresParsed.success) {
-      res.status(500).json({
-        error: "Invalid store features configuration",
-        details: featuresParsed.error.flatten(),
+    if (!validation.valid || !validation.subscription) {
+      res.status(403).json({
+        error: "Subscription Required",
+        message: "Active subscription required to add services",
       });
       return;
     }
 
-    const { unlimited_products, products } = featuresParsed.data;
+    const features: SubscriptionPlanFeatures =
+      validation.subscription.plan.features;
+
+    // Count current services
+    const currentCount = await prisma.service.count({
+      where: { storeId, status: "ACTIVE" },
+    });
+
+    const { unlimited_products, products } = features;
 
     // If unlimited_services is true, allow
     if (unlimited_products) {
@@ -187,29 +194,32 @@ export async function checkHidePlatformBanner(
   }
 
   try {
-    const store = await prisma.store.findUnique({
-      where: { storeId },
-      select: { features: true },
-    });
+    // Get store data from Core Platform (cached)
+    const coreStore = await subscriptionService.getStoreData(storeId);
 
-    if (!store) {
+    if (!coreStore) {
       res.status(404).json({ error: "Store not found" });
       return;
     }
 
-    const featuresParsed = SubscriptionPlanFeaturesSchema.safeParse(
-      store.features,
+    // Get subscription with features (cached)
+    const validation = await subscriptionService.getValidatedSubscription(
+      coreStore.ownerId,
+      storeId,
     );
 
-    if (!featuresParsed.success) {
-      res.status(500).json({
-        error: "Invalid store features configuration",
-        details: featuresParsed.error.flatten(),
+    if (!validation.valid || !validation.subscription) {
+      res.status(403).json({
+        error: "Subscription Required",
+        message: "Active subscription required to modify banner settings",
       });
       return;
     }
 
-    const { hide_platform_banner } = featuresParsed.data;
+    const features: SubscriptionPlanFeatures =
+      validation.subscription.plan.features;
+
+    const { hide_platform_banner } = features;
 
     if (!hide_platform_banner) {
       res.status(403).json({
@@ -264,29 +274,32 @@ export async function checkCustomBranding(
   }
 
   try {
-    const store = await prisma.store.findUnique({
-      where: { storeId },
-      select: { features: true },
-    });
+    // Get store data from Core Platform (cached)
+    const coreStore = await subscriptionService.getStoreData(storeId);
 
-    if (!store) {
+    if (!coreStore) {
       res.status(404).json({ error: "Store not found" });
       return;
     }
 
-    const featuresParsed = SubscriptionPlanFeaturesSchema.safeParse(
-      store.features,
+    // Get subscription with features (cached)
+    const validation = await subscriptionService.getValidatedSubscription(
+      coreStore.ownerId,
+      storeId,
     );
 
-    if (!featuresParsed.success) {
-      res.status(500).json({
-        error: "Invalid store features configuration",
-        details: featuresParsed.error.flatten(),
+    if (!validation.valid || !validation.subscription) {
+      res.status(403).json({
+        error: "Subscription Required",
+        message: "Active subscription required to customize branding",
       });
       return;
     }
 
-    const { custom_branding } = featuresParsed.data;
+    const features: SubscriptionPlanFeatures =
+      validation.subscription.plan.features;
+
+    const { custom_branding } = features;
 
     if (!custom_branding) {
       res.status(403).json({
@@ -318,29 +331,32 @@ export async function checkAnalytics(
   const { storeId } = req.auth!;
 
   try {
-    const store = await prisma.store.findUnique({
-      where: { storeId },
-      select: { features: true },
-    });
+    // Get store data from Core Platform (cached)
+    const coreStore = await subscriptionService.getStoreData(storeId);
 
-    if (!store) {
+    if (!coreStore) {
       res.status(404).json({ error: "Store not found" });
       return;
     }
 
-    const featuresParsed = SubscriptionPlanFeaturesSchema.safeParse(
-      store.features,
+    // Get subscription with features (cached)
+    const validation = await subscriptionService.getValidatedSubscription(
+      coreStore.ownerId,
+      storeId,
     );
 
-    if (!featuresParsed.success) {
-      res.status(500).json({
-        error: "Invalid store features configuration",
-        details: featuresParsed.error.flatten(),
+    if (!validation.valid || !validation.subscription) {
+      res.status(403).json({
+        error: "Subscription Required",
+        message: "Active subscription required to access analytics",
       });
       return;
     }
 
-    const { analytics } = featuresParsed.data;
+    const features: SubscriptionPlanFeatures =
+      validation.subscription.plan.features;
+
+    const { analytics } = features;
 
     if (!analytics) {
       res.status(403).json({
@@ -380,29 +396,32 @@ export async function checkServicesSync(
   }
 
   try {
-    const store = await prisma.store.findUnique({
-      where: { storeId },
-      select: { features: true },
-    });
+    // Get store data from Core Platform (cached)
+    const coreStore = await subscriptionService.getStoreData(storeId);
 
-    if (!store) {
+    if (!coreStore) {
       res.status(404).json({ error: "Store not found" });
       return;
     }
 
-    const featuresParsed = SubscriptionPlanFeaturesSchema.safeParse(
-      store.features,
+    // Get subscription with features (cached)
+    const validation = await subscriptionService.getValidatedSubscription(
+      coreStore.ownerId,
+      storeId,
     );
 
-    if (!featuresParsed.success) {
-      res.status(500).json({
-        error: "Invalid store features configuration",
-        details: featuresParsed.error.flatten(),
+    if (!validation.valid || !validation.subscription) {
+      res.status(403).json({
+        error: "Subscription Required",
+        message: "Active subscription required to sync services",
       });
       return;
     }
 
-    const { social_store_service_sync } = featuresParsed.data;
+    const features: SubscriptionPlanFeatures =
+      validation.subscription.plan.features;
+
+    const { social_store_service_sync } = features;
 
     if (!social_store_service_sync) {
       res.status(403).json({
@@ -442,29 +461,32 @@ export async function checkOrdersSync(
   }
 
   try {
-    const store = await prisma.store.findUnique({
-      where: { storeId },
-      select: { features: true },
-    });
+    // Get store data from Core Platform (cached)
+    const coreStore = await subscriptionService.getStoreData(storeId);
 
-    if (!store) {
+    if (!coreStore) {
       res.status(404).json({ error: "Store not found" });
       return;
     }
 
-    const featuresParsed = SubscriptionPlanFeaturesSchema.safeParse(
-      store.features,
+    // Get subscription with features (cached)
+    const validation = await subscriptionService.getValidatedSubscription(
+      coreStore.ownerId,
+      storeId,
     );
 
-    if (!featuresParsed.success) {
-      res.status(500).json({
-        error: "Invalid store features configuration",
-        details: featuresParsed.error.flatten(),
+    if (!validation.valid || !validation.subscription) {
+      res.status(403).json({
+        error: "Subscription Required",
+        message: "Active subscription required to sync orders",
       });
       return;
     }
 
-    const { social_store_order_sync } = featuresParsed.data;
+    const features: SubscriptionPlanFeatures =
+      validation.subscription.plan.features;
+
+    const { social_store_order_sync } = features;
 
     if (!social_store_order_sync) {
       res.status(403).json({

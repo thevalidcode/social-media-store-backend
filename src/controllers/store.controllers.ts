@@ -7,12 +7,12 @@ import {
   UpdateStylesRequestSchema,
 } from "../schemas/store.schema";
 import { AdminAuthSchema } from "../schemas/admin.schema";
-import { coreApiRequest } from "../lib/apiClient";
 import { normalizeHost } from "../config/cors.config";
+import { subscriptionService } from "../services/subscription.services";
 
 export const getStoreData = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const domain =
     normalizeHost(req.headers.origin ?? "") ||
@@ -30,61 +30,70 @@ export const getStoreData = async (
         storeId: true,
         planId: true,
         timestamp: true,
-        features: true,
         name: true,
         description: true,
         status: true,
       },
     });
+
     if (!store) {
-      res.status(404).json({ error: "Store not found for the given domain" });
+      res
+        .status(404)
+        .json({ error: "Active Store not found for the given domain" });
       return;
     }
 
     try {
-      const subscriptionPlan = await coreApiRequest<{
-        features: unknown;
-      }>({
-        endpoint: `/subscription-plans/${store.planId}`,
-      });
+      // Get store data from Core Platform to get owner ID (cached)
+      const coreStore = await subscriptionService.getStoreData(store.storeId);
 
-      // Check if features is a valid JSON object
-      if (
-        subscriptionPlan.features &&
-        typeof subscriptionPlan.features === "object"
-      ) {
-        // Update store features in DB
-        await prisma.store.update({
-          where: { storeId: store.storeId },
-          data: { features: subscriptionPlan.features },
+      if (!coreStore) {
+        res.status(503).json({
+          error: "Service Unavailable",
+          message: "Unable to verify store subscription",
         });
-
-        // Return store with updated features
-        res.json({
-          ...store,
-          features: subscriptionPlan.features,
-        });
-      } else {
-        // If subscription plan features are invalid, return existing store features
-        res.json(store);
+        return;
       }
-    } catch (apiError: any) {
-      // If API call fails, return existing store features
-      console.warn(
-        "Warning: Failed to fetch subscription plan, using existing store features:",
-        apiError.message
+
+      // Get subscription with plan features (cached)
+      const validation = await subscriptionService.getValidatedSubscription(
+        store.storeId,
       );
-      res.json(store);
+
+      if (!validation.subscription?.plan?.features) {
+        res.status(503).json({
+          error: "Service Unavailable",
+          message: "Unable to fetch subscription details",
+        });
+        return;
+      }
+
+      // Return store with features and subscription details
+      res.json({
+        ...store,
+        features: validation.subscription.plan.features,
+        planName: validation.subscription.plan.name,
+        subscriptionStatus: validation.subscription.status,
+        startedAt: validation.subscription.startedAt,
+        createdAt: validation.subscription.createdAt,
+        expiresAt: validation.subscription.expiresAt,
+        gracePeriod: validation.subscription.plan.gracePeriod,
+        billingCycle: validation.subscription.billingCycle,
+      });
+    } catch (error: any) {
+      res.status(503).json({
+        error: "Service Unavailable",
+        message: "Unable to fetch subscription details",
+      });
     }
   } catch (err: any) {
-    console.error("Error fetching store data:", err);
     res.status(500).json({ error: "Failed to fetch store data." });
   }
 };
 
 export const getStoreGeneralData = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const parsed = StoreGeneralDataRequestSchema.safeParse(req.params);
   if (!parsed.success) {
@@ -108,14 +117,13 @@ export const getStoreGeneralData = async (
 
     res.json(generalData);
   } catch (err: any) {
-    console.error("Error fetching store general data:", err);
     res.status(500).json({ error: "Failed to fetch store general data." });
   }
 };
 
 export const updateStoreGeneralData = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const bodyParsed = UpdateGeneralDataRequestSchema.safeParse(req.body);
@@ -158,7 +166,6 @@ export const updateStoreGeneralData = async (
 
     res.json({ success: "Successfully updated the data." });
   } catch (err: any) {
-    console.error("Error updating store general data:", err);
     res.status(500).json({ error: "Failed to update store general data." });
   }
 };
@@ -177,14 +184,13 @@ export const getStyles = async (req: Request, res: Response): Promise<void> => {
 
     res.json(style || {});
   } catch (err: any) {
-    console.error("Error fetching store styles:", err);
     res.status(500).json({ error: "Failed to fetch store styles." });
   }
 };
 
 export const updateStoreStyles = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const bodyParsed = UpdateStylesRequestSchema.safeParse(req.body);
@@ -224,7 +230,7 @@ export const updateStoreStyles = async (
 
 export const getSiteData = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const parsed = storeIdSchema.safeParse(req.query);
   if (!parsed.success) {
@@ -238,14 +244,13 @@ export const getSiteData = async (
     const general = await prisma.setting.findFirst({ where: { storeId } });
     res.json(general || {});
   } catch (err: any) {
-    console.error("Error fetching site data:", err);
     res.status(500).json({ error: "Failed to fetch site data." });
   }
 };
 
 export const completeOnboarding = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const parsed = StoreGeneralDataRequestSchema.safeParse(req.params);
   if (!parsed.success) {

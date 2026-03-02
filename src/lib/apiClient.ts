@@ -4,10 +4,6 @@ import { env } from "../config/env.config";
 const apiClient = axios.create({
   baseURL: env.CORE_PLATFORM_BACKEND_URL,
   timeout: 15000,
-  headers: {
-    Origin: "https://validpanel.com",
-    "Content-Type": "application/json",
-  },
 });
 
 type ApiRequestOptions<TData = unknown> = {
@@ -40,7 +36,8 @@ export async function coreApiRequest<TResponse = any, TData = any>({
     const message =
       error?.response?.data?.message ||
       error?.response?.data?.error ||
-      error.message ||
+      error?.message ||
+      (typeof error === "string" ? error : JSON.stringify(error)) ||
       "API request failed";
 
     throw new Error(message);

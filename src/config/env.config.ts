@@ -12,7 +12,7 @@ const envSchema = z.object({
   DB_HOST: z.string().default("localhost"),
   MASTER_KEY: z.string(),
   JWT_SECRET: z.string(),
-  CORE_SERVICE_SECRET: z.string(),
+  INTERNAL_SERVICE_JWT_SECRET: z.string(),
   DATABASE_URL: z.string().url().default(""),
   SESSION_SECRET: z.string(),
   ADMIN_USERNAME: z.string(),
@@ -24,6 +24,7 @@ const envSchema = z.object({
   AWS_SECRET_ACCESS_KEY: z.string(),
   AWS_ACCESS_KEY_ID: z.string(),
   CORE_PLATFORM_BACKEND_URL: z.string().url(),
+  REDIS_URL: z.string().default("redis://localhost:6379"),
 });
 
 // Parse and validate

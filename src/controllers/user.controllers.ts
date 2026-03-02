@@ -26,7 +26,7 @@ import { normalizeHost } from "../config/cors.config";
 
 async function getNextStoreScopedId(
   storeId: number,
-  tx: Prisma.TransactionClient
+  tx: Prisma.TransactionClient,
 ): Promise<number> {
   const counter = await tx.storeCounter.upsert({
     where: { storeId },
@@ -75,7 +75,7 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
 
 export const createUser = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const parsed = CreateUserInputSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -137,7 +137,7 @@ export const createUser = async (
       const token = jwt.sign(
         { uid: newUser.uid, storeId, apiKey: newUser.apiKey },
         env.JWT_SECRET,
-        { expiresIn: "7d" }
+        { expiresIn: "7d" },
       );
 
       const csrfToken = crypto.randomBytes(32).toString("hex");
@@ -217,7 +217,7 @@ export const me = async (req: Request, res: Response): Promise<void> => {
       env.JWT_SECRET,
       {
         expiresIn: "7d",
-      }
+      },
     );
     const csrfToken = crypto.randomBytes(32).toString("hex");
 
@@ -250,7 +250,7 @@ export const me = async (req: Request, res: Response): Promise<void> => {
 
 export const getUserByUid = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const paramsSchema = UidSchema.safeParse(req.params);
   const parsed = UserAuthSchema.safeParse(req.auth);
@@ -295,17 +295,22 @@ export const getUserByUid = async (
 
 export const getAffiliateData = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
-  const { uid } = req.params;
+  const paramsSchema = UidSchema.safeParse(req.params);
   const parsed = UserAuthSchema.safeParse(req.auth);
 
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
+  if (!paramsSchema.success) {
+    res.status(400).json({ error: paramsSchema.error.flatten() });
+    return;
+  }
 
   const { storeId } = parsed.data;
+  const { uid } = paramsSchema.data;
 
   try {
     // Fetch user with referrals
@@ -324,7 +329,7 @@ export const getAffiliateData = async (
 
     // Active referrals (status = ACTIVE)
     const activeReferrals = user.referrals.filter(
-      (ref) => ref.status === "ACTIVE"
+      (ref) => ref.status === "ACTIVE",
     ).length;
 
     // Total earnings from referral credits
@@ -371,7 +376,7 @@ export const getAffiliateData = async (
 
 export const verifySession = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const parsed = VerifySessionCodeBodySchema.safeParse(req.body);
   if (!parsed.success) {
@@ -428,7 +433,7 @@ export const verifySession = async (
     env.JWT_SECRET,
     {
       expiresIn: "7d",
-    }
+    },
   );
   const csrfToken = crypto.randomBytes(32).toString("hex");
 
@@ -457,7 +462,7 @@ export const verifySession = async (
 
 export const deleteUser = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const parsed = DeleteUserSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -474,7 +479,7 @@ export const deleteUser = async (
 
 export const deleteUsers = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const parsed = DeleteUsersSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -491,7 +496,7 @@ export const deleteUsers = async (
 
 export const updateUser = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const parsed = UserUpdateRequestSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -533,7 +538,7 @@ export const updateUser = async (
 
 export const updateUserByAdmin = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const parsed = UpdateUserByAdminRequestSchema.safeParse(req.body);
   if (!parsed.success) {

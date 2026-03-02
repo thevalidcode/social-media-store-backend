@@ -10,12 +10,13 @@ import {
   getRefillsByStatusSchema,
   RefillPublicSchema,
   RefillSchema,
+  RefillUidSchema,
 } from "../schemas/refill.schema";
 import { AdminAuthSchema } from "../schemas/admin.schema";
 
 export const getRefills = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = UserAuthSchema.safeParse(req.auth);
   if (!authParsed.success) {
@@ -32,7 +33,7 @@ export const getRefills = async (
     });
 
     const parsedRefills = refills.map(
-      (r) => RefillPublicSchema.safeParse(r).data
+      (r) => RefillPublicSchema.safeParse(r).data,
     );
     res.status(200).json(parsedRefills);
   } catch (error: any) {
@@ -42,7 +43,7 @@ export const getRefills = async (
 
 export const getRefillsForAdmins = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   if (!authParsed.success) {
@@ -67,16 +68,24 @@ export const getRefillsForAdmins = async (
 
 export const getRefillById = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = UserAuthSchema.safeParse(req.auth);
-  const { refillUid } = req.params;
+  const paramsParsed = RefillUidSchema.safeParse(req.params);
 
-  if (!authParsed.success) {
-    res.status(400).json({ error: authParsed.error.flatten() });
+  if (!authParsed.success || !paramsParsed.success) {
+    res.status(400).json({
+      error: {
+        auth: !authParsed.success ? authParsed.error.flatten() : undefined,
+        params: !paramsParsed.success
+          ? paramsParsed.error.flatten()
+          : undefined,
+      },
+    });
     return;
   }
 
+  const { refillUid } = paramsParsed.data;
   const { storeId, type, user } = authParsed.data;
 
   try {
@@ -106,7 +115,7 @@ export const getRefillById = async (
 
 export const placeRefill = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = UserAuthSchema.safeParse(req.auth);
   const parsed = placeRefillSchema.safeParse(req.body);
@@ -158,22 +167,26 @@ export const placeRefill = async (
 
 export const updateRefill = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = updateRefillSchema.safeParse(req.body);
-  const { refillUid } = req.params;
+  const paramsParsed = RefillUidSchema.safeParse(req.params);
 
-  if (!authParsed.success || !parsed.success) {
+  if (!authParsed.success || !parsed.success || !paramsParsed.success) {
     res.status(400).json({
       error: {
         auth: !authParsed.success ? authParsed.error.flatten() : undefined,
         body: !parsed.success ? parsed.error.flatten() : undefined,
+        params: !paramsParsed.success
+          ? paramsParsed.error.flatten()
+          : undefined,
       },
     });
     return;
   }
 
+  const { refillUid } = paramsParsed.data;
   const { storeId } = authParsed.data;
 
   try {
@@ -190,16 +203,24 @@ export const updateRefill = async (
 
 export const deleteRefill = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
-  const { refillUid } = req.params;
+  const paramsParsed = RefillUidSchema.safeParse(req.params);
 
-  if (!authParsed.success) {
-    res.status(400).json({ error: authParsed.error.flatten() });
+  if (!authParsed.success || !paramsParsed.success) {
+    res.status(400).json({
+      error: {
+        auth: !authParsed.success ? authParsed.error.flatten() : undefined,
+        params: !paramsParsed.success
+          ? paramsParsed.error.flatten()
+          : undefined,
+      },
+    });
     return;
   }
 
+  const { refillUid } = paramsParsed.data;
   const { storeId } = authParsed.data;
 
   try {
@@ -215,7 +236,7 @@ export const deleteRefill = async (
 
 export const getRefillsByStatus = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = UserAuthSchema.safeParse(req.auth);
   const parsed = getRefillsByStatusSchema.safeParse(req.params);
@@ -256,7 +277,7 @@ export const getRefillsByStatus = async (
 
 export const bulkCreateRefills = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = UserAuthSchema.safeParse(req.auth);
   const parsed = bulkCreateRefillSchema.safeParse(req.body);
@@ -291,8 +312,8 @@ export const bulkCreateRefills = async (
             storeScopedId: baseCount + index + 1,
             userUid: user.uid,
           },
-        })
-      )
+        }),
+      ),
     );
 
     const uids = created.map((r) => r.uid);
@@ -304,7 +325,7 @@ export const bulkCreateRefills = async (
 
 export const bulkUpdateRefillStatus = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = bulkStatusUpdateRefillSchema.safeParse(req.body);
@@ -332,8 +353,8 @@ export const bulkUpdateRefillStatus = async (
           data: {
             status: update.status,
           },
-        })
-      )
+        }),
+      ),
     );
 
     res.status(200).json({ success: "Bulk status update completed" });

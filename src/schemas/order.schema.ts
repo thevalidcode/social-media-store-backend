@@ -93,3 +93,7 @@ export const bulkStatusUpdateSchema = z.object({
     })
   ),
 });
+
+export const OrderUidSchema = z.object({
+  orderUid: z.string().uuid(),
+});
