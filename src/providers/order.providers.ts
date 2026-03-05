@@ -284,19 +284,21 @@ export const updateOrderStatus = async (
       { httpsAgent: agent },
     );
 
+    const providerStatus = resp.status?.toLowerCase();
+
     await prisma.order.update({
       where: { uid: order.uid, storeId },
       data: {
         status:
-          resp.status === "In Progress"
+          providerStatus === "in progress" || providerStatus === "inprogress"
             ? "ACTIVE"
-            : resp.status === "Processing"
+            : providerStatus === "processing"
               ? "PROCESSING"
-              : resp.status === "Completed"
+              : providerStatus === "completed"
                 ? "COMPLETED"
-                : resp.status === "Partial"
+                : providerStatus === "partial"
                   ? "PARTIAL"
-                  : resp.status === "Canceled"
+                  : providerStatus === "canceled" || providerStatus === "cancelled"
                     ? "CANCELED"
                     : order.status,
         providerCurrency: resp.currency?.toUpperCase(),
@@ -389,7 +391,9 @@ export const syncOrderDetails = async (
       where: { uid: orderData.serviceUid, storeId },
     });
 
-    if (resp.status === "Canceled" && orderData.status !== "CANCELED") {
+    const providerStatus = resp.status?.toLowerCase();
+
+    if (providerStatus === "canceled" && orderData.status !== "CANCELED") {
       const newBalance = toDecimal(user.balance).add(
         toDecimal(orderData.price),
       );
@@ -406,7 +410,7 @@ export const syncOrderDetails = async (
       });
     }
 
-    if (resp.status === "Partial" && orderData.status !== "PARTIAL") {
+    if (providerStatus === "partial" && orderData.status !== "PARTIAL") {
       if (!service) {
         throw new Error("Service not found");
       }
@@ -414,7 +418,7 @@ export const syncOrderDetails = async (
       const pricePer1000 = toDecimal(
         convertCurrency(
           toDecimal(service.price).toNumber(),
-          service.providerCurrency || "USD",
+          service.currency || "USD",
           "USD",
         ) || 0,
       );
@@ -433,14 +437,14 @@ export const syncOrderDetails = async (
       const newBalance = toDecimal(user.balance).add(totalPrice);
 
       await prisma.user.update({
-        where: { uid: user.uid },
+        where: { uid: user.uid, storeId },
         data: {
           balance: newBalance,
           spent: { decrement: totalPrice },
         },
       });
       await prisma.order.update({
-        where: { uid: orderData.uid },
+        where: { uid: orderData.uid, storeId },
         data: {
           status: "PARTIAL",
           price: orderPrice,
@@ -449,7 +453,7 @@ export const syncOrderDetails = async (
       });
     }
 
-    if (resp.status === "Completed" && orderData.status !== "COMPLETED") {
+    if (providerStatus === "completed" && orderData.status !== "COMPLETED") {
       if (!service) {
         throw new Error("Service not found");
       }
@@ -457,7 +461,7 @@ export const syncOrderDetails = async (
       const pricePer1000 = toDecimal(
         convertCurrency(
           toDecimal(service.price).toNumber(),
-          service.providerCurrency || "USD",
+          service.currency || "USD",
           "USD",
         ) || 0,
       );
@@ -512,7 +516,7 @@ export const syncOrderDetails = async (
         });
       } else {
         await prisma.order.update({
-          where: { uid: orderData.uid },
+          where: { uid: orderData.uid, storeId },
           data: { status: "COMPLETED", remains: 0 },
         });
       }
@@ -522,15 +526,15 @@ export const syncOrderDetails = async (
       where: { uid: orderData.uid, storeId },
       data: {
         status:
-          resp.status === "In progress"
+          providerStatus === "in progress" || providerStatus === "inprogress"
             ? "ACTIVE"
-            : resp.status === "Processing"
+            : providerStatus === "processing"
               ? "PROCESSING"
-              : resp.status === "Completed"
+              : providerStatus === "completed"
                 ? "COMPLETED"
-                : resp.status === "Partial"
+                : providerStatus === "partial"
                   ? "PARTIAL"
-                  : resp.status === "Canceled"
+                  : providerStatus === "canceled" || providerStatus === "cancelled"
                     ? "CANCELED"
                     : orderData.status,
         remains: safeInt(resp.remains),
@@ -561,11 +565,17 @@ export const syncAllStoresOrderDetails = async () => {
     });
 
     for (const { storeId } of storeIds) {
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
       const syncedOrders = await prisma.order.findMany({
         where: {
           storeId,
           synced: true,
           syncOrder: true,
+          timestamp: {
+            gte: threeMonthsAgo,
+          },
         },
       });
 

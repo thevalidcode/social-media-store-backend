@@ -6,6 +6,7 @@ import { decryptKey } from "../utils/encrypt";
 import { v4 as uuidv4 } from "uuid";
 import { Decimal } from "@prisma/client/runtime/client";
 import { ServiceType } from "../../prisma/generated";
+import convertCurrency from "../utils/ConvertCurrency";
 
 export const agent = new https.Agent({
   keepAlive: true,
@@ -83,9 +84,15 @@ export const updateExistingServices = async (): Promise<void> => {
 
         const providerRate = toDecimal(liveSvc.rate);
         const pct = toDecimal(svc.percentage ?? 0);
-        const priceUSD = providerRate
+        const endPrice = providerRate
           .plus(providerRate.mul(pct).div(100))
           .toDecimalPlaces(2);
+
+        const finalPrice = await convertCurrency(
+          endPrice,
+          prov.currency,
+          "USD",
+        );
 
         updateOperations.push({
           uid: svc.uid,
@@ -96,7 +103,7 @@ export const updateExistingServices = async (): Promise<void> => {
                 : "DEFAULT",
             ) as ServiceType,
             providerPrice: providerRate,
-            price: priceUSD,
+            price: finalPrice,
             cancel: liveSvc.cancel,
             providerCurrency: prov.currency,
             network: liveSvc.network || "None",
@@ -237,6 +244,12 @@ export const syncServices = async (): Promise<void> => {
                   .plus(providerRate.mul(pct).div(100))
                   .toDecimalPlaces(2);
 
+                const finalPrice = await convertCurrency(
+                  endPrice,
+                  prov.currency,
+                  "USD",
+                );
+
                 const newService = await tx.service.create({
                   data: {
                     storeScopedId: serviceCounter.serviceCounter,
@@ -258,7 +271,7 @@ export const syncServices = async (): Promise<void> => {
                     status: "ACTIVE",
                     syncQuantity: true,
                     syncCatAndName: true,
-                    price: endPrice,
+                    price: finalPrice,
                     position: serviceCounter.serviceCounter,
                     cancel: s.cancel,
                     network: s.network || "None",

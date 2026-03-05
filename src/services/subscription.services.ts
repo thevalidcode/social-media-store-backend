@@ -115,7 +115,7 @@ class SubscriptionService {
 
       // Fetch from Core API
       const response = await coreApiRequest<{ subscription: Subscription }>({
-        endpoint: "/subscription",
+        endpoint: "/internal/subscription",
         method: "GET",
         headers: {
           authorization: `Bearer ${token}`,
@@ -163,7 +163,7 @@ class SubscriptionService {
 
       // Fetch from Core API
       const response = await coreApiRequest<{ store: StoreData }>({
-        endpoint: `/store?storeId=${storeId}`,
+        endpoint: `/internal/store?storeId=${storeId}`,
         method: "GET",
         headers: {
           authorization: `Bearer ${token}`,
