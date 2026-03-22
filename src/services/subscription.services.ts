@@ -15,6 +15,7 @@ export type SubscriptionStatus =
   | "FAILED"
   | "EXPIRED"
   | "TRIAL"
+  | "PAST_DUE"
   | "CANCELED";
 
 export type BillingInterval = "MONTHLY" | "YEARLY";
@@ -22,14 +23,9 @@ export type BillingInterval = "MONTHLY" | "YEARLY";
 export interface SubscriptionPlan {
   id: number;
   name: string;
-  price: string;
-  currency: string;
   description: string | null;
   status: string;
   features: SubscriptionPlanFeatures;
-  tax: number | null;
-  discountForAnnually: number | null;
-  interval: BillingInterval;
   createdAt: string;
   updatedAt: string;
   gracePeriod: number | null;
