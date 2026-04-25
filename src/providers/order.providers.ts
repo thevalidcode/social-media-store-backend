@@ -23,14 +23,118 @@ const toDecimal = (n: any, d = "0"): Decimal =>
 const safeInt = (n: any, d = 0): number =>
   Number.isFinite(+n) ? parseInt(n, 10) : d;
 
+function normalizeInternalStoreUid(providerUrl: string): string {
+  return providerUrl
+    .trim()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/$/, "")
+    .replace(/^api\./, "")
+    .replace(/\/v2\/?$/, "")
+    .split("/")[0];
+}
+
+function mapOrderStatusForProviderResponse(status: Order["status"]): string {
+  switch (status) {
+    case "ACTIVE":
+    case "PROCESSING":
+      return "processing";
+    case "COMPLETED":
+      return "completed";
+    case "PARTIAL":
+      return "partial";
+    case "CANCELED":
+      return "canceled";
+    default:
+      return "pending";
+  }
+}
+
+async function getInternalProviderOrderStatus(
+  providerUrl: string,
+  providerOrderId: number,
+) {
+  const sourceStoreUid = normalizeInternalStoreUid(providerUrl);
+  const sourceStore = await prisma.store.findFirst({
+    where: { uid: sourceStoreUid },
+    select: { storeId: true },
+  });
+
+  if (!sourceStore) {
+    throw new Error("INTERNAL_PROVIDER_STORE_NOT_FOUND");
+  }
+
+  const sourceOrder = await prisma.order.findFirst({
+    where: {
+      storeId: sourceStore.storeId,
+      OR: [{ storeScopedId: providerOrderId }, { id: providerOrderId }],
+    },
+    select: {
+      status: true,
+      remains: true,
+      start: true,
+      providerPrice: true,
+      providerCurrency: true,
+    },
+  });
+
+  if (!sourceOrder) {
+    throw new Error("INTERNAL_PROVIDER_ORDER_NOT_FOUND");
+  }
+
+  return {
+    status: mapOrderStatusForProviderResponse(sourceOrder.status),
+    remains: sourceOrder.remains,
+    startCount: sourceOrder.start,
+    charge: sourceOrder.providerPrice || 0,
+    currency: (sourceOrder.providerCurrency || "USD").toUpperCase(),
+  };
+}
+
+async function cancelInternalProviderOrder(
+  providerUrl: string,
+  providerOrderId: number,
+) {
+  const sourceStoreUid = normalizeInternalStoreUid(providerUrl);
+  const sourceStore = await prisma.store.findFirst({
+    where: { uid: sourceStoreUid },
+    select: { storeId: true },
+  });
+
+  if (!sourceStore) {
+    throw new Error("INTERNAL_PROVIDER_STORE_NOT_FOUND");
+  }
+
+  const sourceOrder = await prisma.order.findFirst({
+    where: {
+      storeId: sourceStore.storeId,
+      OR: [{ storeScopedId: providerOrderId }, { id: providerOrderId }],
+    },
+    select: { uid: true },
+  });
+
+  if (!sourceOrder) {
+    throw new Error("INTERNAL_PROVIDER_ORDER_NOT_FOUND");
+  }
+
+  await prisma.order.update({
+    where: { uid: sourceOrder.uid },
+    data: { status: "CANCELED" },
+  });
+}
+
 type ProviderOrderResult = {
   success?: string;
   error?: string;
 };
 
+interface SendOrderToProviderOptions {
+  skipBalanceDeduction?: boolean;
+}
+
 export const sendOrderToProvider = async (
   order: Order,
   storeId: number,
+  options: SendOrderToProviderOptions = {},
 ): Promise<ProviderOrderResult> => {
   try {
     const orderSchema = placeOrderSchema.extend({ uid: z.string().uuid() });
@@ -71,31 +175,41 @@ export const sendOrderToProvider = async (
     if (!user || !service || !provider)
       throw new Error("There's either no user, service or provider.");
 
-    const pricePer1000 = toDecimal(
-      convertCurrency(
-        toDecimal(service.price).toNumber(),
-        service.currency || "USD",
-        "USD",
-      ),
-    );
+    const userCurrency = (user.currency || "USD").toUpperCase();
+    const serviceCurrency = (service.currency || "USD").toUpperCase();
 
-    let chargeUSD = new Decimal(0);
+    const pricePer1000InUserCurrency =
+      serviceCurrency === userCurrency
+        ? toDecimal(service.price)
+        : new Decimal(
+            await convertCurrency(
+              toDecimal(service.price).toNumber(),
+              serviceCurrency,
+              userCurrency,
+            ),
+          );
+
+    let chargeInUserCurrency = new Decimal(0);
     if (service.type === "PACKAGE") {
-      chargeUSD = pricePer1000;
+      chargeInUserCurrency = pricePer1000InUserCurrency;
     } else {
       const quantity = toDecimal(orderData.quantity);
-      chargeUSD = quantity.div(1000).mul(pricePer1000);
+      chargeInUserCurrency = quantity.div(1000).mul(pricePer1000InUserCurrency);
     }
 
-    chargeUSD = chargeUSD.toDecimalPlaces(2);
+    chargeInUserCurrency = chargeInUserCurrency.toDecimalPlaces(2);
+
+    const skipBalanceDeduction = options.skipBalanceDeduction ?? false;
 
     const userBalance = toDecimal(user.balance);
-    if (userBalance.lt(chargeUSD)) {
+    if (!skipBalanceDeduction && userBalance.lt(chargeInUserCurrency)) {
       throw new Error("User has insufficient balance");
     }
 
     const userInitialBalance = userBalance;
-    const userFinalBalance = userBalance.minus(chargeUSD);
+    const userFinalBalance = skipBalanceDeduction
+      ? userBalance
+      : userBalance.minus(chargeInUserCurrency);
 
     const apiKeyData = provider.apiKey as {
       encrypted_key: string;
@@ -123,10 +237,12 @@ export const sendOrderToProvider = async (
     });
 
     if (res.error) {
-      await prisma.user.update({
-        where: { uid: user.uid },
-        data: { balance: userInitialBalance },
-      });
+      if (!skipBalanceDeduction) {
+        await prisma.user.update({
+          where: { uid: user.uid },
+          data: { balance: userInitialBalance },
+        });
+      }
 
       await prisma.order.update({
         where: { uid: orderData.uid },
@@ -167,33 +283,51 @@ export const sendOrderToProvider = async (
         },
       });
 
-      await tx.user.update({
-        where: { uid: user.uid },
-        data: {
-          balance: userFinalBalance,
-          spent: { increment: chargeUSD },
-        },
-      });
+      if (!skipBalanceDeduction) {
+        await tx.user.update({
+          where: { uid: user.uid },
+          data: {
+            balance: userFinalBalance,
+            spent: { increment: chargeInUserCurrency },
+          },
+        });
+      }
 
       await tx.order.update({
         where: { uid: orderData.uid, storeId },
         data: {
           providerOrderId: safeInt(res.order),
           provider: provider.url,
-          price: chargeUSD,
+          price: chargeInUserCurrency,
           synced: true,
           storeScopedId: counter.orderCounter,
         },
       });
 
-      if (user.ref && affiliate) {
+      if (!skipBalanceDeduction && user.ref && affiliate) {
         const refUser = await tx.user.findUnique({
           where: { id: user.ref, storeId },
         });
         const percent = affiliate.percent || 0;
 
         if (refUser) {
-          const earned = chargeUSD.mul(percent).div(100).toDecimalPlaces(2);
+          const earnedInOrderCurrency = chargeInUserCurrency
+            .mul(percent)
+            .div(100)
+            .toDecimalPlaces(2);
+
+          const refCurrency = (refUser.currency || "USD").toUpperCase();
+          const earned =
+            refCurrency === userCurrency
+              ? earnedInOrderCurrency
+              : new Decimal(
+                  await convertCurrency(
+                    earnedInOrderCurrency.toNumber(),
+                    userCurrency,
+                    refCurrency,
+                  ),
+                );
+
           const newRefBalance = toDecimal(refUser.balance).add(earned);
 
           await tx.user.update({
@@ -203,7 +337,7 @@ export const sendOrderToProvider = async (
 
           await tx.referralOrder.create({
             data: {
-              price: chargeUSD,
+              price: chargeInUserCurrency,
               username: user.username,
               refId: user.ref,
               storeScopedId: counter.referralOrderCounter,
@@ -216,7 +350,7 @@ export const sendOrderToProvider = async (
               description: "Referral commission earned",
               type: "REFERRAL_CREDIT",
               amount: earned,
-              currency: "USD",
+              currency: refCurrency,
               storeScopedId: counter.transactionCounter,
               userUid: user.uid,
               storeId,
@@ -266,23 +400,36 @@ export const updateOrderStatus = async (
       where: { url: order.provider, storeId },
     });
     if (!provider) return;
+    if (!order.providerOrderId) return;
 
-    const apiKeyData = provider.apiKey as {
-      encrypted_key: string;
-      iv: string;
-    };
+    const resp = provider.isInternal
+      ? await getInternalProviderOrderStatus(
+          order.provider,
+          order.providerOrderId,
+        )
+      : await (async () => {
+          const apiKeyData = provider.apiKey as {
+            encrypted_key: string;
+            iv: string;
+          };
 
-    const decryptedKey = decryptKey(apiKeyData.encrypted_key, apiKeyData.iv);
+          const decryptedKey = decryptKey(
+            apiKeyData.encrypted_key,
+            apiKeyData.iv,
+          );
 
-    const { data: resp } = await axios.post(
-      `https://${order.provider}`,
-      {
-        key: decryptedKey,
-        action: "status",
-        order: order.providerOrderId,
-      },
-      { httpsAgent: agent },
-    );
+          const { data } = await axios.post(
+            `https://${order.provider}`,
+            {
+              key: decryptedKey,
+              action: "status",
+              order: order.providerOrderId,
+            },
+            { httpsAgent: agent },
+          );
+
+          return data;
+        })();
 
     const providerStatus = resp.status?.toLowerCase();
 
@@ -298,21 +445,111 @@ export const updateOrderStatus = async (
                 ? "COMPLETED"
                 : providerStatus === "partial"
                   ? "PARTIAL"
-                  : providerStatus === "canceled" || providerStatus === "cancelled"
+                  : providerStatus === "canceled" ||
+                      providerStatus === "cancelled"
                     ? "CANCELED"
                     : order.status,
         providerCurrency: resp.currency?.toUpperCase(),
-        providerPrice: toDecimal(
-          convertCurrency(
-            toDecimal(resp.charge).toNumber(),
-            resp.currency?.toUpperCase(),
-            "USD",
-          ),
-        ),
+        providerPrice: toDecimal(resp.charge),
       },
     });
   } catch (err: any) {
     console.error("Error updating order status:", err.message);
+  }
+};
+
+export const requestCancelationFromProvider = async (
+  order: Order,
+  storeId: number,
+  cancelUid?: string,
+): Promise<void> => {
+  try {
+    if (!order.provider || !order.providerOrderId) {
+      throw new Error("Provider information is missing");
+    }
+
+    const provider = await prisma.provider.findFirst({
+      where: { url: order.provider, storeId },
+    });
+
+    if (!provider) {
+      throw new Error("Provider not found");
+    }
+
+    if (provider.isInternal) {
+      await cancelInternalProviderOrder(order.provider, order.providerOrderId);
+
+      if (cancelUid) {
+        await prisma.cancel.update({
+          where: { uid: cancelUid },
+          data: { status: "COMPLETED" },
+        });
+      }
+
+      await prisma.order.update({
+        where: { uid: order.uid, storeId },
+        data: { status: "CANCELED" },
+      });
+      return;
+    }
+
+    const apiKeyData = provider.apiKey as {
+      encrypted_key: string;
+      iv: string;
+    };
+
+    const decryptedKey = decryptKey(apiKeyData.encrypted_key, apiKeyData.iv);
+
+    const { data: resp } = await axios.post(
+      `https://${order.provider}`,
+      {
+        key: decryptedKey,
+        action: "cancel",
+        orders: order.providerOrderId.toString(),
+      },
+      { httpsAgent: agent },
+    );
+
+    // Response is an array of cancel operations
+    if (Array.isArray(resp)) {
+      const cancelResult = resp.find(
+        (r: any) => r.order === order.providerOrderId,
+      );
+
+      if (cancelResult) {
+        if (cancelResult.cancel?.error) {
+          // Mark cancellation as ERROR
+          if (cancelUid) {
+            await prisma.cancel.update({
+              where: { uid: cancelUid },
+              data: {
+                status: "ERROR",
+                providerError: cancelResult.cancel.error,
+              },
+            });
+          }
+        } else if (cancelResult.cancel === 1) {
+          // Cancel request was successfully created on provider side
+          // Mark cancellation as COMPLETED (means the provider accepted the cancel request)
+          if (cancelUid) {
+            await prisma.cancel.update({
+              where: { uid: cancelUid },
+              data: { status: "COMPLETED" },
+            });
+          }
+
+          // Update order status to CANCELED
+          await prisma.order.update({
+            where: { uid: order.uid, storeId },
+            data: { status: "CANCELED" },
+          });
+        }
+      }
+    }
+  } catch (err: any) {
+    console.error("Error requesting cancellation from provider:", err.message);
+    // If there's an error, mark cancellation as ERROR
+    // This will be handled by the controller
   }
 };
 
@@ -370,22 +607,33 @@ export const syncOrderDetails = async (
     });
     if (!provider) return false;
 
-    const url = `${orderData.provider}`;
+    const resp = provider.isInternal
+      ? await getInternalProviderOrderStatus(
+          orderData.provider,
+          orderData.providerOrderId || 0,
+        )
+      : await (async () => {
+          const url = `${orderData.provider}`;
 
-    const apiKeyData = provider.apiKey as {
-      encrypted_key: string;
-      iv: string;
-    };
+          const apiKeyData = provider.apiKey as {
+            encrypted_key: string;
+            iv: string;
+          };
 
-    const decryptedKey = decryptKey(apiKeyData.encrypted_key, apiKeyData.iv);
-    const data = {
-      key: decryptedKey,
-      action: "status",
-      order: orderData.providerOrderId,
-    };
-    const { data: resp } = await axios.post(`https://${url}`, data, {
-      httpsAgent: agent,
-    });
+          const decryptedKey = decryptKey(
+            apiKeyData.encrypted_key,
+            apiKeyData.iv,
+          );
+          const data = {
+            key: decryptedKey,
+            action: "status",
+            order: orderData.providerOrderId,
+          };
+          const { data: response } = await axios.post(`https://${url}`, data, {
+            httpsAgent: agent,
+          });
+          return response;
+        })();
 
     const service = await prisma.service.findUnique({
       where: { uid: orderData.serviceUid, storeId },
@@ -415,25 +663,12 @@ export const syncOrderDetails = async (
         throw new Error("Service not found");
       }
 
-      const pricePer1000 = toDecimal(
-        convertCurrency(
-          toDecimal(service.price).toNumber(),
-          service.currency || "USD",
-          "USD",
-        ) || 0,
-      );
-
-      const refunded = toDecimal(orderData.quantity).minus(
-        toDecimal(resp.remains),
-      );
-      const totalPrice = toDecimal(resp.remains)
-        .div(1000)
-        .mul(pricePer1000)
-        .toDecimalPlaces(2);
-      const orderPrice = refunded
-        .div(1000)
-        .mul(pricePer1000)
-        .toDecimalPlaces(2);
+      const fullOrderPrice = toDecimal(orderData.price);
+      const remains = toDecimal(resp.remains);
+      const quantity = toDecimal(orderData.quantity || 1);
+      const refundedPortion = remains.div(quantity);
+      const totalPrice = fullOrderPrice.mul(refundedPortion).toDecimalPlaces(2);
+      const orderPrice = fullOrderPrice.minus(totalPrice).toDecimalPlaces(2);
       const newBalance = toDecimal(user.balance).add(totalPrice);
 
       await prisma.user.update({
@@ -458,19 +693,8 @@ export const syncOrderDetails = async (
         throw new Error("Service not found");
       }
 
-      const pricePer1000 = toDecimal(
-        convertCurrency(
-          toDecimal(service.price).toNumber(),
-          service.currency || "USD",
-          "USD",
-        ) || 0,
-      );
-
       if (orderData.status === "CANCELED") {
-        const totalPrice = toDecimal(orderData.quantity)
-          .div(1000)
-          .mul(pricePer1000)
-          .toDecimalPlaces(2);
+        const totalPrice = toDecimal(orderData.price).toDecimalPlaces(2);
         const newBalance = toDecimal(user.balance).minus(totalPrice);
 
         await prisma.user.update({
@@ -489,14 +713,12 @@ export const syncOrderDetails = async (
           },
         });
       } else if (orderData.status === "PARTIAL") {
-        const originalPrice = toDecimal(orderData.quantity)
-          .div(1000)
-          .mul(pricePer1000)
-          .toDecimalPlaces(2);
-        const refundPrice = toDecimal(resp.remains)
-          .div(1000)
-          .mul(pricePer1000)
-          .toDecimalPlaces(2);
+        const originalPrice = toDecimal(orderData.price).toDecimalPlaces(2);
+        const refundPrice = new Decimal(orderData.quantity || 0).gt(0)
+          ? toDecimal(orderData.price)
+              .mul(toDecimal(resp.remains).div(toDecimal(orderData.quantity)))
+              .toDecimalPlaces(2)
+          : new Decimal(0);
         const newBalance = toDecimal(user.balance).minus(refundPrice);
 
         await prisma.user.update({
@@ -534,18 +756,13 @@ export const syncOrderDetails = async (
                 ? "COMPLETED"
                 : providerStatus === "partial"
                   ? "PARTIAL"
-                  : providerStatus === "canceled" || providerStatus === "cancelled"
+                  : providerStatus === "canceled" ||
+                      providerStatus === "cancelled"
                     ? "CANCELED"
                     : orderData.status,
         remains: safeInt(resp.remains),
         start: safeInt(resp.startCount),
-        providerPrice: toDecimal(
-          convertCurrency(
-            toDecimal(resp.charge).toNumber(),
-            resp.currency.toUpperCase(),
-            "USD",
-          ),
-        ),
+        providerPrice: toDecimal(resp.charge),
         providerCurrency: resp.currency.toUpperCase(),
       },
     });
@@ -682,7 +899,21 @@ export const processDripFeedOrders = async (): Promise<void> => {
             });
 
             if (refUser) {
-              const earned = order.price.mul(percentage).div(100);
+              const earnedInOrderCurrency = order.price
+                .mul(percentage)
+                .div(100);
+              const orderCurrency = (order.currency || "USD").toUpperCase();
+              const refCurrency = (refUser.currency || "USD").toUpperCase();
+              const earned =
+                orderCurrency === refCurrency
+                  ? earnedInOrderCurrency
+                  : new Decimal(
+                      await convertCurrency(
+                        earnedInOrderCurrency.toNumber(),
+                        orderCurrency,
+                        refCurrency,
+                      ),
+                    );
               const newBalance = refUser.balance.add(earned);
 
               await prisma.$transaction(async (tx) => {
@@ -713,7 +944,7 @@ export const processDripFeedOrders = async (): Promise<void> => {
                     description: "Referral commission earned",
                     type: "REFERRAL_CREDIT",
                     amount: earned,
-                    currency: "USD",
+                    currency: refCurrency,
                     userUid: user.uid,
 
                     storeScopedId: counter.transactionCounter,
@@ -725,10 +956,26 @@ export const processDripFeedOrders = async (): Promise<void> => {
           }
 
           // 🆕 Create new order from drip feed
-          const price = toDecimal(order.quantity)
-            .div(1000)
-            .mul(toDecimal(service.price))
-            .toDecimalPlaces(2);
+          const serviceCurrency = (service.currency || "USD").toUpperCase();
+          const userCurrency = (user.currency || "USD").toUpperCase();
+          const basePriceInServiceCurrency =
+            service.type === "PACKAGE"
+              ? toDecimal(service.price)
+              : toDecimal(order.quantity)
+                  .div(1000)
+                  .mul(toDecimal(service.price))
+                  .toDecimalPlaces(2);
+
+          const price =
+            serviceCurrency === userCurrency
+              ? basePriceInServiceCurrency
+              : new Decimal(
+                  await convertCurrency(
+                    basePriceInServiceCurrency.toNumber(),
+                    serviceCurrency,
+                    userCurrency,
+                  ),
+                );
 
           const newOrder = await prisma.$transaction(async (tx) => {
             // Get current user balance
@@ -781,7 +1028,7 @@ export const processDripFeedOrders = async (): Promise<void> => {
                 quantity: order.quantity,
                 comments: order.comments || "",
                 price,
-                currency: "USD",
+                currency: userCurrency,
                 userInitialBalance: userBalance,
                 userFinalBalance: finalBalance,
                 provider: service.provider?.url,
@@ -802,7 +1049,7 @@ export const processDripFeedOrders = async (): Promise<void> => {
                 type: "WALLET_DEBIT",
                 description: `Drip Feed Order #${createdOrder.storeScopedId} - ${order.quantity} units`,
                 storeScopedId: counter.transactionCounter,
-                currency: "USD",
+                currency: userCurrency,
               },
             });
 

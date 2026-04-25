@@ -159,6 +159,15 @@ export const requireFeature = (
         return;
       }
 
+      if (featureName === "reselling" && !coreStore.resellingEnabled) {
+        res.status(403).json({
+          error: "Reselling Disabled",
+          message:
+            "Reselling is disabled for this store. Upgrade your plan first.",
+        });
+        return;
+      }
+
       // Get subscription data for store owner (cached)
       const validation =
         await subscriptionService.getValidatedSubscription(storeId);

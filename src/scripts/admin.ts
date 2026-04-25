@@ -2,8 +2,10 @@ import { prisma } from "../config/db.config";
 
 if (require.main === module) {
   (async () => {
+    console.log(await prisma.admin.findMany());
+    console.log(await prisma.store.findMany());
     const result = await prisma.admin.update({
-      where: { id: 1, storeId: 1 },
+      where: { id: 1, storeId: 11 },
       data: {
         onboardingCompleted: false,
         password:
@@ -12,12 +14,12 @@ if (require.main === module) {
     });
 
     await prisma.store.update({
-      where: { storeId: 1 },
+      where: { storeId: 11 },
       data: { status: "ACTIVE" },
     });
 
     await prisma.setting.update({
-      where: { storeId: 1 },
+      where: { storeId: 11 },
       data: { onboardingCompleted: false },
     });
 

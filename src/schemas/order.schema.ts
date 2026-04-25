@@ -21,6 +21,7 @@ export const OrderPublicSchema = z
     comments: z.string().optional(),
     dripFeed: z.boolean().optional(),
     interval: z.coerce.number().optional(),
+    runs: z.coerce.number().optional(),
     userUid: z.string(),
     timestamp: z.string().datetime(),
   })
@@ -50,6 +51,7 @@ export const OrderSchema = z
     syncOrder: z.boolean().optional(),
     synced: z.boolean().optional(),
     interval: z.coerce.number().optional(),
+    runs: z.coerce.number().optional(),
     userUid: z.string(),
     timestamp: z.string().datetime(),
   })
@@ -90,7 +92,7 @@ export const bulkStatusUpdateSchema = z.object({
     z.object({
       uid: z.string(),
       status: z.nativeEnum(OrderStatus),
-    })
+    }),
   ),
 });
 

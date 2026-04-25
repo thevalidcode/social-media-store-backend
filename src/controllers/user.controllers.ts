@@ -23,6 +23,10 @@ import { AdminAuthSchema } from "../schemas/admin.schema";
 import { sendUserEmail } from "../emails";
 import { StoreIdSchema, UidSchema } from "../schemas/common.schema";
 import { normalizeHost } from "../config/cors.config";
+import { encryptKey } from "../utils/encrypt";
+
+const hashApiKey = (key: string) =>
+  crypto.createHash("sha256").update(key).digest("hex");
 
 async function getNextStoreScopedId(
   storeId: number,
@@ -56,6 +60,7 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
         username: true,
         balance: true,
         status: true,
+        role: true,
         spent: true,
         fullName: true,
         image: true,
@@ -114,6 +119,9 @@ export const createUser = async (
       const hashedPassword = await bcrypt.hash(password, 10);
       const storeScopedId = await getNextStoreScopedId(storeId, tx);
 
+      const rawApiKey = uuidv4();
+      const encrypted = encryptKey(rawApiKey);
+
       const newUser = await tx.user.create({
         data: {
           storeId,
@@ -122,7 +130,9 @@ export const createUser = async (
           username,
           password: hashedPassword,
           uid: uuidv4(),
-          apiKey: uuidv4(),
+          encryptedApiKey: encrypted.encrypted_key,
+          apiKeyIv: encrypted.iv,
+          apiKeyHash: hashApiKey(rawApiKey),
           ref,
         },
       });
@@ -134,11 +144,9 @@ export const createUser = async (
         });
       }
 
-      const token = jwt.sign(
-        { uid: newUser.uid, storeId, apiKey: newUser.apiKey },
-        env.JWT_SECRET,
-        { expiresIn: "7d" },
-      );
+      const token = jwt.sign({ uid: newUser.uid, storeId }, env.JWT_SECRET, {
+        expiresIn: "7d",
+      });
 
       const csrfToken = crypto.randomBytes(32).toString("hex");
 
@@ -209,16 +217,11 @@ export const me = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const apiKey = account.apiKey || uuidv4();
     const role = account.role;
 
-    const token = jwt.sign(
-      { uid: account.uid, storeId, apiKey },
-      env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      },
-    );
+    const token = jwt.sign({ uid: account.uid, storeId }, env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
     const csrfToken = crypto.randomBytes(32).toString("hex");
 
     res.cookie("csrf_token", csrfToken, {
@@ -237,7 +240,15 @@ export const me = async (req: Request, res: Response): Promise<void> => {
       ...(env.NODE_ENV === "production" && { domain: `.${domain}` }),
     });
 
-    const { password: _, resetToken, resetTokenExpiry, ...safeUser } = account;
+    const {
+      password: _,
+      resetToken,
+      resetTokenExpiry,
+      encryptedApiKey: __encryptedApiKey,
+      apiKeyIv: __apiKeyIv,
+      apiKeyHash: __apiKeyHash,
+      ...safeUser
+    } = account;
     res.status(200).json({
       success: "Logged in successfully",
       role,
@@ -280,6 +291,7 @@ export const getUserByUid = async (
         fullName: true,
         image: true,
         refCode: true,
+        role: true,
         ref: true,
         timestamp: true,
         updatedAt: true,
@@ -428,13 +440,9 @@ export const verifySession = async (
     data: { used: true },
   });
 
-  const token = jwt.sign(
-    { uid: user.uid, storeId, apiKey: user.apiKey },
-    env.JWT_SECRET,
-    {
-      expiresIn: "7d",
-    },
-  );
+  const token = jwt.sign({ uid: user.uid, storeId }, env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
   const csrfToken = crypto.randomBytes(32).toString("hex");
 
   res.cookie("csrf_token", csrfToken, {
@@ -453,7 +461,15 @@ export const verifySession = async (
     ...(env.NODE_ENV === "production" && { domain: `.${domain}` }),
   });
 
-  const { password: _, resetToken, resetTokenExpiry, ...safeUser } = user;
+  const {
+    password: _,
+    resetToken,
+    resetTokenExpiry,
+    encryptedApiKey: __encryptedApiKey,
+    apiKeyIv: __apiKeyIv,
+    apiKeyHash: __apiKeyHash,
+    ...safeUser
+  } = user;
 
   res
     .status(200)
@@ -506,12 +522,16 @@ export const updateUser = async (
   const { uid } = req.auth!;
 
   try {
+    const updatePayload = {
+      ...parsed.data,
+      ...(parsed.data.currency
+        ? { currency: parsed.data.currency.toUpperCase() }
+        : {}),
+    };
+
     const user = await prisma.user.update({
       where: { uid: uid },
-      data: {
-        ...parsed.data,
-        apiKey: parsed.data.apiKey ? parsed.data.apiKey : undefined,
-      },
+      data: updatePayload,
       select: {
         id: true,
         uid: true,
@@ -522,6 +542,7 @@ export const updateUser = async (
         spent: true,
         fullName: true,
         image: true,
+        role: true,
         refCode: true,
         ref: true,
         timestamp: true,
@@ -546,13 +567,23 @@ export const updateUserByAdmin = async (
     return;
   }
 
-  const { balance, uid } = parsed.data;
+  const { balance, uid, currency } = parsed.data;
 
   try {
     const parsedBalance = new Decimal(balance);
+
+    const updatePayload: any = {
+      ...parsed.data,
+      balance: parsedBalance,
+    };
+
+    if (currency) {
+      updatePayload.currency = currency.toUpperCase();
+    }
+
     await prisma.user.update({
       where: { uid: uid },
-      data: { ...parsed.data, balance: parsedBalance },
+      data: updatePayload,
     });
 
     res.status(200).json({ success: "Successfully updated user" });

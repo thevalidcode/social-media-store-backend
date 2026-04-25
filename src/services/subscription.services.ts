@@ -59,6 +59,7 @@ export interface StoreData {
   plan: string;
   type: string;
   status: string;
+  resellingEnabled: boolean;
   timestamp: string;
   ownerId: number;
 }

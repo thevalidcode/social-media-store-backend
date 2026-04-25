@@ -35,6 +35,7 @@ model Store {
   ReferralOrder    ReferralOrder[]
   Refill           Refill[]
   Service          Service[]
+  ServiceRating    ServiceRating[]
   SessionCode      SessionCode[]
   Setting          Setting[]
   storeCounter     StoreCounter?
@@ -55,7 +56,9 @@ model User {
   image            String?
   password         String
   username         String
-  apiKey           String     @unique @default(uuid()) @map("api_key")
+  encryptedApiKey  String?    @map("encrypted_api_key")
+  apiKeyIv         String?    @map("api_key_iv")
+  apiKeyHash       String?    @unique @map("api_key_hash")
   storeId          Int        @map("store_id")
   balance          Decimal    @default(0.00) @db.Decimal(10, 2)
   spent            Decimal    @default(0.00) @db.Decimal(10, 2)
@@ -85,7 +88,6 @@ model User {
 }
 
 // This Admin model is the user in the core-platform, that's why most fields aren't unique.
-
 model Admin {
   id                  Int
   uid                 String
@@ -93,12 +95,15 @@ model Admin {
   image               String?
   password            String
   username            String
-  apiKey              String      @map("api_key")
+  encryptedApiKey     String?     @map("encrypted_api_key")
+  apiKeyIv            String?     @map("api_key_iv")
+  apiKeyHash          String?     @unique @map("api_key_hash")
   storeId             Int         @unique @map("store_id")
   timestamp           DateTime    @default(now())
   lastSeen            DateTime    @default(now()) @map("last_seen")
   role                AdminRole   @default(BASIC)
   status              AdminStatus @default(ACTIVE)
+  currency            String      @default("USD")
   fullName            String?     @map("full_name")
   onboardingCompleted Boolean?    @default(false) @map("onboarding_completed")
   resetToken          String?     @map("reset_token")
@@ -142,13 +147,34 @@ model Service {
   icon             String?
   providerUid      String?       @map("provider_uid")
 
-  Order        Order[]
-  provider     Provider? @relation(fields: [providerUid], references: [uid], onDelete: Cascade)
-  categoryData Category  @relation(fields: [categoryUid], references: [uid], onDelete: Cascade)
-  store        Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+  Order         Order[]
+  ServiceRating ServiceRating[]
+  provider      Provider?       @relation(fields: [providerUid], references: [uid], onDelete: Cascade)
+  categoryData  Category        @relation(fields: [categoryUid], references: [uid], onDelete: Cascade)
+  store         Store           @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@unique([storeId, storeScopedId])
   @@map("services")
+}
+
+model ServiceRating {
+  id            Int          @id @default(autoincrement())
+  storeScopedId Int          @map("store_scoped_id")
+  uid           String       @unique @default(uuid())
+  serviceUid    String       @map("service_uid")
+  userUid       String       @map("user_uid")
+  rating        Int // 1-5 stars
+  review        String?
+  status        RatingStatus @default(PENDING) // PENDING, APPROVED, REJECTED
+  timestamp     DateTime     @default(now())
+  storeId       Int          @map("store_id")
+
+  service Service @relation(fields: [serviceUid], references: [uid], onDelete: Cascade)
+  store   Store   @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
+
+  @@unique([storeId, storeScopedId])
+  @@unique([serviceUid, userUid, storeId]) // One rating per user per service per store
+  @@map("service_ratings")
 }
 
 model Order {
@@ -181,10 +207,13 @@ model Order {
   remains            Int         @default(0)
   storeId            Int         @map("store_id")
   serviceUid         String      @map("service_uid")
+  paymentUid         String?     @unique @map("payment_uid")
   status             OrderStatus @default(PENDING)
   service            Service     @relation(fields: [serviceUid], references: [uid], onDelete: Cascade)
   store              Store       @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
   user               User        @relation(fields: [userUid], references: [uid], onDelete: Cascade)
+  payment            Payment?    @relation(fields: [paymentUid], references: [uid], onDelete: SetNull)
+  cancels            Cancel[]
 
   @@unique([storeId, storeScopedId])
   @@map("orders")
@@ -247,8 +276,10 @@ model Cancel {
 
   store    Store    @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
   provider Provider @relation(fields: [providerUid], references: [uid], onDelete: Cascade)
+  order    Order    @relation(fields: [orderUid], references: [uid], onDelete: Cascade)
 
   @@unique([storeId, storeScopedId])
+  @@unique([orderUid, status]) // Only one PENDING cancel per order
   @@map("cancels")
 }
 
@@ -405,11 +436,13 @@ model PaymentGateway {
   uid           String                 @unique @default(uuid())
   name          String
   description   String?
+  content       String?
   secretKey     Json?                  @map("secret_key")
   createdAt     DateTime               @default(now()) @map("created_at")
   storeId       Int                    @map("store_id")
   min           Decimal                @db.Decimal(10, 2)
   max           Decimal                @db.Decimal(10, 2)
+  currency      String                 @default("USD")
   position      Int                    @map("position")
   status        PaymentGatewayStatus   @default(ACTIVE)
   platform      PaymentGatewayPlatform @default(MANUAL)
@@ -431,10 +464,11 @@ model Provider {
   sync          Boolean   @default(false)
   percentage    Float     @default(0)
   createdAt     DateTime  @default(now()) @map("created_at")
+  isInternal    Boolean   @default(false) @map("is_internal")
   storeId       Int       @map("store_id")
   currency      String    @default("USD")
   apiKey        Json      @map("api_key")
-  image         String
+  image         String    @default("https://cdn-icons-png.flaticon.com/512/1/1.png") // Default icon if not provided
   store         Store     @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
   Service       Service[]
   cancels       Cancel[]
@@ -509,6 +543,7 @@ model StoreCounter {
   supportTicketCounter  Int   @default(0) @map("support_ticket_counter")
   cancelCounter         Int   @default(0) @map("cancel_counter")
   paymentCounter        Int   @default(0) @map("payment_counter")
+  ratingCounter         Int   @default(0) @map("rating_counter")
   store                 Store @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
 
   @@map("store_counters")
@@ -577,12 +612,14 @@ model Payment {
   amount        Decimal                @db.Decimal(10, 2)
   chargedAmount Decimal                @map("charged_amount") @db.Decimal(10, 2)
   status        PaymentStatus
+  purpose       PaymentPurpose         @default(WALLET_TOPUP)
   method        PaymentGatewayPlatform
   createdAt     DateTime               @default(now()) @map("created_at")
   storeId       Int                    @map("store_id")
   storeScopedId Int
   store         Store                  @relation(fields: [storeId], references: [storeId], onDelete: Cascade)
   user          User                   @relation(fields: [userUid], references: [uid], onDelete: Cascade)
+  order         Order?
 
   @@unique([storeId, storeScopedId])
   @@map("payments")
@@ -603,18 +640,6 @@ model UploadLog {
 
   @@unique([storeId, storeScopedId])
   @@map("upload_logs")
-}
-
-model ServiceProvider {
-  id        Int      @id @default(autoincrement())
-  uid       String   @unique @default(uuid())
-  name      String
-  url       String   @unique
-  image     String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("service_provders")
 }
 
 enum StoreStatus {
@@ -740,6 +765,7 @@ enum PaymentGatewayPlatform {
   FLUTTERWAVE
   PAYSTACK
   REFERRAL
+  CREDIT
 }
 
 enum RefillStatus {
@@ -749,6 +775,12 @@ enum RefillStatus {
   COMPLETED
   ACTIVE
   ERROR
+}
+
+enum RatingStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum TicketStatus {
@@ -780,6 +812,11 @@ enum PaymentStatus {
   PENDING
   SUCCESS
   FAILED
+}
+
+enum PaymentPurpose {
+  WALLET_TOPUP
+  ORDER
 }
 
 model ExchangeRate {

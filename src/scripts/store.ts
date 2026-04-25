@@ -9,7 +9,6 @@ if (require.main === module) {
       storeId: 1,
       adminId: 1,
       description: "A new production store",
-      planId: 1,
       adminEmail: "admin@validpanel.com",
       adminUsername: "validadmin",
       fullName: "Valid Admin",

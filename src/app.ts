@@ -24,6 +24,7 @@ import providerRoutes from "./routes/provider.routes";
 import adminRoutes from "./routes/admin.routes";
 import categoryRoutes from "./routes/category.routes";
 import orderRoutes from "./routes/order.routes";
+import cancelRoutes from "./routes/cancel.routes";
 import refillRoutes from "./routes/refill.routes";
 import versionRouter from "./routes/version.routes";
 import filesRouter from "./routes/files.routes";
@@ -34,6 +35,8 @@ import webhookRouter from "./routes/webhook.routes";
 import statisticsRouter from "./routes/statistics.routes";
 import transactionRouter from "./routes/transaction.routes";
 import ratesRouter from "./routes/rate.routes";
+import resellerRoutes from "./routes/reseller.routes";
+import serviceRatingRouter from "./routes/serviceRating.routes";
 
 const app = express();
 
@@ -82,9 +85,14 @@ app.use("/v1/payment-gateways", cors(dynamicOrigin), paymentGatewayRouter);
 app.use("/v1/admins", cors(dynamicOrigin), adminRoutes);
 app.use("/v1/rates", cors(dynamicOrigin), ratesRouter);
 app.use("/v1/transactions", cors(dynamicOrigin), transactionRouter);
+app.use("/v1/service-ratings", cors(dynamicOrigin), serviceRatingRouter);
+app.use("/v1/cancellations", cors(dynamicOrigin), cancelRoutes);
 
 // Webhook Routes (no CORS - these are called by external services)
 app.use("/v1/webhooks", openCors, webhookRouter);
+
+// Reseller Routes
+app.use("/v1/reseller", openCors, resellerRoutes);
 
 // Internal Routes (no CORS - these are called by internal services with JWT auth)
 app.use("/internal", openCors, internalRouter);

@@ -6,7 +6,6 @@ import { decryptKey } from "../utils/encrypt";
 import { v4 as uuidv4 } from "uuid";
 import { Decimal } from "@prisma/client/runtime/client";
 import { ServiceType } from "../../prisma/generated";
-import convertCurrency from "../utils/ConvertCurrency";
 
 export const agent = new https.Agent({
   keepAlive: true,
@@ -18,6 +17,134 @@ const toDecimal = (n: any, d = "0"): Decimal =>
 
 const safeInt = (n: any, d = 0): number =>
   Number.isFinite(+n) ? parseInt(n, 10) : d;
+
+type ProviderCatalogItem = {
+  service: number;
+  name: string;
+  category: string;
+  type?: string;
+  min: number;
+  max: number;
+  description?: string | null;
+  cancel?: boolean | null;
+  network?: string | null;
+  refill?: boolean | null;
+  dripFeed?: boolean | null;
+  dripfeed?: boolean | null;
+  rate: number;
+  currency?: string | null;
+};
+
+function normalizeInternalStoreUid(providerUrl: string): string {
+  return providerUrl
+    .trim()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/$/, "")
+    .replace(/^api\./, "")
+    .replace(/\/v2\/?$/, "")
+    .split("/")[0];
+}
+
+async function fetchProviderServicesCatalog(provider: {
+  url: string;
+  isInternal: boolean;
+  apiKey: unknown;
+}) {
+  if (provider.isInternal) {
+    const sourceStoreUid = normalizeInternalStoreUid(provider.url);
+    const sourceStore = await prisma.store.findFirst({
+      where: { uid: sourceStoreUid },
+      select: { storeId: true },
+    });
+
+    if (!sourceStore) {
+      return [] as ProviderCatalogItem[];
+    }
+
+    const services = await prisma.service.findMany({
+      where: {
+        storeId: sourceStore.storeId,
+        status: "ACTIVE",
+      },
+      orderBy: { position: "asc" },
+      select: {
+        storeScopedId: true,
+        name: true,
+        category: true,
+        type: true,
+        min: true,
+        max: true,
+        description: true,
+        cancel: true,
+        network: true,
+        refill: true,
+        dripFeed: true,
+        price: true,
+        currency: true,
+      },
+    });
+
+    return services.map(
+      (service): ProviderCatalogItem => ({
+        service: service.storeScopedId,
+        name: service.name,
+        category: service.category,
+        type: String(service.type),
+        min: service.min,
+        max: service.max,
+        description: service.description,
+        cancel: service.cancel,
+        network: service.network,
+        refill: service.refill,
+        dripFeed: service.dripFeed,
+        rate: Number(service.price),
+        currency: service.currency,
+      }),
+    );
+  }
+
+  const apiKeyData = provider.apiKey as {
+    encrypted_key: string;
+    iv: string;
+  };
+
+  const decryptedKey = decryptKey(apiKeyData.encrypted_key, apiKeyData.iv);
+  const { data } = await axios.post(
+    `https://${provider.url}`,
+    { action: "services", key: decryptedKey },
+    { httpsAgent: agent },
+  );
+
+  const payload = (data?.data ?? data) as unknown;
+  if (!Array.isArray(payload)) {
+    return [] as ProviderCatalogItem[];
+  }
+
+  return payload.map((raw): ProviderCatalogItem => {
+    const item = raw as Record<string, unknown>;
+    return {
+      service: safeInt(item.service),
+      name: String(item.name ?? "Untitled Service"),
+      category: String(item.category ?? "Uncategorized"),
+      type: item.type ? String(item.type) : "DEFAULT",
+      min: safeInt(item.min, 1),
+      max: safeInt(item.max, 1),
+      description: item.description ? String(item.description) : null,
+      cancel: typeof item.cancel === "boolean" ? item.cancel : null,
+      network: item.network ? String(item.network) : null,
+      refill: typeof item.refill === "boolean" ? item.refill : null,
+      dripFeed:
+        typeof item.dripFeed === "boolean"
+          ? item.dripFeed
+          : typeof item.dripfeed === "boolean"
+            ? item.dripfeed
+            : null,
+      dripfeed: typeof item.dripfeed === "boolean" ? item.dripfeed : undefined,
+      rate: Number(item.rate ?? 0),
+      currency: item.currency ? String(item.currency) : null,
+    };
+  });
+}
 
 export const updateExistingServices = async (): Promise<void> => {
   try {
@@ -46,26 +173,8 @@ export const updateExistingServices = async (): Promise<void> => {
         if (!prov) continue;
 
         if (!provCache[prov.url]) {
-          const apiKeyData = prov.apiKey as {
-            encrypted_key: string;
-            iv: string;
-          };
-
-          const decryptedKey = decryptKey(
-            apiKeyData.encrypted_key,
-            apiKeyData.iv,
-          );
-          const baseURL = `${prov.url}`;
-          const [servicesRes] = await Promise.all([
-            axios.post(
-              `https://${baseURL}`,
-              { action: "services", key: decryptedKey },
-              { httpsAgent: agent },
-            ),
-          ]);
-
           provCache[prov.url] = {
-            list: servicesRes.data,
+            list: await fetchProviderServicesCatalog(prov),
           };
         }
 
@@ -88,12 +197,6 @@ export const updateExistingServices = async (): Promise<void> => {
           .plus(providerRate.mul(pct).div(100))
           .toDecimalPlaces(2);
 
-        const finalPrice = await convertCurrency(
-          endPrice,
-          prov.currency,
-          "USD",
-        );
-
         updateOperations.push({
           uid: svc.uid,
           data: {
@@ -103,9 +206,8 @@ export const updateExistingServices = async (): Promise<void> => {
                 : "DEFAULT",
             ) as ServiceType,
             providerPrice: providerRate,
-            price: finalPrice,
             cancel: liveSvc.cancel,
-            providerCurrency: prov.currency,
+            providerCurrency: String(liveSvc.currency || prov.currency),
             network: liveSvc.network || "None",
             refill: liveSvc.refill,
             ...(liveSvc.description && { description: liveSvc.description }),
@@ -117,6 +219,8 @@ export const updateExistingServices = async (): Promise<void> => {
               name: liveSvc.name,
               category: liveSvc.category,
             }),
+            currency: String(liveSvc.currency || prov.currency),
+            price: endPrice,
           },
         });
       }
@@ -170,31 +274,20 @@ export const syncServices = async (): Promise<void> => {
       });
 
       for (const prov of providers) {
-        const apiKeyData = prov.apiKey as {
-          encrypted_key: string;
-          iv: string;
-        };
+        const svcList = await fetchProviderServicesCatalog(prov);
 
-        const decryptedKey = decryptKey(
-          apiKeyData.encrypted_key,
-          apiKeyData.iv,
+        const existingServiceKeys = new Set(
+          existingServices
+            .filter((service) => service.providerUid === prov.uid)
+            .map(
+              (service) => `${service.providerUid}:${service.providerId ?? ""}`,
+            ),
         );
-        const baseURL = `${prov.url}`;
-
-        const [{ data: svcList }] = await Promise.all([
-          axios.post(
-            `https://${baseURL}`,
-            { action: "services", key: decryptedKey },
-            { httpsAgent: agent },
-          ),
-        ]);
 
         // Filter out already existing services before transaction
         const newServices = svcList.filter(
           (s: any) =>
-            !existingServices.find(
-              (x) => safeInt(x.providerId) === safeInt(s.service),
-            ),
+            !existingServiceKeys.has(`${prov.uid}:${safeInt(s.service)}`),
         );
 
         if (!newServices.length) continue;
@@ -244,12 +337,6 @@ export const syncServices = async (): Promise<void> => {
                   .plus(providerRate.mul(pct).div(100))
                   .toDecimalPlaces(2);
 
-                const finalPrice = await convertCurrency(
-                  endPrice,
-                  prov.currency,
-                  "USD",
-                );
-
                 const newService = await tx.service.create({
                   data: {
                     storeScopedId: serviceCounter.serviceCounter,
@@ -271,12 +358,12 @@ export const syncServices = async (): Promise<void> => {
                     status: "ACTIVE",
                     syncQuantity: true,
                     syncCatAndName: true,
-                    price: finalPrice,
+                    price: endPrice,
                     position: serviceCounter.serviceCounter,
                     cancel: s.cancel,
                     network: s.network || "None",
-                    providerCurrency: prov.currency,
-                    currency: "USD",
+                    providerCurrency: (s.currency || prov.currency) as string,
+                    currency: (s.currency || prov.currency) as string,
                     refill: s.refill,
                     percentage: prov.percentage,
                     dripFeed: s.dripFeed || s.dripfeed || false,

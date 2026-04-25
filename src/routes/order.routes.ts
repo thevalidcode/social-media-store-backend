@@ -48,6 +48,13 @@ router.post(
   limitBulkOrders,
   orders.bulkCreateOrders,
 );
+
+router.post(
+  "/:orderUid/cancel",
+  authenticateUser,
+  limitOrderActions,
+  orders.cancelOrder,
+);
 router.patch(
   "/bulk/status",
   authenticateAdmin,

@@ -63,6 +63,17 @@ export const ServerError = {
   },
 };
 
+export const NotFound = {
+  description: "Resource not found",
+  content: {
+    "application/json": {
+      schema: z.object({
+        error: z.string().describe("Error message for not found resource"),
+      }),
+    },
+  },
+};
+
 export const InvalidData = {
   description: "Request is missing or has invalid fields",
   content: {

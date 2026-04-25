@@ -5,6 +5,9 @@ import {
   authenticateInternalAdmin,
   authenticateInternalAnyone,
 } from "../middleware/auth";
+import { requireFeature } from "../middleware/subscription.middleware";
+import { resellerImportRateLimit } from "../middleware/ratelimit/reseller.ratelimit";
+import * as reseller from "../controllers/reseller.controllers";
 import { openCors } from "../config/cors.config";
 
 router.get(
@@ -30,6 +33,22 @@ router.patch(
   openCors,
   authenticateInternalAnyone,
   internals.updateStore
+);
+router.post(
+  "/reseller/import-services",
+  openCors,
+  authenticateInternalAnyone,
+  requireFeature("reselling"),
+  resellerImportRateLimit,
+  reseller.importServicesInternal,
+);
+router.post(
+  "/reseller/sync-services",
+  openCors,
+  authenticateInternalAnyone,
+  requireFeature("reselling"),
+  resellerImportRateLimit,
+  reseller.syncServicesInternal,
 );
 
 export default router;

@@ -1,5 +1,4 @@
 import { prisma } from "../config/db.config";
-import { exchangeRates } from "../helpers/currency.helper";
 import { v4 as uuidv4 } from "uuid";
 import { sendOrderToProvider } from "../providers/order.providers";
 import {
@@ -13,6 +12,11 @@ import {
 import { Request, Response } from "express";
 import convertCurrency from "../utils/ConvertCurrency";
 import { Decimal } from "@prisma/client/runtime/client";
+import crypto from "crypto";
+import { decryptKey } from "../utils/encrypt";
+
+const hashApiKey = (key: string) =>
+  crypto.createHash("sha256").update(key).digest("hex");
 
 export const apiRequests = async (req: Request, res: Response) => {
   const parseResult = ApiActionSchema.safeParse(req.body);
@@ -22,7 +26,19 @@ export const apiRequests = async (req: Request, res: Response) => {
   }
 
   const { action, key } = parseResult.data;
-  const user = await prisma.user.findUnique({ where: { apiKey: key } });
+  const users = await prisma.user.findMany({
+    where: { apiKeyHash: hashApiKey(key) },
+    take: 5,
+  });
+
+  const user = users.find((candidate) => {
+    if (!candidate.encryptedApiKey || !candidate.apiKeyIv) {
+      return false;
+    }
+
+    return decryptKey(candidate.encryptedApiKey, candidate.apiKeyIv) === key;
+  });
+
   if (!user) {
     res.status(400).json({ error: "Invalid API Key." });
     return;
@@ -63,7 +79,8 @@ export const apiRequests = async (req: Request, res: Response) => {
         name: data.name,
         type: data.type,
         category: data.category,
-        rate: String(convertCurrency(data.price, data.currency!, "USD")),
+        rate: String(data.price),
+        currency: (data.currency || "USD").toUpperCase(),
         min: String(data.min),
         max: String(data.max),
         refill: data.refill,
@@ -182,18 +199,13 @@ export const apiRequests = async (req: Request, res: Response) => {
         return;
       }
 
-      // Calculate cost in service's currency first
+      // Calculate cost in service currency first
       const serviceCurrency = serviceData.currency || "USD";
       const costInServiceCurrency = serviceData.price.div(1000).mul(quantity);
 
-      // Convert to USD for the order
-      const costUSD = new Decimal(
-        await convertCurrency(costInServiceCurrency, serviceCurrency, "USD"),
-      );
-
-      // Convert to user's currency for balance checking
+      // Convert to user's wallet currency for balance and storage
       const costUserCurrency = new Decimal(
-        await convertCurrency(costUSD, "USD", user.currency),
+        await convertCurrency(costInServiceCurrency, serviceCurrency, user.currency),
       );
 
       if (new Decimal(user.balance).lessThan(costUserCurrency)) {
@@ -241,8 +253,8 @@ export const apiRequests = async (req: Request, res: Response) => {
             quantity,
             runs,
             interval,
-            price: costUSD,
-            currency: "USD",
+            price: costUserCurrency,
+            currency: (user.currency || "USD").toUpperCase(),
             userInitialBalance: userBalance,
             userFinalBalance: finalBalance,
             storeScopedId: counter.orderCounter,

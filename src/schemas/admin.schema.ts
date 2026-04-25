@@ -9,13 +9,13 @@ export const AdminSchema = z
     id: z.number(),
     uid: z.string(),
     email: z.string(),
-    image: z.string().nullable(),
+    image: z.union([z.string().url(), z.literal("")]).nullable(),
     username: z.string(),
     fullName: z.string(),
-    apiKey: z.string(),
     onboardingCompleted: z.boolean(),
     role: z.nativeEnum(AdminRole),
     status: z.nativeEnum(AdminStatus),
+    currency: z.string().length(3),
     storeId: z.number(),
     timestamp: z.coerce.date(),
     updatedAt: z.coerce.date(),
@@ -58,9 +58,12 @@ export const AdminUpdateRequestSchema = z
   .object({
     username: z.string().describe("Username").optional(),
     fullName: z.string().describe("Full name").optional(),
-    apiKey: z.string().describe("Admin api key").optional(),
-    image: z.string().url().optional(),
+    image: z
+      .union([z.string().url(), z.literal("")])
+      .optional()
+      .nullable(),
     status: z.nativeEnum(AdminStatus).optional(),
+    currency: z.string().length(3).optional(),
   })
   .strict();
 

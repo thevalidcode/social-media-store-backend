@@ -20,7 +20,7 @@ export const ProviderCreateRequestSchema = z.object({
   name: z.string(),
   url: z.string(),
   percentage: z.number(),
-  image: z.string().url().optional(),
+  image: z.string().url().optional().or(z.literal("")).nullable(),
   apiKey: z.string(),
   sync: z.boolean().default(false),
 });
@@ -28,7 +28,7 @@ export const ProviderCreateRequestSchema = z.object({
 export const ProviderUpdateRequestSchema = z.object({
   uid: z.string(),
   name: z.string().optional(),
-  image: z.string().url(),
+  image: z.string().url().optional().or(z.literal("")).nullable(),
   percentage: z.number().optional(),
   apiKey: z.string(),
   sync: z.boolean().default(false).optional(),

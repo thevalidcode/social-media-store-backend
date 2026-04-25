@@ -1,6 +1,7 @@
 import axios from "axios";
 import type { Request, Response } from "express";
 import { prisma } from "../config/db.config";
+import { coreApiRequest } from "../lib/apiClient";
 import { decryptKey, encryptKey } from "../utils/encrypt";
 import {
   ProviderCreateRequestSchema,
@@ -16,12 +17,11 @@ import { AdminAuthSchema } from "../schemas/admin.schema";
 import { Decimal } from "@prisma/client/runtime/client";
 import { ServiceType } from "../../prisma/generated";
 import { agent } from "../providers/service.providers";
-import convertCurrency from "../utils/ConvertCurrency";
 import ogs from "open-graph-scraper";
 
 export const getProviderServices = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const queryParsed = ProviderServicesSchema.safeParse(req.query);
@@ -75,7 +75,7 @@ export const getProviderServices = async (
 
 export const importServices = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const bodyParsed = ImportProviderServicesRequestSchema.safeParse(req.body);
@@ -125,12 +125,12 @@ export const importServices = async (
           select: { providerId: true },
         });
         const existingProviderIds = new Set(
-          existingServices.map((s) => s.providerId)
+          existingServices.map((s) => s.providerId),
         );
 
         const categories = await tx.category.findMany({ where: { storeId } });
         const categoryCache = new Map(
-          categories.map((c) => [c.name.toLowerCase(), c])
+          categories.map((c) => [c.name.toLowerCase(), c]),
         );
 
         const counter = await tx.storeCounter.update({
@@ -145,7 +145,7 @@ export const importServices = async (
 
         for (const providerServiceId of providerServicesId) {
           const service = providerServices.find(
-            (s: any) => parseInt(s.service) === providerServiceId
+            (s: any) => parseInt(s.service) === providerServiceId,
           );
           if (!service) continue;
 
@@ -156,12 +156,6 @@ export const importServices = async (
           const newPrice = baseRate
             .plus(baseRate.times(importPercent).dividedBy(100))
             .toDecimalPlaces(2);
-
-          const finalPrice = await convertCurrency(
-            newPrice,
-            providerData.currency,
-            "USD"
-          );
 
           currentServiceId++;
 
@@ -198,11 +192,11 @@ export const importServices = async (
           } else {
             // Use predefined category - lookup by lowercase
             const categoryLookup = categoryCache.get(
-              serviceCategory.toLowerCase()
+              serviceCategory.toLowerCase(),
             );
             if (!categoryLookup) {
               throw new Error(
-                `Category "${serviceCategory}" not found in store`
+                `Category "${serviceCategory}" not found in store`,
               );
             }
             categoryUid = categoryLookup.uid;
@@ -212,7 +206,7 @@ export const importServices = async (
           const formattedType = String(
             service.type
               ? service.type.replace(/\s+/g, "_").toUpperCase()
-              : "DEFAULT"
+              : "DEFAULT",
           ) as ServiceType;
 
           if (!(formattedType in ServiceType)) {
@@ -220,7 +214,7 @@ export const importServices = async (
               "Unknown type:",
               service.type,
               "-> formatted as:",
-              formattedType
+              formattedType,
             );
           }
 
@@ -249,7 +243,7 @@ export const importServices = async (
             status: formattedStatus,
             syncQuantity: formattedSyncQuantity,
             syncCatAndName: formattedSyncCatAndName,
-            price: finalPrice,
+            price: newPrice,
             position: currentServiceId,
             cancel: formattedCancel,
             network: formattedNetwork,
@@ -257,7 +251,7 @@ export const importServices = async (
             percentage: importPercent,
             dripFeed: formattedDripFeed,
             providerCurrency: providerData.currency,
-            currency: "USD",
+            currency: providerData.currency,
             syncWithProvider: true,
             uid: uuidv4(),
             storeScopedId: currentServiceId,
@@ -275,7 +269,7 @@ export const importServices = async (
       },
       {
         timeout: 120000,
-      }
+      },
     );
 
     res.status(200).json({
@@ -290,7 +284,7 @@ export const importServices = async (
 
 export const addProvider = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const bodyParsed = ProviderCreateRequestSchema.safeParse(req.body);
@@ -324,7 +318,7 @@ export const addProvider = async (
       }>(
         `https://${parsedUrl}`,
         { action: "balance", key: reqData.apiKey },
-        { httpsAgent: agent }
+        { httpsAgent: agent },
       );
       providerUser = response.data;
 
@@ -361,20 +355,36 @@ export const addProvider = async (
       // Continue with user-provided image
     }
 
-    // Check if serviceProvider exists, if not, create it
-    const existingServiceProvider = await prisma.serviceProvider.findUnique({
-      where: { url: parsedUrl },
+    const existingServiceProvider = await coreApiRequest<{
+      stores: Array<{ uid: string; url: string }>;
+    }>({
+      endpoint: "/internal/reseller-stores",
+      params: {
+        type: "SOCIAL",
+        page: 1,
+        limit: 100,
+      },
     });
 
-    if (!existingServiceProvider) {
-      await prisma.serviceProvider.create({
-        data: {
-          name: reqData.name,
-          url: parsedUrl,
-          image: providerImage,
-        },
-      });
+    if (
+      existingServiceProvider.stores.some((store) => store.url === parsedUrl)
+    ) {
+      res.status(400).json({ error: "Provider already exists." });
+      return;
     }
+
+    await coreApiRequest({
+      endpoint: "/internal/reseller-stores",
+      method: "POST",
+      data: {
+        name: reqData.name,
+        url: parsedUrl,
+        type: "SOCIAL",
+        image: providerImage || null,
+        isActive: true,
+        isInternal: false,
+      },
+    });
 
     const existingProvider = await prisma.provider.findFirst({
       where: { storeId, url: parsedUrl },
@@ -419,85 +429,48 @@ export const addProvider = async (
 export const getAllSeviceProviders = async (req: Request, res: Response) => {
   const parsed = GetAllServiceProvidersQuerySchema.safeParse(req.query);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
-    return;
+    return res.status(400).json({ error: parsed.error.flatten() });
   }
 
-  const { storeId } = req.auth!;
-
   const { page = 1, limit = 20, search } = parsed.data;
+
   try {
-    // Fetch service providers with only needed fields
-    const serviceProviders = await prisma.serviceProvider.findMany({
-      select: {
-        id: true,
-        uid: true,
-        name: true,
-        url: true,
-        image: true,
-        createdAt: true,
-        updatedAt: true,
+    const response = await coreApiRequest<{
+      stores: Array<{
+        uid: string;
+        name: string;
+        url: string;
+        image: string | null;
+        isActive: boolean;
+        isInternal: boolean;
+        createdAt: string;
+        updatedAt: string;
+      }>;
+      meta: { total: number; page: number; pages: number; limit: number };
+    }>({
+      endpoint: "/internal/reseller-stores",
+      params: {
+        type: "SOCIAL",
+        page,
+        limit,
+        search,
       },
-      orderBy: { createdAt: "desc" },
     });
 
-    // Fetch stores with settings in a single optimized query
-    const stores = await prisma.store.findMany({
-      where: {
-        storeId: { not: storeId },
-      },
-      select: {
-        storeId: true,
-        uid: true,
-        name: true,
-        timestamp: true,
-        Setting: true,
-      },
-      orderBy: { timestamp: "desc" },
-    });
-
-    // Transform stores to match the provider interface
-    const transformedStores = stores.map((store) => ({
-      id: store.storeId,
-      uid: store.uid,
-      name: store.name,
-      url: `api.${store.uid}/v2`,
-      image: store.Setting?.[0]?.logoUrl || null,
-      createdAt: store.timestamp,
-      updatedAt: store.timestamp,
-    }));
-
-    // Merge both arrays
-    let mergedProviders = [...serviceProviders, ...transformedStores];
-
-    // Apply search filter if provided
-    if (search) {
-      const searchLower = search.toLowerCase();
-      mergedProviders = mergedProviders.filter(
-        (provider) =>
-          provider.name.toLowerCase().includes(searchLower) ||
-          provider.url.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Apply pagination
-    const skip = (page - 1) * limit;
-    const paginatedProviders = mergedProviders.slice(skip, skip + limit);
-
-    res.status(200).json({
-      providers: paginatedProviders,
-      total: mergedProviders.length,
-      page,
-      limit,
+    return res.status(200).json({
+      providers: response.stores,
+      total: response.meta.total,
+      page: response.meta.page,
+      limit: response.meta.limit,
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
 
 export const getProviders = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
 
@@ -535,7 +508,7 @@ export const getProviders = async (
 
 export const updateProvider = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = ProviderUpdateRequestSchema.safeParse(req.body);
@@ -556,19 +529,26 @@ export const updateProvider = async (
   try {
     const encrypted_key = encryptKey(reqData.apiKey);
 
+    const provider = await prisma.provider.findFirst({
+      where: { uid: reqData.uid, storeId },
+    });
+
+    if (!provider) {
+      res.status(404).json({ error: "Provider not found." });
+      return;
+    }
+
     await prisma.provider.updateMany({
       where: { uid: reqData.uid, storeId },
       data: {
-        image: reqData.image,
+        image:
+          reqData.image ||
+          `https://www.google.com/s2/favicons?domain=${provider.url}`,
         name: reqData.name,
         percentage: reqData.percentage,
         sync: reqData.sync,
         apiKey: JSON.parse(JSON.stringify(encrypted_key)),
       },
-    });
-
-    const provider = await prisma.provider.findFirst({
-      where: { uid: reqData.uid, storeId },
     });
 
     res.status(200).json({
@@ -582,7 +562,7 @@ export const updateProvider = async (
 
 export const deleteProvider = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = deleteProviderSchema.safeParse(req.body);
@@ -613,7 +593,7 @@ export const deleteProvider = async (
 
 export const deleteMultipleProviders = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   const authParsed = AdminAuthSchema.safeParse(req.auth);
   const parsed = deleteMultipleProviderSchema.safeParse(req.body);

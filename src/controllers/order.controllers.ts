@@ -11,9 +11,13 @@ import {
 } from "../schemas/order.schema";
 import { UserAuthSchema } from "../schemas/user.schema";
 import { AdminAuthSchema } from "../schemas/admin.schema";
-import { sendOrderToProvider } from "../providers/order.providers";
+import {
+  sendOrderToProvider,
+  requestCancelationFromProvider,
+} from "../providers/order.providers";
 import { Decimal } from "@prisma/client/runtime/client";
 import { subscriptionService } from "../services/subscription.services";
+import convertCurrency from "../utils/ConvertCurrency";
 
 const publicFields = {
   storeScopedId: true,
@@ -31,6 +35,7 @@ const publicFields = {
   comments: true,
   dripFeed: true,
   interval: true,
+  runs: true,
   userUid: true,
   timestamp: true,
   service: {
@@ -357,25 +362,38 @@ export const placeOrder = async (
       return;
     }
 
-    // Calculate order price
-    let orderPrice: Decimal;
+    // Calculate order price in service currency first
+    let orderPriceInServiceCurrency: Decimal;
     if (service.type === "PACKAGE") {
-      orderPrice = new Decimal(service.price);
+      orderPriceInServiceCurrency = new Decimal(service.price);
     } else {
-      orderPrice = new Decimal(service.price)
+      orderPriceInServiceCurrency = new Decimal(service.price)
         .mul(parsed.data.quantity)
         .div(1000)
         .toDecimalPlaces(2);
     }
 
     // Validate that price is not zero or negative
-    if (orderPrice.lte(0)) {
+    if (orderPriceInServiceCurrency.lte(0)) {
       res.status(400).json({
         error:
           "Invalid order price calculated. Service may not be properly configured.",
       });
       return;
     }
+
+    const serviceCurrency = (service.currency || "USD").toUpperCase();
+    const userCurrency = (user.currency || "USD").toUpperCase();
+    const orderPrice =
+      serviceCurrency === userCurrency
+        ? orderPriceInServiceCurrency
+        : new Decimal(
+            await convertCurrency(
+              orderPriceInServiceCurrency.toNumber(),
+              serviceCurrency,
+              userCurrency,
+            ),
+          );
 
     // Create order and deduct balance in single transaction
     const newOrder = await prisma.$transaction(
@@ -431,7 +449,7 @@ export const placeOrder = async (
             syncOrder: storeFeatures.social_store_order_sync,
             storeScopedId: counter.orderCounter,
             price: orderPrice,
-            currency: "USD",
+            currency: userCurrency,
             userInitialBalance: userBalance,
             userFinalBalance: finalBalance,
             status: "PENDING",
@@ -446,7 +464,7 @@ export const placeOrder = async (
             storeId,
             userUid: user.uid,
             amount: orderPrice.neg(),
-            currency: "USD",
+            currency: userCurrency,
             type: "WALLET_DEBIT",
             description: `Order #${order.storeScopedId} - ${parsed.data.quantity} ${service.type}`,
             storeScopedId: counter.transactionCounter,
@@ -578,38 +596,48 @@ export const bulkCreateOrders = async (
       }
     }
 
-    // Calculate total price and prepare order data
+    // Calculate total price and prepare order data in the user's wallet currency
+    const userCurrency = (user.currency || "USD").toUpperCase();
     let totalPrice = new Decimal(0);
-    const ordersWithPrices = parsed.data.orders.map((order) => {
+    const ordersWithPrices: Array<
+      (typeof parsed.data.orders)[number] & { calculatedPrice: Decimal }
+    > = [];
+
+    for (const order of parsed.data.orders) {
       const service = serviceMap.get(order.serviceUid)!;
 
-      let orderPrice: Decimal;
+      let orderPriceInServiceCurrency: Decimal;
       if (service.type === "PACKAGE") {
-        orderPrice = new Decimal(service.price);
+        orderPriceInServiceCurrency = new Decimal(service.price);
       } else {
-        orderPrice = new Decimal(service.price)
+        orderPriceInServiceCurrency = new Decimal(service.price)
           .mul(order.quantity)
           .div(1000)
           .toDecimalPlaces(2);
       }
 
-      // Validate price is positive
-      // if (orderPrice.lte(0)) {
-      //   throw new Error(
-      //     `Invalid price calculated for service ${order.serviceUid}. Service may not be properly configured.`,
-      //   );
-      // }
+      const serviceCurrency = (service.currency || "USD").toUpperCase();
+      const orderPrice =
+        serviceCurrency === userCurrency
+          ? orderPriceInServiceCurrency
+          : new Decimal(
+              await convertCurrency(
+                orderPriceInServiceCurrency.toNumber(),
+                serviceCurrency,
+                userCurrency,
+              ),
+            );
 
       totalPrice = totalPrice.add(orderPrice);
 
-      return {
+      ordersWithPrices.push({
         ...order,
         calculatedPrice: orderPrice,
-      };
-    });
+      });
+    }
 
     // Create all orders in a single transaction
-    const createdOrders = await prisma.$transaction(
+    const bulkResult = await prisma.$transaction(
       async (tx) => {
         // Lock user and check balance
         const currentUser = await tx.user.findUnique({
@@ -667,7 +695,7 @@ export const bulkCreateOrders = async (
               storeId,
               storeScopedId: currentOrderId,
               price: orderData.calculatedPrice,
-              currency: "USD",
+              currency: userCurrency,
               userInitialBalance: userBalance,
               userFinalBalance: finalBalance,
               status: "PENDING",
@@ -685,14 +713,18 @@ export const bulkCreateOrders = async (
             storeId,
             userUid: user.uid,
             amount: totalPrice.neg(),
-            currency: "USD",
+            currency: userCurrency,
             type: "WALLET_DEBIT",
             description: `Bulk order - ${ordersWithPrices.length} orders`,
             storeScopedId: counter.transactionCounter,
           },
         });
 
-        return orders;
+        return {
+          orders,
+          finalBalance,
+          totalPrice,
+        };
       },
       {
         maxWait: 10000,
@@ -705,7 +737,7 @@ export const bulkCreateOrders = async (
     const failedOrders: string[] = [];
     const successfulOrders: string[] = [];
 
-    for (const order of createdOrders) {
+    for (const order of bulkResult.orders) {
       try {
         await sendOrderToProvider(order, storeId);
         successfulOrders.push(order.uid);
@@ -725,7 +757,7 @@ export const bulkCreateOrders = async (
     }
 
     // If all orders failed, refund the user
-    if (failedOrders.length === createdOrders.length) {
+    if (failedOrders.length === bulkResult.orders.length) {
       await prisma.$transaction(async (tx) => {
         await tx.user.update({
           where: { uid: user.uid },
@@ -750,6 +782,8 @@ export const bulkCreateOrders = async (
       success: "Bulk orders processed",
       successful: successfulOrders,
       failed: failedOrders.length > 0 ? failedOrders : undefined,
+      balance: bulkResult.finalBalance.toNumber(),
+      totalCharged: bulkResult.totalPrice.toNumber(),
       message:
         failedOrders.length > 0
           ? `${successfulOrders.length} orders succeeded, ${failedOrders.length} failed`
@@ -858,5 +892,118 @@ export const bulkUpdateOrderStatus = async (
     res.status(200).json({ success: "Bulk status update completed" });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+export const cancelOrder = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const authParsed = UserAuthSchema.safeParse(req.auth);
+  const parsed = OrderUidSchema.safeParse(req.params);
+
+  if (!authParsed.success || !parsed.success) {
+    res.status(400).json({
+      error: {
+        ...authParsed.error?.flatten(),
+        ...parsed.error?.flatten(),
+      },
+    });
+    return;
+  }
+
+  const { storeId, user } = authParsed.data;
+  const { orderUid } = parsed.data;
+
+  try {
+    // Fetch order and verify it belongs to user
+    const order = await prisma.order.findFirst({
+      where: { uid: orderUid, userUid: user.uid, storeId },
+      include: {
+        service: {
+          select: {
+            cancel: true,
+            type: true,
+            uid: true,
+            name: true,
+            providerId: true,
+            provider: { select: { uid: true } },
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      res.status(404).json({ error: "Order not found" });
+      return;
+    }
+
+    // Check if order can be cancelled
+    if (!order.service.cancel) {
+      res.status(403).json({ error: "This service cannot be cancelled" });
+      return;
+    }
+
+    if (order.status === "CANCELED") {
+      res.status(400).json({ error: "Order is already cancelled" });
+      return;
+    }
+
+    if (order.service.type !== "MANUAL") {
+      // Check if we have provider info
+      if (!order.service.provider) {
+        res.status(400).json({
+          error: "Cannot cancel order: provider information is missing",
+        });
+        return;
+      }
+
+      if (!order.providerOrderId) {
+        res.status(400).json({
+          error: "Cannot cancel order: provider order ID is not available yet",
+        });
+        return;
+      }
+    }
+
+    // Create cancel record in transaction
+    const cancelRecord = await prisma.$transaction(async (tx) => {
+      // Increment cancel counter
+      const counter = await tx.storeCounter.update({
+        where: { storeId },
+        data: { cancelCounter: { increment: 1 } },
+      });
+
+      // Create cancel record (status PENDING)
+      const createdCancel = await tx.cancel.create({
+        data: {
+          uid: uuidv4(),
+          storeScopedId: counter.cancelCounter,
+          orderUid: order.uid,
+          providerUid: order.service.provider!.uid,
+          providerOrderId: order.providerOrderId!,
+          userUid: user.uid,
+          storeId,
+          status: "PENDING",
+        },
+      });
+
+      return createdCancel;
+    });
+
+    // Send cancellation to provider (outside transaction) with cancel UID
+    try {
+      await requestCancelationFromProvider(order, storeId, cancelRecord.uid);
+    } catch (error: any) {
+      // Log error but don't fail the request
+    }
+
+    res.json({
+      success: "Cancellation request created successfully",
+      orderUid: order.uid,
+      cancelUid: cancelRecord.uid,
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || "Internal server error" });
   }
 };

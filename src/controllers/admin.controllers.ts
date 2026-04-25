@@ -58,7 +58,7 @@ export const authenticateAdmin = async (
     const role = account.role;
 
     const token = jwt.sign(
-      { uid: account.uid, storeId, apiKey: account.apiKey },
+      { uid: account.uid, storeId },
       env.JWT_SECRET,
       {
         expiresIn: "7d",
@@ -82,7 +82,15 @@ export const authenticateAdmin = async (
       ...(env.NODE_ENV === "production" && { domain: `.${domain}` }),
     });
 
-    const { password: _, resetToken, resetTokenExpiry, ...safeAdmin } = account;
+    const {
+      password: _,
+      resetToken,
+      resetTokenExpiry,
+      encryptedApiKey: __encryptedApiKey,
+      apiKeyIv: __apiKeyIv,
+      apiKeyHash: __apiKeyHash,
+      ...safeAdmin
+    } = account;
     res.status(200).json({
       success: "Logged in successfully",
       role,
@@ -106,11 +114,26 @@ export const updateAdmin = async (
   const { uid, storeId } = req.auth!;
 
   try {
+    const updatePayload = {
+      ...parsed.data,
+      ...(parsed.data.currency
+        ? { currency: parsed.data.currency.toUpperCase() }
+        : {}),
+    };
+
     const admin = await prisma.admin.update({
       where: { uid, storeId },
-      data: parsed.data,
+      data: updatePayload,
     });
-    const { password: _, resetToken, resetTokenExpiry, ...safeAdmin } = admin;
+    const {
+      password: _,
+      resetToken,
+      resetTokenExpiry,
+      encryptedApiKey: __encryptedApiKey,
+      apiKeyIv: __apiKeyIv,
+      apiKeyHash: __apiKeyHash,
+      ...safeAdmin
+    } = admin;
     res
       .status(200)
       .json({ success: "Successfully updated admin", admin: safeAdmin });
@@ -306,7 +329,7 @@ export const verifySession = async (
   });
 
   const token = jwt.sign(
-    { uid: admin.uid, storeId, apiKey: admin.apiKey },
+    { uid: admin.uid, storeId },
     env.JWT_SECRET,
     {
       expiresIn: "7d",

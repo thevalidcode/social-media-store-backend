@@ -6,7 +6,10 @@ import { decryptKey } from "../utils/encrypt";
 import { PaystackWebhookData } from "../schemas/webhook.schema";
 import type { Request } from "express";
 import { verifyPaystackSignature } from "../utils/webhook/verifySignatures";
-import { Decimal } from "@prisma/client/runtime/client";
+import {
+  handleSmmPaymentFailure,
+  handleSmmPaymentSuccess,
+} from "../services/payments/provider-webhook-handler";
 
 const verifySignature = async (req: Request, storeId: number) => {
   const gateway = await prisma.paymentGateway.findFirst({
@@ -30,12 +33,12 @@ const verifySignature = async (req: Request, storeId: number) => {
 
 export const initPaystackPayment = async (
   paymentData: any,
-  secretKey: { encrypted_key: string; iv: string }
+  secretKey: { encrypted_key: string; iv: string },
 ) => {
   const convertedNGNAmount = await convertCurrency(
     paymentData.amount,
     paymentData.currency,
-    "NGN"
+    "NGN",
   );
   const response = await axios.post(
     "https://api.paystack.co/transaction/initialize",
@@ -50,10 +53,10 @@ export const initPaystackPayment = async (
       headers: {
         Authorization: `Bearer ${decryptKey(
           secretKey.encrypted_key,
-          secretKey.iv
+          secretKey.iv,
         )}`,
       },
-    }
+    },
   );
   return { url: response.data.data.authorization_url };
 };
@@ -61,84 +64,44 @@ export const initPaystackPayment = async (
 const processSuccess = async (
   req: Request,
   data: PaystackWebhookData,
-  customer: PaystackWebhookData["customer"]
+  customer: PaystackWebhookData["customer"],
 ) => {
   const payment = await prisma.payment.findFirst({
     where: { uid: data.metadata.txRef, status: "PENDING" },
+    select: { storeId: true },
   });
 
   if (!payment) throw new Error("Payment not found");
 
   await verifySignature(req, payment.storeId);
-  const user = await prisma.user.findFirst({
-    where: { email: customer.email },
-  });
-
-  if (!user) throw new Error("User not found");
-
-  await prisma.$transaction(async (tx) => {
-    const counter = await tx.storeCounter.update({
-      where: { storeId: user.storeId! },
-      data: {
-        transactionCounter: { increment: 1 },
-      },
-    });
-    await tx.payment.update({
-      where: { uid: payment.uid },
-      data: {
-        status: "SUCCESS",
-      },
-    });
-
-    await tx.transaction.create({
-      data: {
-        uid: payment.uid,
-        type: "WALLET_CREDIT",
-        amount: data.amount,
-        description: `Wallet credit via Paystack`,
-        userUid: user.uid,
-        storeScopedId: counter.transactionCounter,
-        storeId: user.storeId,
-      },
-    });
-
-    const toKoboAmount = data.amount / 100;
-    const usdAmount = await convertCurrency(toKoboAmount, data.currency, "USD");
-
-    await tx.user.update({
-      where: { uid: user.uid },
-      data: {
-        balance: {
-          increment: new Decimal(usdAmount),
-        },
-      },
-    });
+  await handleSmmPaymentSuccess({
+    paymentUid: data.metadata.txRef,
+    storeId: payment.storeId,
+    customerEmail: customer.email,
+    amountForTransaction: data.amount,
+    amountForBalance: data.amount / 100,
+    currency: data.currency,
+    paymentGateway: "PAYSTACK",
   });
 };
 
 const processFailure = async (
   req: Request,
   data: PaystackWebhookData,
-  customer: PaystackWebhookData["customer"]
+  customer: PaystackWebhookData["customer"],
 ) => {
   const payment = await prisma.payment.findFirst({
     where: { uid: data.metadata.txRef, status: "PENDING" },
+    select: { storeId: true },
   });
 
   if (!payment) throw new Error("Payment not found");
 
   await verifySignature(req, payment.storeId);
-  const user = await prisma.user.findFirst({
-    where: { email: customer.email },
-  });
-
-  if (!user) throw new Error("User not found");
-
-  await prisma.payment.update({
-    where: { uid: payment.uid },
-    data: {
-      status: "FAILED",
-    },
+  await handleSmmPaymentFailure({
+    paymentUid: data.metadata.txRef,
+    storeId: payment.storeId,
+    customerEmail: customer.email,
   });
 };
 

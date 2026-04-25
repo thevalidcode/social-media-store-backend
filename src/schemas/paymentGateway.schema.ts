@@ -13,9 +13,11 @@ export const PaymentGatewayAdminsSchema = z
     uid: z.string(),
     name: z.string(),
     description: z.string().optional(),
+    content: z.string().optional(),
     webhookUrl: z.string().optional(),
     min: z.number(),
     max: z.number(),
+    currency: z.string(),
     feePercent: z.number(),
     position: z.number(),
     secretKey: z.any().optional(),
@@ -29,7 +31,9 @@ export const PaymentGatewayUsersSchema = z.object({
   uid: z.string(),
   name: z.string(),
   description: z.string().optional(),
+  content: z.string().optional(),
   min: z.number(),
+  currency: z.string(),
   webhookUrl: z.string().optional(),
   feePercent: z.number().optional(),
   max: z.number(),
@@ -43,22 +47,40 @@ export const PaymentCreateRequestSchema = z
     name: z.string(),
     min: z.coerce.number(),
     max: z.coerce.number(),
+    currency: z
+      .string()
+      .length(3)
+      .transform((v) => v.toUpperCase()),
     feePercent: z.coerce.number().optional(),
     secretKey: z.string().optional(),
     description: z.string().optional(),
+    content: z.string().optional(),
   })
-  .strip();
+  .refine((data) => data.max >= data.min, {
+    message: "Max amount must be greater than or equal to min amount",
+    path: ["max"],
+  });
 
-export const PaymentUpdateRequestSchema = z.object({
-  platform: z.nativeEnum(PaymentGatewayPlatform),
-  uid: z.string(),
-  name: z.string(),
-  min: z.coerce.number(),
-  max: z.coerce.number(),
-  feePercent: z.number().optional(),
-  secretKey: z.string().optional(),
-  description: z.string().optional(),
-});
+export const PaymentUpdateRequestSchema = z
+  .object({
+    platform: z.nativeEnum(PaymentGatewayPlatform),
+    uid: z.string(),
+    name: z.string(),
+    min: z.coerce.number(),
+    max: z.coerce.number(),
+    currency: z
+      .string()
+      .length(3)
+      .transform((v) => v.toUpperCase()),
+    feePercent: z.number().optional(),
+    secretKey: z.string().optional(),
+    description: z.string().optional(),
+    content: z.string().optional(),
+  })
+  .refine((data) => data.max >= data.min, {
+    message: "Max amount must be greater than or equal to min amount",
+    path: ["max"],
+  });
 
 export const PaymentUpdateStatusRequestSchema = z.object({
   uid: z.string(),

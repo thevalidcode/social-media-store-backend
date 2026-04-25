@@ -16,6 +16,12 @@ router.post(
 
 router.get("/", authenticateUser, payments.getPayments);
 
+router.patch(
+  "/admin/:paymentUid/status",
+  authenticateAdmin,
+  payments.updatePaymentStatusAdmin,
+);
+
 router.get("/admin", authenticateAdmin, payments.getPaymentsAdmin);
 
 export default router;

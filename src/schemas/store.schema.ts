@@ -35,6 +35,9 @@ export const SubscriptionPlanFeaturesSchema = z.object({
   store_email_notifications: z.boolean(),
   store_custom_emails: z.boolean(),
   store_newsletters: z.boolean(),
+
+  // Commerce network features
+  reselling: z.boolean(),
 });
 
 export type SubscriptionPlanFeatures = z.infer<

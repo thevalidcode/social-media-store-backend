@@ -6,11 +6,16 @@ import { verifyGoogleIdToken } from "../helpers/googleverify";
 import axios from "axios";
 import bcrypt from "bcrypt";
 import { env } from "../config/env.config";
+import crypto from "crypto";
+import { encryptKey } from "../utils/encrypt";
 import {
   GoogleCallbackQuerySchema,
   RedirectToGoogleQuerySchema,
   RoleEnum,
 } from "../schemas/auth.schema";
+
+const hashApiKey = (key: string) =>
+  crypto.createHash("sha256").update(key).digest("hex");
 
 const isValidStoreDomain = async (url: string): Promise<boolean> => {
   try {
@@ -146,6 +151,8 @@ export const googleCallback = async (
 
     if (!user) {
       user = await prisma.$transaction(async (tx) => {
+        const rawApiKey = uuidv4();
+        const encrypted = encryptKey(rawApiKey);
         const counter = await tx.storeCounter.update({
           where: { storeId },
           data: { userCounter: { increment: 1 } },
@@ -161,7 +168,9 @@ export const googleCallback = async (
                 : googleUser.email.split("@")[0]) + counter.userCounter,
             image: googleUser.picture,
             password: await bcrypt.hash(Date.now().toString(), 10),
-            apiKey: uuidv4(),
+            encryptedApiKey: encrypted.encrypted_key,
+            apiKeyIv: encrypted.iv,
+            apiKeyHash: hashApiKey(rawApiKey),
             timestamp: new Date(),
             uid: uuidv4(),
             role: "BASIC",

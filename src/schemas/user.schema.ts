@@ -14,7 +14,6 @@ export const UserSchema = z
     email: z.string(),
     image: z.string().nullable(),
     username: z.string(),
-    apiKey: z.string(),
     fullName: z.string().nullable(),
     role: z.nativeEnum(UserRole),
     status: z.nativeEnum(UserStatus),
@@ -48,8 +47,8 @@ export const UserUpdateRequestSchema = z
   .object({
     username: z.string().describe("Username").optional(),
     fullName: z.string().describe("Full name").optional().nullable(),
-    image: z.string().url().describe("User image").optional().nullable(),
-    apiKey: z.string().describe("User api key").optional(),
+    image: z.string().url().describe("User image").optional().nullable().or(z.literal("")),
+    currency: z.string().length(3).optional(),
   })
   .strict();
 
@@ -60,6 +59,7 @@ export const UpdateUserByAdminRequestSchema = UserUpdateRequestSchema.extend({
   uid: z.string(),
   email: z.string().email().optional(),
   status: z.nativeEnum(UserStatus).optional(),
+  currency: z.string().length(3).optional(),
 });
 
 export const AuthenticateUserSchema = z.object({
