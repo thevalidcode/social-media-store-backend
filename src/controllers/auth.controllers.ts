@@ -28,6 +28,33 @@ const isValidStoreDomain = async (url: string): Promise<boolean> => {
   }
 };
 
+const getCookieDomain = (req: Request): string | undefined => {
+  if (env.NODE_ENV !== "production") return undefined;
+
+  const host = (req.headers.origin ?? req.headers.host ?? "")
+    .toString()
+    .replace(/^https?:\/\//, "")
+    .split("/")[0]
+    .split(":")[0];
+
+  if (!host) return undefined;
+  return host.startsWith("api.") ? `.${host.slice(4)}` : `.${host}`;
+};
+
+export const logout = (req: Request, res: Response): void => {
+  const domain = getCookieDomain(req);
+  const cookieOptions = {
+    secure: env.NODE_ENV === "production",
+    sameSite: env.NODE_ENV === "production" ? ("none" as const) : ("lax" as const),
+    path: "/",
+    ...(domain ? { domain } : {}),
+  };
+
+  res.clearCookie("auth_token", cookieOptions);
+  res.clearCookie("csrf_token", cookieOptions);
+  res.status(200).json({ success: "Logged out successfully" });
+};
+
 export const redirectToGoogle = async (
   req: Request,
   res: Response

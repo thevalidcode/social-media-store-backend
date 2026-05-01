@@ -4,6 +4,7 @@ import { authRateLimit } from "../middleware/ratelimit/auth.ratelimit";
 
 const router = express.Router();
 
+router.post("/logout", auth.logout);
 router.get("/google", authRateLimit, auth.redirectToGoogle);
 router.get("/callback/google", authRateLimit, auth.googleCallback);
 
